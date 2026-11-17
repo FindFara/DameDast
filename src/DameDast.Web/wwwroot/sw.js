@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v44";
+const CACHE = "damedast-shell-v45";
 const SHELL = [
   "/",
   "/index.html",
