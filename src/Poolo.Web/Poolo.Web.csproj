@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><UserSecretsId>Poolo-development</UserSecretsId></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Poolo.Infrastructure/Poolo.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.0" />
+  </ItemGroup>
+</Project>

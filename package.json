@@ -1,0 +1,11 @@
+{
+  "name": "damdast",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bash scripts/preview.sh",
+    "test": "node --test tests/*.test.mjs",
+    "build:whiteboard": "npm run build --prefix whiteboard",
+    "test:whiteboard": "npm test --prefix whiteboard"
+  }
+}

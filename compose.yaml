@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      AllowedHosts: ${DOMAIN:-localhost}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      ReverseProxy__KnownProxy: 172.29.10.2
+      Push__Subject: ${PUSH_SUBJECT:-}
+    volumes:
+      - poolo_data:/app/data
+    networks:
+      poolo:
+        ipv4_address: 172.29.10.3
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      poolo:
+        ipv4_address: 172.29.10.2
+networks:
+  poolo:
+    ipam:
+      config:
+        - subnet: 172.29.10.0/24
+volumes:
+  poolo_data:
+  caddy_data:
+  caddy_config:

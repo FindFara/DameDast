@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Poolo.Domain/Poolo.Domain.csproj" />
+    <ProjectReference Include="../Poolo.Common/Poolo.Common.csproj" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Features/Market/market-catalog.json" /></ItemGroup>
+</Project>

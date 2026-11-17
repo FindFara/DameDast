@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "دمِ دست · Portfolio Bridge",
+  "version": "1.0.0",
+  "description": "Read reviewed holdings and installment tables from your active financial tab. No credentials, trading or payment access.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "action": {"default_popup": "popup.html", "default_title": "دمِ دست"},
+  "background": {"service_worker": "background.js", "type": "module"},
+  "icons": {"128": "icon-128.png"},
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"}
+}

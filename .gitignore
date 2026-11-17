@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/data/
+TestResults/
+.env
+.openai/
+node_modules/
+*.zip

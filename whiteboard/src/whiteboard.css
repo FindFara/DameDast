@@ -1,0 +1,580 @@
+@font-face {
+  font-family: Vazir;
+  src: url("/fonts/vazir.woff2");
+}
+@font-face {
+  font-family: Vazir;
+  src: url("/fonts/vazir-bold.woff2");
+  font-weight: 700;
+}
+@font-face {
+  font-family: Helvetica;
+  src: url("/fonts/vazir.woff2");
+}
+:root {
+  font-family: Vazir, Arial, sans-serif;
+  color: #302b40;
+  background: #faf9fd;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root,
+.wb-app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.wb-app {
+  --wb-panel: #fff;
+  --wb-ink: #332d42;
+  --wb-border: #e4dfee;
+  --wb-accent: #8872ba;
+  position: relative;
+  background: #faf9fd;
+}
+.wb-app[data-theme="dark"] {
+  --wb-panel: #292733;
+  --wb-ink: #eee9f7;
+  --wb-border: #45404f;
+  --wb-accent: #b5a1df;
+  color: var(--wb-ink);
+  background: #15131b;
+}
+.excalidraw {
+  --color-primary: #9b83c8;
+  --color-primary-light: #eee7fa;
+  --color-primary-darker: #78609e;
+  --color-selection: #b19bd9;
+  --island-bg-color: var(--wb-panel);
+  font-family: Vazir, Arial, sans-serif;
+}
+.excalidraw .Island {
+  background: color-mix(in srgb, var(--wb-panel) 92%, transparent);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--wb-border);
+  border-radius: 15px;
+  box-shadow: 0 5px 25px #3322440c;
+}
+.excalidraw .App-menu_top .Island {
+  border-radius: 16px;
+}
+.excalidraw .welcome-screen-center {
+  display: none;
+}
+.excalidraw .main-menu-trigger {
+  border-radius: 12px;
+}
+.excalidraw .layer-ui__wrapper__top-right {
+  gap: 9px;
+}
+.excalidraw .App-menu_bottom {
+  gap: 10px;
+}
+.excalidraw .help-icon {
+  opacity: 0.65;
+}
+.excalidraw button,
+.excalidraw select,
+.excalidraw input {
+  font-family: inherit;
+}
+.wb-docbar {
+  position: absolute;
+  top: 16px;
+  left: 132px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  padding: 7px 11px 7px 7px;
+  background: color-mix(in srgb, var(--wb-panel) 90%, transparent);
+  color: var(--wb-ink);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--wb-border);
+  border-radius: 15px;
+  box-shadow: 0 5px 25px #3322440c;
+}
+.wb-docbar > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.wb-docbar span {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #9f91b7;
+  white-space: nowrap;
+}
+.wb-docbar i {
+  font-style: normal;
+  color: var(--wb-accent);
+}
+.wb-docbar input {
+  border: 0;
+  background: none;
+  color: inherit;
+  width: 150px;
+  font:
+    700 13px Vazir,
+    Arial,
+    sans-serif;
+  outline: 0;
+  padding: 0;
+}
+.wb-docbar input:focus {
+  box-shadow: 0 1px var(--wb-accent);
+}
+.wb-save {
+  font-size: 9px;
+  max-width: 55px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--wb-accent);
+}
+.wb-save.status-Save-failed {
+  color: #bf6c77;
+}
+.wb-back,
+.wb-top-actions button,
+.wb-extras button {
+  height: 34px;
+  min-width: 34px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: none;
+  color: var(--wb-ink);
+  border: 0;
+  border-radius: 9px;
+  padding: 7px;
+  font:
+    12px Vazir,
+    Arial,
+    sans-serif;
+}
+.wb-back:hover,
+.wb-top-actions button:hover,
+.wb-extras button:hover,
+.wb-extras button.active {
+  background: #9b83c822;
+  color: var(--wb-accent);
+}
+.wb-app svg {
+  width: 20px;
+  height: 20px;
+}
+.wb-top-actions {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding: 2px;
+  background: color-mix(in srgb, var(--wb-panel) 90%, transparent);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--wb-border);
+  border-radius: 13px;
+}
+.wb-extras {
+  display: flex;
+  gap: 2px;
+  background: color-mix(in srgb, var(--wb-panel) 90%, transparent);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--wb-border);
+  border-radius: 12px;
+  padding: 2px;
+}
+.wb-extras button {
+  min-width: 30px;
+  height: 30px;
+  padding: 5px;
+}
+.wb-selection-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 6;
+  touch-action: none;
+  cursor: crosshair;
+}
+.wb-warning,
+.wb-conflict {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(620px, calc(100% - 36px));
+  padding: 14px 20px;
+  z-index: 20;
+  background: var(--wb-panel);
+  color: var(--wb-ink);
+  border: 1px solid #d09b8b66;
+  border-radius: 15px;
+  box-shadow: 0 12px 40px #160d291a;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 12px;
+}
+.wb-conflict {
+  bottom: 135px;
+  flex-wrap: wrap;
+  border-color: #ae95cf;
+}
+.wb-warning button,
+.wb-conflict button {
+  background: none;
+  color: var(--wb-accent);
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+.wb-dialog {
+  width: min(430px, calc(100% - 24px));
+  max-height: 90dvh;
+  border: 1px solid var(--wb-border);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--wb-panel) 93%, transparent);
+  backdrop-filter: blur(30px);
+  color: var(--wb-ink);
+  padding: 23px;
+  box-shadow: 0 25px 100px #17102433;
+  font:
+    14px Vazir,
+    Arial,
+    sans-serif;
+}
+.wb-dialog::backdrop {
+  background: #19112444;
+  backdrop-filter: blur(5px);
+}
+.wb-dialog header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.wb-dialog h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.wb-dialog header button {
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 25px;
+  cursor: pointer;
+}
+.wb-form {
+  display: grid;
+  gap: 19px;
+  padding-block-start: 22px;
+}
+.wb-form label {
+  display: grid;
+  gap: 9px;
+  font-size: 12px;
+}
+.wb-form select,
+.wb-form textarea {
+  width: 100%;
+  background: var(--wb-panel);
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-border);
+  padding: 12px;
+  border-radius: 11px;
+  font: inherit;
+}
+.wb-form textarea {
+  min-height: 90px;
+  font-size: 11px;
+  direction: ltr;
+}
+.wb-form .wb-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wb-form button {
+  padding: 12px 17px;
+  border: 1px solid var(--wb-border);
+  border-radius: 11px;
+  background: var(--wb-panel);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.wb-form .wb-primary {
+  background: var(--wb-accent);
+  color: #fff;
+  border: 0;
+}
+.wb-form button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.wb-form p {
+  line-height: 1.9;
+  font-size: 12px;
+}
+.wb-fatal {
+  padding: 40px;
+  overflow: auto;
+  font:
+    14px Vazir,
+    Arial,
+    sans-serif;
+}
+.wb-fatal h1 {
+  font-size: 20px;
+}
+.wb-fatal a {
+  color: #8872ba;
+}
+button:focus-visible {
+  outline: 2px solid var(--wb-accent);
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .wb-docbar {
+    max-width: 205px;
+  }
+  .wb-docbar input {
+    width: 110px;
+  }
+  .wb-save {
+    display: none;
+  }
+  .wb-top-actions button {
+    min-width: 30px;
+    width: 30px;
+    padding: 6px;
+  }
+  .wb-extras {
+    gap: 0;
+  }
+  .wb-extras button {
+    min-width: 27px;
+    width: 27px;
+  }
+  .wb-warning {
+    bottom: 95px;
+  }
+}
+@media (max-width: 600px) {
+  .wb-docbar {
+    top: 66px;
+    left: 16px;
+    right: auto;
+    max-width: 170px;
+    padding: 6px;
+  }
+  .wb-docbar input {
+    width: 92px;
+    font-size: 12px;
+  }
+  .wb-docbar span {
+    font-size: 8px;
+  }
+  .wb-back {
+    min-width: 27px;
+    width: 27px;
+    padding: 4px;
+  }
+  .wb-top-actions {
+    gap: 0;
+  }
+  .wb-top-actions button {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+  }
+  .wb-app .excalidraw .layer-ui__wrapper__top-right {
+    top: 13px;
+  }
+  .wb-extras {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .wb-warning,
+  .wb-conflict {
+    bottom: 120px;
+    width: calc(100% - 30px);
+    max-width: none;
+    flex-wrap: wrap;
+  }
+  .wb-conflict {
+    bottom: 180px;
+  }
+  .wb-dialog {
+    margin: auto 12px 12px;
+    max-width: calc(100% - 24px);
+    width: calc(100% - 24px);
+    border-radius: 22px;
+  }
+  .wb-dialog header {
+    gap: 12px;
+  }
+}
+
+.wb-download {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  padding: 12px 17px;
+  border-radius: 11px;
+  font: inherit;
+}
+
+.wb-app > .wb-extras {
+  position: absolute;
+  bottom: 16px;
+  left: 240px;
+  z-index: 7;
+}
+@media (max-width: 600px) {
+  .wb-app > .wb-extras {
+    position: absolute;
+    bottom: 78px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .excalidraw .App-toolbar-container {
+    position: fixed !important;
+    top: 122px !important;
+    left: 12px !important;
+    right: 12px !important;
+    transform: none !important;
+    width: calc(100% - 24px) !important;
+    max-width: calc(100% - 24px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+  .excalidraw .App-toolbar--mobile {
+    min-width: max-content;
+  }
+  .excalidraw .App-toolbar-container::-webkit-scrollbar {
+    display: none;
+  }
+  .excalidraw .wb-top-actions {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+  }
+  .excalidraw .main-menu-trigger {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+  }
+}
+
+/* The app hamburger and the drawing menu have separate, reserved positions. */
+.wb-file-menu {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 48px;
+  height: 38px;
+  background: color-mix(in srgb, var(--wb-panel) 92%, transparent);
+  backdrop-filter: blur(20px);
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.wb-file-menu svg {
+  width: 14px;
+  height: 16px;
+}
+.wb-file-menu span {
+  font:
+    700 19px Arial,
+    sans-serif;
+  line-height: 1;
+}
+.excalidraw .main-menu-trigger {
+  visibility: hidden;
+  pointer-events: none;
+}
+.wb-app > .wb-top-actions {
+  position: absolute;
+  top: 16px;
+  right: 114px;
+  z-index: 8;
+}
+@media (min-width: 601px) and (max-width: 1360px) {
+  .wb-docbar {
+    left: 132px;
+    max-width: 205px;
+  }
+  .wb-docbar input {
+    width: 110px;
+  }
+  .wb-save {
+    display: none;
+  }
+  .wb-app > .wb-top-actions {
+    top: 66px;
+    right: 16px;
+  }
+  .excalidraw .shapes-section {
+    position: fixed;
+    top: 122px;
+    left: 12px;
+    right: 12px;
+    z-index: 5;
+  }
+  .excalidraw .App-menu__left {
+    top: 176px;
+    max-height: calc(100% - 250px);
+  }
+}
+@media (max-width: 600px) {
+  .wb-app > .wb-top-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  .excalidraw .App-toolbar-container {
+    overflow: visible;
+  }
+  .excalidraw .App-toolbar--mobile {
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-width: 0;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+  .excalidraw .mobile-misc-tools-container {
+    position: fixed;
+    top: 76px;
+    right: 16px;
+    flex-direction: row;
+    gap: 3px;
+    border: 1px solid var(--wb-border);
+    border-radius: 11px;
+    z-index: 7;
+  }
+}
+
+.wb-overlay-open > .wb-extras,
+.wb-overlay-open > .wb-top-actions,
+.wb-overlay-open > .wb-docbar {
+  visibility: hidden;
+  pointer-events: none;
+}
