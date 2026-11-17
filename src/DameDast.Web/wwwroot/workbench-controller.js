@@ -15,6 +15,8 @@ import {
 } from "./workbench-ui.js";
 import { t } from "./i18n.js";
 import { preferences, savePreferences } from "./preferences.js";
+import { prepareDeskImage, MAX_DESK_IMAGES } from "./desk-tools.js";
+import { toolOptionFields, optionsFromForm } from "./desk-tool-ui.js";
 
 export class WorkbenchController {
   constructor(callbacks) {
@@ -38,6 +40,12 @@ export class WorkbenchController {
     window.addEventListener("blur", () => this.cancelPointer());
     document.addEventListener("keydown", (event) => void this.keyDown(event));
     document.addEventListener("click", (event) => void this.click(event));
+    document.addEventListener("change", event => {
+      if (!event.target.matches("[data-desk-edit-toggle]")) return;
+      savePreferences({ workbenchEditing: event.target.checked });
+      this.editing = event.target.checked;
+      this.callbacks.refresh();
+    });
   }
   get isInteracting() {
     return !!this.gesture || this.saving;
@@ -225,6 +233,28 @@ export class WorkbenchController {
     this.dialogBase = base;
     dialog.innerHTML = `<form id="desk-form"><div class="dialog-heading"><h2>${t(mode === "add" ? "Add component" : mode === "background" ? "Desk background" : "Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">×</button></div><div class="desk-dialog-fields">${mode === "add" ? addWidgetFields(this.callbacks.icon) : mode === "background" ? colorFields(base.layout.background) : widgetSettings(widget, base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode === "configure" ? `<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>` : ""}<button type="submit" class="primary">${t(mode === "add" ? "Add component" : "Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
     const form = dialog.querySelector("form");
+    let imageData = widget?.options?.imageData || null, imagePromise = null, imageGeneration = 0;
+    form.addEventListener("change", event => {
+      if (event.target.name === "widgetType") {
+        imageGeneration++; imageData = null;
+        form.querySelector("[data-widget-options]").innerHTML = toolOptionFields(event.target.value);
+        form.elements.size.value = ["plainCalendar", "calculator", "keyGenerator", "pet"].includes(event.target.value) ? "4,3" : "4,2";
+      }
+      if (event.target.matches("[data-desk-image-input]")) {
+        const file = event.target.files[0], generation = ++imageGeneration;
+        if (!file) return;
+        form.querySelector('[type="submit"]').disabled = true;
+        imagePromise = prepareDeskImage(file).then(data => {
+          if (generation !== imageGeneration) return;
+          imageData = data;
+          let preview = form.querySelector(".desk-image-draft");
+          if (!preview) { preview = document.createElement("img"); preview.className = "desk-image-draft"; preview.alt = ""; event.target.after(preview); }
+          preview.src = data;
+          form.querySelector("#desk-form-error").textContent = "";
+        }).catch(error => { form.querySelector("#desk-form-error").textContent = t(error.message); })
+          .finally(() => { form.querySelector('[type="submit"]').disabled = false; });
+      }
+    });
     dialog
       .querySelectorAll("[data-desk-dialog-close]")
       .forEach((b) => (b.onclick = () => dialog.close()));
@@ -251,11 +281,14 @@ export class WorkbenchController {
       error.textContent = "";
       const values = Object.fromEntries(new FormData(form));
       try {
+        await imagePromise;
         let next = structuredClone(base.layout);
         if (remove) next.widgets = next.widgets.filter((w) => w.id !== id);
         else if (mode === "background")
           next.background = values.background.trim() || null;
         else if (mode === "add") {
+          if (values.widgetType === "image" && next.widgets.filter(widget => widget.type === "image").length >= MAX_DESK_IMAGES)
+            throw Error("You can add up to 4 photos to your workbench.");
           const [width, height] = values.size.split(",").map(Number),
             rect = firstFreeSpace(next, width, height);
           if (!rect)
@@ -267,8 +300,9 @@ export class WorkbenchController {
             type: values.widgetType,
             ...rect,
             background: null,
-            title: null,
+            title: values.title?.trim() || null,
             referenceId: null,
+            options: optionsFromForm(values.widgetType, values, {}, imageData),
           });
           this.editing = true;
         } else
@@ -281,7 +315,10 @@ export class WorkbenchController {
             y: Number(values.y) - 1,
             width: Number(values.width),
             height: Number(values.height),
+            options: optionsFromForm(widget.type, values, widget.options || {}, imageData),
           });
+        if (!remove && mode === "add" && values.widgetType === "image" && !imageData)
+          throw Error("Choose a photo in card settings.");
         form.querySelectorAll("button").forEach((b) => (b.disabled = true));
         await this.save(next, base);
         dialog.close();

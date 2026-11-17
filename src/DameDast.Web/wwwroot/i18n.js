@@ -1183,3 +1183,29 @@ Object.assign(fa, {
   'Completed items': 'مورد انجام‌شده',
   'No matching notes.': 'یادداشتی پیدا نشد.',
 });
+
+Object.assign(fa, {
+ 'Back to notes': 'بازگشت به یادداشت‌ها', 'Photo': 'عکس', 'Simple calendar': 'تقویم ساده',
+ 'Website link': 'لینک سایت', 'Calculator': 'ماشین‌حساب', 'Random key': 'کلید تصادفی',
+ 'Clock and date': 'ساعت و تاریخ', 'Desk pet': 'پت میز کار', 'Website address': 'آدرس سایت',
+ 'Clock style': 'نمای ساعت', 'Digital': 'دیجیتال', 'Analog': 'آنالوگ', 'Time zone': 'منطقهٔ زمانی',
+ 'Device time': 'زمان دستگاه', 'Tehran': 'تهران', 'Character': 'کاراکتر', 'Cat': 'گربه', 'Robot': 'ربات',
+ 'Play with pet': 'بازی با پت', 'Say hello': 'سلام کن', 'Calculation': 'محاسبه', 'Length': 'طول', 'Format': 'قالب',
+ 'Generated key': 'کلید تولیدشده', 'Generate': 'تولید', 'Copy': 'کپی', 'Copied.': 'کپی شد.',
+ 'Opens in a new tab': 'در تب جدید باز می‌شود', 'Previous month': 'ماه قبل', 'Next month': 'ماه بعد',
+ 'Generated keys are not saved or synced.': 'کلیدهای تولیدشده ذخیره یا همگام نمی‌شوند.',
+ 'Select and copy the key.': 'کلید را انتخاب و کپی کن.',
+ 'Up to 4 photos. Each file up to 5 MB; photos are resized before saving.': 'حداکثر ۴ عکس؛ هر فایل تا ۵ مگابایت. عکس‌ها پیش از ذخیره کوچک و فشرده می‌شوند.',
+ 'Choose a photo in card settings.': 'یک عکس برای این بخش انتخاب کن.',
+ 'Add a website address in card settings.': 'آدرس سایت را در تنظیمات بخش وارد کن.',
+ 'Enter a valid http or https link.': 'یک لینک معتبر با http یا https وارد کن.',
+ 'Invalid component settings.': 'تنظیمات بخش معتبر نیست.',
+ 'Choose a PNG, JPEG or WebP image up to 5 MB.': 'یک عکس PNG، JPEG یا WebP تا ۵ مگابایت انتخاب کن.',
+ 'Choose an image smaller than 24 megapixels.': 'عکسی کوچک‌تر از ۲۴ مگاپیکسل انتخاب کن.',
+ 'This image could not be made small enough. Choose another image.': 'فشرده‌سازی این عکس کافی نبود؛ عکس دیگری انتخاب کن.',
+ 'Enter a valid calculation.': 'یک عبارت محاسباتی معتبر وارد کن.',
+ 'Cannot divide by zero.': 'تقسیم بر صفر ممکن نیست.',
+ 'Choose a key length from 16 to 128.': 'طول کلید را بین ۱۶ تا ۱۲۸ انتخاب کن.',
+});
+
+Object.assign(fa, {'You can add up to 4 photos to your workbench.': 'می‌توانی حداکثر ۴ عکس به میز کار اضافه کنی.'});

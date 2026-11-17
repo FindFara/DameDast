@@ -4,7 +4,8 @@ public sealed record WorkbenchLayout(int Version, int Columns, int Rows, string?
     IReadOnlyList<WorkbenchWidget> Widgets);
 
 public sealed record WorkbenchWidget(Guid Id, string Type, int X, int Y, int Width, int Height,
-    string? Background = null, string? Title = null, Guid? ReferenceId = null, WorkbenchDevices? Devices = null);
+    string? Background = null, string? Title = null, Guid? ReferenceId = null, WorkbenchDevices? Devices = null,
+    WorkbenchWidgetOptions? Options = null);
 
 public sealed record WorkbenchDevices(bool Phone = true, bool Tablet = true, bool Desktop = true);
 
@@ -13,12 +14,14 @@ public static class WorkbenchRules
     public const int Columns = 12;
     public const int Rows = 6;
     public static readonly string[] WidgetTypes =
-        ["summary", "accounts", "installments", "notes", "canvas", "tasks", "goals", "markets", "allocation", "assets", "receivables", "reminders"];
+        ["summary", "accounts", "installments", "notes", "canvas", "tasks", "goals", "markets", "allocation", "assets", "receivables", "reminders",
+         "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
 
     public static void Validate(WorkbenchLayout layout)
     {
         if (layout.Version != 1 || layout.Columns != Columns || layout.Rows != Rows ||
-            !ValidColor(layout.Background) || layout.Widgets is null || layout.Widgets.Count > Columns * Rows)
+            !ValidColor(layout.Background) || layout.Widgets is null || layout.Widgets.Count > Columns * Rows ||
+            layout.Widgets.Count(widget => widget?.Type == "image") > 4)
             throw new FinanceException("Invalid workbench layout.");
 
         var ids = new HashSet<Guid>();
@@ -32,6 +35,7 @@ public static class WorkbenchRules
                 widget.X < 0 || widget.Y < 0 || widget.Width < 1 || widget.Height < 1 ||
                 widget.Width > Columns || widget.Height > Rows || widget.X > Columns - widget.Width || widget.Y > Rows - widget.Height)
                 throw new FinanceException("Invalid workbench card.");
+            WorkbenchOptionRules.Validate(widget.Type, widget.Options);
 
             for (var x = widget.X; x < widget.X + widget.Width; x++)
                 for (var y = widget.Y; y < widget.Y + widget.Height; y++)

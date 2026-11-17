@@ -1,0 +1,63 @@
+.desk-edit-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--muted); }
+.desk-edit-toggle input { appearance: none; width: 22px; min-width: 22px; height: 22px; min-height: 22px; padding: 0; border: 2px solid var(--muted); border-radius: 50%; margin: 0; cursor: pointer; background: var(--surface); }
+.desk-settings-heading h1 { margin-inline-end: 0; }
+.desk-settings-heading > [data-desk-action="add"] { margin-inline-start: auto; }
+.desk-edit-toggle input:checked { border-color: var(--accent); background: var(--accent); box-shadow: inset 0 0 0 4px var(--surface); }
+.desk-edit-toggle:has(input:checked) { color: var(--accent); }
+.desk-edit-toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.desk-card-foot:empty { display: none; }
+.desk-image-draft { display: block; max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; }
+.desk-photo { display: flex; flex-direction: column; gap: 8px; margin: 0; height: 100%; min-height: 0; }
+.desk-photo img { width: 100%; flex: 1; min-height: 0; object-fit: contain; border-radius: 8px; }
+.desk-photo figcaption { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.desk-link-preview { display: flex; flex-direction: column; align-items: start; gap: 9px; padding: 6px; color: var(--ink); text-decoration: none; min-width: 0; }
+.desk-link-preview:hover strong { text-decoration: underline; }
+.desk-link-preview strong, .desk-link-preview p, .desk-link-host { overflow-wrap: anywhere; margin: 0; }
+.desk-link-preview p, .desk-link-preview small { font-size: 12px; color: var(--muted); }
+.desk-link-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 22px; }
+.desk-link-host { color: var(--muted); font-size: 11px; }
+.desk-calendar header { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-block-end: 8px; }
+.desk-calendar header strong { font-size: 13px; text-align: center; }
+.desk-calendar header button { min-width: 30px; min-height: 30px; padding: 2px 8px; font-size: 19px; }
+.desk-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; text-align: center; font-size: 12px; }
+.desk-calendar-grid > * { display: grid; place-items: center; min-height: 26px; border-radius: 7px; }
+.desk-calendar-weekday { color: var(--muted); font-size: 11px; }
+.desk-calendar-grid .is-today { background: var(--accent); color: var(--surface); font-weight: 700; }
+.desk-calculator { display: grid; gap: 5px; }
+.desk-calculator > input { height: 36px; min-height: 36px; }
+.desk-calculator > input, .desk-key-generator input, .desk-key-generator select { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; padding: 7px; }
+.desk-calculator output { min-height: 25px; text-align: end; color: var(--accent); overflow-wrap: anywhere; }
+.desk-calculator-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; direction: ltr; }
+.desk-calculator-keys button { min-width: 0; min-height: 28px; height: 28px; padding: 2px; font-size: 14px; }
+.desk-calculator > button { min-height: 32px; padding: 4px; }
+.desk-key-generator { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.desk-key-generator label { display: grid; gap: 6px; min-width: 0; font-size: 12px; }
+.desk-key-generator > :is(input, div, small, output) { grid-column: 1 / -1; }
+.desk-key-generator > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.desk-key-generator > small { font-size: 11px; color: var(--muted); }
+.desk-key-generator output { font-size: 12px; overflow-wrap: anywhere; }
+.desk-clock { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100%; text-align: center; }
+.desk-clock-time { font-size: clamp(20px, 3vw, 34px); font-variant-numeric: tabular-nums; }
+.desk-clock-date { font-size: 13px; line-height: 1.6; }
+.desk-clock > small { font-size: 11px; color: var(--muted); }
+.desk-card .desk-clock-face { display: block; width: min(140px, 100%); height: 140px; max-height: 140px; flex-shrink: 0; fill: none; stroke: var(--ink); stroke-width: 2; }
+.desk-clock-face path { transform-origin: 50px 50px; stroke-linecap: round; }
+.desk-clock-face .clock-hour { stroke-width: 3.5; }
+.desk-clock-face .clock-second { stroke: var(--accent); stroke-width: 1; }
+.desk-clock[data-clock-style="analog"] { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 1fr); align-content: center; gap: 6px 12px; }
+.desk-clock[data-clock-style="analog"] .desk-clock-face { grid-column: 1; grid-row: 1 / span 3; justify-self: center; }
+.desk-clock[data-clock-style="analog"] > :not(svg) { grid-column: 2; }
+.desk-clock[data-clock-style="analog"] .desk-clock-time { font-size: 14px; }
+.desk-pet { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
+.desk-card .desk-pet svg { display: block; width: min(170px, 100%); height: 170px; max-height: 180px; overflow: visible; fill: var(--accent-soft); stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.desk-pet span { font-size: 12px; color: var(--muted); }
+.pet-tail, .pet-smile { fill: none; }
+.pet-face { stroke-width: 5; }
+.pet-body { transform-origin: 50px 85px; }
+.workbench-page:not(.desk-tools-paused) .tool-in-view .pet-body { animation: desk-pet-breathe 3s ease-in-out infinite; }
+.workbench-page:not(.desk-tools-paused) .tool-in-view .pet-tail { transform-origin: 72px 72px; animation: desk-pet-tail 4s ease-in-out infinite; }
+.desk-pet.pet-playing svg { animation: desk-pet-hop .65s ease-in-out 2; }
+@keyframes desk-pet-breathe { 50% { transform: scaleY(.96); } }
+@keyframes desk-pet-tail { 50% { transform: rotate(-12deg); } }
+@keyframes desk-pet-hop { 50% { transform: translateY(-8px) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .desk-pet *, .workbench-page .tool-in-view .pet-body, .workbench-page .tool-in-view .pet-tail { animation: none !important; } }

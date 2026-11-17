@@ -63,6 +63,48 @@ public sealed class WorkbenchTests
         Assert.Null((await client.GetFromJsonAsync<WorkbenchOverview>("/api/workbench", CancellationToken.None))!.Record);
     }
 
+    [Fact]
+    public void NewComponentsValidateOptionsAndRoundTripWithoutChangingOldCards()
+    {
+        var cases = new (string Type, WorkbenchWidgetOptions Options)[]
+        {
+            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")),
+            ("pet", new(PetStyle: "cat")), ("plainCalendar", new(Calendar: "persian")),
+            ("link", new(Url: "https://example.com/path", Description: "A useful site")),
+            ("calculator", new()), ("keyGenerator", new()),
+            ("image", new(ImageData: "data:image/png;base64,iVBORw0KGgo="))
+        };
+        foreach (var (type, options) in cases)
+        {
+            var card = Card() with { Type = type, ReferenceId = null, Options = options };
+            var saved = FinanceRules.Apply([], Change("workbench", Layout(card)));
+            Assert.Equal(options, FinanceRules.Read<WorkbenchLayout>(saved.Data).Widgets[0].Options);
+        }
+        WorkbenchRules.Validate(Layout(Card()));
+    }
+
+    [Fact]
+    public void ImageAndLinkLimitsAreEnforcedByTheServer()
+    {
+        var invalid = new (string Type, WorkbenchWidgetOptions Options)[]
+        {
+            ("link", new(Url: "javascript:alert(1)")), ("link", new(Url: "file:///tmp/x")),
+            ("link", new(Url: "https://user:pass@example.com")), ("link", new(Url: "https://example.com\n/path")),
+            ("image", new(ImageData: "data:image/svg+xml;base64,PHN2Zz4=")),
+            ("image", new(ImageData: "data:image/png;base64,YmFk")),
+            ("image", new(ImageData: "data:image/png;base64,iVBORw0K Ggo=")),
+            ("image", new(ImageData: "data:image/png;base64," + new string('A', 120000))),
+            ("clock", new(ClockStyle: "unknown")), ("clock", new(TimeZone: "not-a-zone")),
+            ("pet", new(PetStyle: "unknown")), ("notes", new(Url: "https://example.com")),
+            ("notes", new()), ("clock", new() { AdditionalProperties = new() { ["unexpected"] = JsonSerializer.SerializeToElement("value") } })
+        };
+        foreach (var (type, options) in invalid)
+            Assert.Throws<FinanceException>(() => WorkbenchRules.Validate(Layout(Card() with { Type = type, Options = options })));
+        var photos = Enumerable.Range(0, 5).Select(x => Card() with { Type = "image", Id = Guid.NewGuid(), X = x, Width = 1, Height = 1 }).ToArray();
+        WorkbenchRules.Validate(Layout(photos[..4]));
+        Assert.Throws<FinanceException>(() => WorkbenchRules.Validate(Layout(photos)));
+    }
+
     private static WorkbenchWidget Card() => new(Guid.NewGuid(), "notes", 0, 0, 4, 2);
     private static WorkbenchLayout Layout(params WorkbenchWidget[] widgets) => new(1, 12, 6, null, widgets);
     private static Mutation Change(string kind, object data) => new(Guid.NewGuid(), Guid.NewGuid(), kind, 0, false,

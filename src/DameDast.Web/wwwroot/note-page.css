@@ -1,0 +1,22 @@
+.note-page { max-width: 900px; margin-inline: auto; min-width: 0; }
+.note-page-heading { display: flex; align-items: center; gap: 14px; padding-block: 0 22px; border-block-end: 1px solid var(--border); }
+.note-page-heading > span { color: var(--muted); font-size: 14px; }
+.note-page-heading > button { margin-inline-start: auto; }
+.note-page-heading > a { text-decoration: none; }
+#note-page-form { padding-block: 24px; }
+.note-page-title, .note-page-body { display: block; width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; padding: 12px 4px; }
+.note-page-title { font-size: 26px; font-weight: 650; }
+.note-page-body { font-size: 16px; line-height: 1.9; resize: vertical; min-height: 300px; }
+.note-page-title:focus, .note-page-body:focus { outline: 2px solid var(--accent-soft); border-radius: 8px; }
+.note-page-tasks { margin-block-end: 24px; }
+.note-page-actions { display: flex; align-items: center; gap: 15px; margin-block-start: 24px; }
+.note-page-actions output { font-size: 13px; color: var(--muted); }
+#note-page-error { color: var(--negative); }
+.note-page .note-pdf-editor:has(#note-pdf-list:empty):has(#note-pdf-error:empty) { display: none; }
+body:has(.note-page) #global-create { display: none; }
+@media (max-width: 600px) {
+  .note-page-heading { gap: 8px; padding-block-end: 16px; }
+  .note-page-heading > span { display: none; }
+  .note-page-title { font-size: 22px; }
+  .note-page-body { min-height: 270px; }
+}

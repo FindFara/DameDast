@@ -2,6 +2,8 @@ import { migrateLegacyPreferences } from "./legacy-storage.js";
 import { readPins, togglePin, savePins } from "./nav-pins.js";
 import "./select-sheet.js";
 import { NotePdfController } from "./note-pdfs.js";
+import { NotePageController, isNoteRoute } from "./note-page.js";
+import { DeskToolController } from "./desk-tool-controller.js";
 import { PlannerController } from "./planner-controller.js";
 import { validateCalendarEntry } from "./planner.js";
 import { preferences, savePreferences } from "./preferences.js";
@@ -235,6 +237,12 @@ const desk = new WorkbenchController({
 });
 let workbenchSettingsOpen = false;
 const notePdfs = new NotePdfController({ context, error: showError });
+const notePage = new NotePageController({
+  context, pdfs: notePdfs, refresh: render, error: showError,
+  save: (data, id, version) => commit("note", data, id, false, version),
+  drawing: id => openCanvas(id),
+});
+const deskTools = new DeskToolController({ context, error: showError });
 
 async function saveWorkbenchLayout(layout, base) {
   if (base.space !== space)
@@ -411,17 +419,22 @@ function renderChrome() {
 }
 function render() {
   if (!state) return;
+  notePage.capture();
+  deskTools.capture();
   for (const group of document.querySelectorAll('#view [data-setting-group]'))
     settingsGroupsOpen[group.dataset.settingGroup] = group.open;
   const hash = location.hash.slice(1);
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
-  page = Object.hasOwn(sections, hash) ? hash : "overview";
+  page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
   renderChrome();
   noteLayout.disconnect();
-  $("#view").innerHTML = renderPage(context());
+  if (!isNoteRoute(hash)) notePage.deactivate();
+  $("#view").innerHTML = isNoteRoute(hash) ? notePage.render(context()) : renderPage(context());
+  notePage.attach();
   document.querySelectorAll('.notes-grid:not(.notes-list) > .note-card').forEach(card => noteLayout.observe(card));
   desk.attach();
+  deskTools.attach();
   planner.attach();
   formatNumericFields($("#view"));
   updateStatus();
@@ -439,6 +452,7 @@ function render() {
     void loadBenchmarks();
 }
 function openEditor(kind, id = null, type = null, preset = null) {
+  if (kind === "note") { notePage.open(id, preset); return; }
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -1886,8 +1900,7 @@ async function onAction(event) {
   if (action === "csv") exportCsv();
   if (action === "install") install();
   if (action === "note-pdf-add") {
-    openEditor("note");
-    document.querySelector("#note-pdf-input").click();
+    notePage.open(null, null, true);
     return;
   }
   if (["backup", "backup-notes", "backup-finance"].includes(action)) {

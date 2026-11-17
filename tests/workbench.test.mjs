@@ -87,7 +87,7 @@ test("default layouts are independent copies with stable IDs; custom colors rema
   assert.equal(deskContrast("#000000"), "#f2f6f3");
   assert.equal(deskContrast(null), null);
 });
-test("all twelve components render live financial records, references and safe user text", () => {
+test("all components render live financial records, references and safe user text", () => {
   const records = materialize(makeDemo()).filter((r) => !r.deleted),
     base = {
       page: "workbench",

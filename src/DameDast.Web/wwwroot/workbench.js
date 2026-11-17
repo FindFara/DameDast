@@ -2,6 +2,13 @@ export const DESK_COLUMNS = 12,
   DESK_ROWS = 6;
 export const WORKBENCH_ID = "dc7da320-bd12-4e87-a4fb-06b79f2b9f40";
 export const widgetCatalog = [
+  { type: "image", title: "Photo", glyph: "photo" },
+  { type: "plainCalendar", title: "Simple calendar", glyph: "calendar" },
+  { type: "link", title: "Website link", glyph: "link" },
+  { type: "calculator", title: "Calculator", glyph: "calculator" },
+  { type: "keyGenerator", title: "Random key", glyph: "key" },
+  { type: "clock", title: "Clock and date", glyph: "clock" },
+  { type: "pet", title: "Desk pet", glyph: "pet" },
   {
     type: "summary",
     title: "Money overview",
@@ -93,7 +100,7 @@ export function validateWorkbench(layout) {
     layout.rows !== DESK_ROWS ||
     !validDeskColor(layout.background) ||
     !Array.isArray(layout.widgets) ||
-    layout.widgets.length > 72
+    layout.widgets.length > 72 || layout.widgets.filter(w => w?.type === "image").length > MAX_DESK_IMAGES
   )
     throw Error("Invalid workbench layout.");
   const ids = new Set();
@@ -120,6 +127,7 @@ export function validateWorkbench(layout) {
     )
       throw Error("Invalid workbench card.");
     ids.add(w.id);
+    validateToolOptions(w.type, w.options);
   }
   return layout;
 }
@@ -241,3 +249,4 @@ export function deviceWorkbench(layout, device = "desktop") {
     device,
   };
 }
+import { validateToolOptions, MAX_DESK_IMAGES } from "./desk-tools.js";

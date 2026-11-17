@@ -5,7 +5,7 @@ import { MAX_NOTE_PDFS, validatePdfFile, validatePdfMetadata, readPdf, writePdf 
 const pdfIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M7 15h10M7 18h7"/></svg>';
 const fileSize = (size) => size < 1024 * 1024 ? `${localizedNumber(Math.max(1, size / 1024), 1)} KB` : `${localizedNumber(size / 1024 / 1024, 1)} MB`;
 export function notePdfEditor() {
-  return `<section class="note-pdf-editor"><div class="checklist-editor-head"><strong>${t('PDF attachments')}</strong><label class="secondary pdf-choose">${pdfIcon}${t('Add PDF')}<input id="note-pdf-input" type="file" accept="application/pdf,.pdf" multiple></label></div><div id="note-pdf-list"></div><p class="small-note">${t('PDFs stay on this device and are included in notes backups. Up to 25 MB per file.')}</p><p id="note-pdf-error" class="form-error" role="alert"></p></section>`;
+  return `<section class="note-pdf-editor"><input id="note-pdf-input" type="file" accept="application/pdf,.pdf" multiple hidden><div id="note-pdf-list"></div><p id="note-pdf-error" class="form-error" role="alert"></p></section>`;
 }
 export function notePdfLinks(note) {
   return (note.data.attachments || []).map((file) => `<button type="button" class="note-pdf-link" data-pdf-open="${esc(file.id)}" data-pdf-note="${note.id}">${pdfIcon}<span dir="auto">${esc(file.name)}</span><small>${fileSize(file.size)}</small></button>`).join('');
@@ -56,20 +56,23 @@ export class NotePdfController {
       }
       if (draftGeneration !== this.draftGeneration) return;
       for (const { file, metadata } of staged) { this.pending.set(metadata.id, file); this.files.push(metadata); }
-      const title = document.querySelector('#editor [name="title"]');
+      const title = document.querySelector('#note-page-form [name="title"], #editor [name="title"]');
       if (title && !title.value.trim() && staged.length) title.value = staged[0].metadata.name.replace(/\.pdf$/i, '').slice(0, 80);
       this.editorError({ message: '' });
       this.paintDraft();
     } finally { input.value = ''; }
   }
   async saveAttachments(scope) {
+    const draftGeneration = this.draftGeneration;
     await this.addPromise;
-    if (scope !== this.draftScope) throw Error('This record changed. Reopen the form.');
-    for (const file of this.files) {
+    if (scope !== this.draftScope || draftGeneration !== this.draftGeneration) throw Error('This record changed. Reopen the form.');
+    const files = structuredClone(this.files), pending = new Map(this.pending);
+    for (const file of files) {
       validatePdfMetadata(file);
-      if (this.pending.has(file.id)) await writePdf(scope, file, this.pending.get(file.id));
+      if (pending.has(file.id)) await writePdf(scope, file, pending.get(file.id));
     }
-    return structuredClone(this.files);
+    if (draftGeneration !== this.draftGeneration) throw Error('This record changed. Reopen the form.');
+    return files;
   }
   async click(event) {
     const button = event.target.closest('[data-pdf-open],[data-pdf-draft],[data-pdf-remove],[data-pdf-command]');

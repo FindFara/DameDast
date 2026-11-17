@@ -1,5 +1,11 @@
-const CACHE = "damedast-shell-v46";
+const CACHE = "damedast-shell-v47";
 const SHELL = [
+  "/note-page.js",
+  "/note-page.css",
+  "/desk-tools.js",
+  "/desk-tools.css",
+  "/desk-tool-ui.js",
+  "/desk-tool-controller.js",
   "/",
   "/index.html",
   "/styles.css",
