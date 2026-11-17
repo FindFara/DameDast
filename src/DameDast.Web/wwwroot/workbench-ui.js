@@ -28,6 +28,8 @@ import { instruments } from "./market-catalog.js";
 import { preferences } from "./preferences.js";
 import { toolTypes } from "./desk-tools.js";
 import { toolMarkup, toolOptionFields } from "./desk-tool-ui.js";
+import { deskHomeHeading, componentPicker } from "./desk-home-ui.js";
+import { isDrawingNote, textNotes, taskEntries } from "./notebook.js";
 
 const num = (value) => `<bdi dir="ltr">${money(value)}</bdi>`;
 const amount = (value) => `${num(value)} <small>${t("toman")}</small>`;
@@ -54,9 +56,9 @@ function summaryWidget(c) {
   return `<span class="desk-caption">${t("Account balance")}</span><div class="desk-primary-number">${amount(total)}</div><div class="desk-mini-metrics"><span>${t("Income")}<b>${amount(flow.income)}</b></span><span>${t("Spending")}<b>${amount(flow.expense)}</b></span></div>`;
 }
 function notesWidget(c, w) {
-  const notes = rowsOf(c, "note")
+  const notes = textNotes(c.records)
     .filter((r) => (w.referenceId ? r.id === w.referenceId : true))
-    .sort((a, b) => b.data.updatedOn.localeCompare(a.data.updatedOn));
+    .sort((a, b) => Number(!!b.data.pinned) - Number(!!a.data.pinned) || b.data.updatedOn.localeCompare(a.data.updatedOn)).slice(0, 3);
   if (!notes.length)
     return empty(
       w.referenceId ? "This note is no longer available." : "No notes yet.",
@@ -64,7 +66,7 @@ function notesWidget(c, w) {
   return notes
     .map(
       (r) =>
-        `<article class="desk-note"><button class="desk-note-title" data-action="edit" data-id="${r.id}" dir="auto">${label(c, r.data.title)}</button>${r.data.body ? `<p dir="auto">${label(c, r.data.body)}</p>` : ""}<small>${solarText(r.data.updatedOn)}${r.data.drawing ? " · " + t("Includes drawing") : ""}</small></article>`,
+        `<article class="desk-note"><button class="desk-note-title" data-action="edit" data-id="${r.id}" dir="auto">${label(c, r.data.title)}</button>${r.data.body ? `<p dir="auto">${label(c, r.data.body.slice(0, 120))}</p>` : ""}<small>${solarText(r.data.updatedOn)}</small></article>`,
     )
     .join("");
 }
@@ -114,17 +116,8 @@ function installmentsWidget(c) {
   );
 }
 function tasksWidget(c) {
-  const tasks = organizerReport(c.records, c.now).tasks.filter(
-    (x) => !x.item.done,
-  );
-  return (
-    tasks
-      .map(
-        ({ note, item }) =>
-          `<div class="desk-task"><button type="button" class="task-checkbox" role="checkbox" aria-checked="false" aria-label="${label(c, item.text)}" data-action="todo-toggle" data-id="${note.id}" data-task-id="${item.id}"></button><span dir="auto">${label(c, item.text)}</span></div>`,
-      )
-      .join("") || empty("All caught up.")
-  );
+  const tasks = taskEntries(c.records, c.now).filter(task => !task.done).slice(0, 5);
+  return tasks.map(task => `<div class="desk-task"><button type="button" class="task-checkbox" role="checkbox" aria-checked="false" aria-label="${label(c, task.title)}" data-action="${task.source === "noteTask" ? "todo-toggle" : "task-toggle"}" data-id="${task.record.id}" data-task-id="${task.id}" data-date="${task.occurrence || ""}"></button><button type="button" class="desk-task-title" data-planner-action="open" data-id="${task.record.id}" data-source="${task.source}" data-task-id="${task.id}" data-date="${task.occurrence || task.date}" dir="auto">${label(c, task.title)}</button></div>`).join("") || empty("All caught up.");
 }
 function goalsWidget(c) {
   return (
@@ -263,10 +256,7 @@ function widgetMarkup(c, w, icon) {
     heading = w.title || t(spec.title),
     fg = deskContrast(w.background),
     style = `grid-column:${w.x + 1}/span ${w.width};grid-row:${w.y + 1}/span ${w.height};${fg ? `--desk-card-bg:${w.background};--ink:${fg};--muted:${fg};--accent:${fg};--border:color-mix(in srgb,${fg} 15%,transparent);` : ""}`;
-  return `<article class="desk-card${fg ? " desk-custom-color" : ""}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(heading)}"><header class="desk-card-head">${c.workbenchEditing ? `<button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}" title="${t("Arrow keys move; Shift + arrow keys resize.")}">${grip}<span>${esc(heading)}</span></button>` : `<h2>${icon(spec.glyph)}<span>${esc(heading)}</span></h2>`}${c.workbenchEditing ? `<button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button>` : ""}</header><div class="desk-card-body">${components[w.type](c, w)}</div><footer class="desk-card-foot">${spec.page ? `<a href="#${spec.page}">${t("Open")}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>` : ""}${["notes", "canvas"].includes(w.type) ? `<button type="button" class="desk-quick-add" ${w.type === "canvas" ? 'data-action="canvas-add"' : 'data-action="add" data-kind="note"'}>+ ${t("Add")}</button>` : ""}${c.workbenchEditing ? `<span class="desk-card-devices">${t(widgetVisibleOnDevice(w, "phone") ? "Phone" : widgetVisibleOnDevice(w, "tablet") ? "Tablet" : "Desktop")}</span><span class="desk-card-size" dir="ltr">${localizedNumber(w.width)} × ${localizedNumber(w.height)}</span><button type="button" class="desk-resize" data-desk-resize="${w.id}" aria-label="${t("Resize card")}: ${esc(heading)}" title="${t("Drag to resize")}">${resize}</button>` : ""}</footer></article>`;
-}
-function deviceGuide() {
-  return `<div class="desk-device-guide"><p>${t("Place a whole card inside a region to choose where it appears.")}</p><div class="desk-device-legend"><span><i class="phone-dot"></i>${t("Green: phone, tablet and desktop")}</span><span><i class="tablet-dot"></i>${t("Yellow: tablet and desktop")}</span><span><i class="desktop-dot"></i>${t("Other cells: desktop only")}</span></div></div>`;
+  return `<article class="desk-card desk-widget-${w.type}${fg ? " desk-custom-color" : ""}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(heading)}"><header class="desk-card-head">${c.workbenchEditing ? `<button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}" title="${t("Arrow keys move; Shift + arrow keys resize.")}">${grip}<span>${esc(heading)}</span></button>` : `<h2>${icon(spec.glyph)}<span>${esc(heading)}</span></h2>`}${c.workbenchEditing ? `<button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button>` : ""}</header><div class="desk-card-body">${components[w.type](c, w)}</div><footer class="desk-card-foot">${spec.page ? `<a href="#${spec.page}">${t("Open")}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>` : ""}${["notes", "canvas"].includes(w.type) ? `<button type="button" class="desk-quick-add" ${w.type === "canvas" ? 'data-action="canvas-add"' : 'data-action="add" data-kind="note"'}>+ ${t("Add")}</button>` : ""}${c.workbenchEditing ? `<span class="desk-card-devices">${t(widgetVisibleOnDevice(w, "phone") ? "Phone" : widgetVisibleOnDevice(w, "tablet") ? "Tablet" : "Desktop")}</span><span class="desk-card-size" dir="ltr">${localizedNumber(w.width)} × ${localizedNumber(w.height)}</span><button type="button" class="desk-resize" data-desk-resize="${w.id}" aria-label="${t("Resize card")}: ${esc(heading)}" title="${t("Drag to resize")}">${resize}</button>` : ""}</footer></article>`;
 }
 export function workbenchPage(c, icon) {
   const source = workbenchRecord(c.records)?.data || defaultWorkbench();
@@ -277,35 +267,29 @@ export function workbenchPage(c, icon) {
   const layout = editing ? source : deviceWorkbench(source, device),
     fg = deskContrast(layout.background),
     usedRows = editing ? 6 : Math.max(1, ...layout.widgets.map((w) => w.y + w.height));
-  const heading = `<div class="desk-settings-heading"><h1>${t("Workbench")}</h1><label class="desk-edit-toggle"><input type="checkbox" role="switch" data-desk-edit-toggle ${editing ? "checked" : ""}><span>${t("Edit")}</span></label>${editing ? `<button class="primary" data-desk-action="add">${icon("plus")}${t("Add component")}</button>` : ""}</div>`;
-  const zones = `<div class="desk-zone-labels" aria-hidden="true"><span class="phone-zone">${t("Phone")}</span><span class="tablet-zone">${t("Tablet")}</span><span>${t("Desktop")}</span></div>`;
-  return `<section aria-label="${t("Workbench")}" class="workbench-page${editing ? " workbench-editing" : ""}">${heading}${editing ? deviceGuide() : ""}<div class="desk-scroll">${editing ? zones : ""}<div id="desk-board" class="desk-board${editing ? " is-arranging" : ""}" data-device="${device}" style="--desk-columns:${layout.columns};--desk-rows:${usedRows};${layout.background ? `--desk-background:${layout.background};` : ""}${fg ? `--desk-grid-ink:${fg};` : ""}" dir="ltr">${editing ? `<div class="desk-grid" aria-hidden="true">${Array.from({ length: 72 }, (_, i) => `<span class="${i % 12 < 4 ? "phone-cell" : i % 12 < 8 ? "tablet-cell" : ""}"></span>`).join("")}</div>` : ""}${layout.widgets.map((w) => widgetMarkup({ ...c, workbenchEditing: editing }, w, icon)).join("")}${!layout.widgets.length ? `<div class="desk-empty-board"><span>${t("No components for this device.")}</span></div>` : ""}</div></div>${editing ? `<div class="desk-editor-actions"><button type="button" class="primary" data-desk-action="done">${icon("check")}${t("Save")}</button><output class="desk-live-status" role="status">${t("Changes are saved as you arrange cards.")}</output></div>` : ""}</section>`;
+  const heading = deskHomeHeading(c, icon, editing);
+  return `<section aria-label="${t("Workbench")}" class="workbench-page desk-home${editing ? " workbench-editing" : ""}" style="${layout.background ? `--desk-wallpaper:${layout.background};--desk-wallpaper-ink:${fg};` : ""}">${heading}<div class="desk-scroll"><div id="desk-board" class="desk-board${editing ? " is-arranging" : ""}" data-device="${device}" style="--desk-columns:${layout.columns};--desk-rows:${usedRows};${layout.background ? `--desk-background:${layout.background};` : ""}${fg ? `--desk-grid-ink:${fg};` : ""}" dir="ltr">${editing ? `<div class="desk-grid" aria-hidden="true">${Array.from({ length: 72 }, (_, i) => `<span></span>`).join("")}</div>` : ""}${layout.widgets.map((w) => widgetMarkup({ ...c, workbenchEditing: editing }, w, icon)).join("")}${!layout.widgets.length ? `<div class="desk-empty-board"><span>${t("No components for this device.")}</span></div>` : ""}</div></div>${editing ? `<div class="desk-editor-actions"><button type="button" class="primary" data-desk-action="done">${icon("check")}${t("Save")}</button><output class="desk-live-status" role="status">${t("Changes are saved as you arrange cards.")}</output></div>` : ""}</section>`;
 }
 export function colorFields(color) {
   return `<div class="desk-color-swatches"><button type="button" data-desk-swatch="" class="desk-auto-swatch${!color ? " selected" : ""}">${t("Theme color")}</button>${deskColors.map((hex) => `<button type="button" style="background:${hex}" data-desk-swatch="${hex}" aria-label="${t("Use color")} ${hex}" class="${color === hex ? "selected" : ""}"></button>`).join("")}</div><div class="desk-custom-colors"><label class="field">${t("Custom color")}<input type="color" data-desk-color-picker value="${color || "#e3eeea"}" aria-label="${t("Color picker")}"></label><label class="field">${t("Hex color")}<input name="background" value="${color || ""}" maxlength="7" pattern="#[0-9a-fA-F]{6}" placeholder="#e3eeea" dir="ltr" autocomplete="off"></label></div><p class="small-note">${t("Leave empty to follow the app theme.")}</p>`;
 }
 export function widgetSettings(w, c) {
+  const referenceNotes = w.type === "canvas" ? rowsOf(c, "note").filter(isDrawingNote) : textNotes(c.records);
   const options = (n, max, value) =>
     `<label class="field">${t(n)}<select name="${{ Column: "x", Row: "y", Width: "width", Height: "height" }[n]}">${Array.from({ length: max }, (_, i) => `<option value="${i + 1}" ${i + 1 === value ? "selected" : ""}>${localizedNumber(i + 1)}</option>`).join("")}</select></label>`;
   return `<label class="field">${t("Card title")}<input name="title" maxlength="60" value="${esc(w.title || "")}" placeholder="${t(widgetCatalog.find((i) => i.type === w.type).title)}" dir="auto"></label>${
     ["notes", "canvas"].includes(w.type)
-      ? `<label class="field">${t("Note to display")}<select name="referenceId"><option value="">${t(w.type === "canvas" ? "Latest handwritten note" : "Latest notes")}</option>${rowsOf(
-          c,
-          "note",
-        )
-          .filter(
-            (r) => w.type !== "canvas" || r.data.drawing || r.data.whiteboardId,
-          )
+      ? `<label class="field">${t("Note to display")}<select name="referenceId"><option value="">${t(w.type === "canvas" ? "Latest handwritten note" : "Latest notes")}</option>${referenceNotes
           .map(
             (r) =>
               `<option value="${r.id}" ${r.id === w.referenceId ? "selected" : ""}>${label(c, r.data.title)}</option>`,
           )
           .join(
             "",
-          )}${w.referenceId && !rowsOf(c, "note").some((r) => r.id === w.referenceId) ? `<option selected value="${w.referenceId}">${t("Unavailable")}</option>` : ""}</select></label>`
+          )}${w.referenceId && !referenceNotes.some((r) => r.id === w.referenceId) ? `<option selected value="${w.referenceId}">${t("Unavailable")}</option>` : ""}</select></label>`
       : ""
-  }${toolOptionFields(w.type, w.options || {})}<strong class="desk-field-heading">${t("Card background")}</strong>${colorFields(w.background)}<div class="desk-dimension-fields">${options("Column", 12, w.x + 1)}${options("Row", 6, w.y + 1)}${options("Width", 12, w.width)}${options("Height", 6, w.height)}</div>`;
+  }<fieldset class="desk-visibility"><legend>${t("Show on devices")}</legend>${["phone", "tablet", "desktop"].map(device=>`<label><input type="checkbox" name="device-${device}" ${w.devices?.[device] !== false ? "checked" : ""}>${t({phone:"Phone",tablet:"Tablet",desktop:"Desktop"}[device])}</label>`).join("")}</fieldset>${toolOptionFields(w.type, w.options || {})}<strong class="desk-field-heading">${t("Card background")}</strong>${colorFields(w.background)}<div class="desk-dimension-fields">${options("Column", 12, w.x + 1)}${options("Row", 6, w.y + 1)}${options("Width", 12, w.width)}${options("Height", 6, w.height)}</div>`;
 }
 export function addWidgetFields(icon) {
-  return `<div class="desk-component-picker">${widgetCatalog.map((w, i) => `<label><input type="radio" name="widgetType" value="${w.type}" ${w.type === "notes" ? "checked" : ""} required><span>${icon(w.glyph)}<strong>${t(w.title)}</strong></span></label>`).join("")}</div><label class="field">${t("Card title")}<input name="title" maxlength="60" dir="auto"></label><div data-widget-options></div><label class="field">${t("Initial size")}<select name="size"><option value="2,2">${t("Small")} · ${localizedNumber(2)} × ${localizedNumber(2)}</option><option value="4,2" selected>${t("Medium")} · ${localizedNumber(4)} × ${localizedNumber(2)}</option><option value="6,3">${t("Large")} · ${localizedNumber(6)} × ${localizedNumber(3)}</option><option value="1,1">${t("Tiny")} · ${localizedNumber(1)} × ${localizedNumber(1)}</option></select></label>`;
+  return `${componentPicker(widgetCatalog, icon)}<label class="field">${t("Card title")}<input name="title" maxlength="60" dir="auto"></label><div data-widget-options>${toolOptionFields("clock")}</div><label class="field">${t("Initial size")}<select name="size"><option value="2,2">${t("Small")} · ${localizedNumber(2)} × ${localizedNumber(2)}</option><option value="4,2" selected>${t("Medium")} · ${localizedNumber(4)} × ${localizedNumber(2)}</option><option value="6,3">${t("Large")} · ${localizedNumber(6)} × ${localizedNumber(3)}</option><option value="1,1">${t("Tiny")} · ${localizedNumber(1)} × ${localizedNumber(1)}</option></select></label>`;
 }

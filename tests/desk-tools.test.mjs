@@ -46,9 +46,9 @@ test('plain calendar has only dates, can navigate months and never renders note 
     assert.notEqual(current,next); assert.match(current,/aria-current="date"/); assert.doesNotMatch(current,/data-action="edit"/);
   }
 });
-test('notes have a dedicated route and a single composer PDF action without a duplicate create heading',()=>{
+test('notes have a dedicated route and a plain composer without PDF or a duplicate create heading',()=>{
   assert.equal(isNoteRoute('note/new'),true); assert.equal(isNoteRoute(`note/${crypto.randomUUID()}`),true); assert.equal(isNoteRoute('notes'),false);
   const html=renderPage({page:'notes',records:[],space:'guest',now:'2026-11-18T12:00:00Z',filter:''});
-  assert.equal((html.match(/data-action="note-pdf-add"/g)||[]).length,1);
+  assert.equal((html.match(/data-action="note-pdf-add"/g)||[]).length,0);
   assert.doesNotMatch(html.split('</div><nav')[0],/New note/);
 });

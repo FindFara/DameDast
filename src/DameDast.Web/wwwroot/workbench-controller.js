@@ -234,6 +234,16 @@ export class WorkbenchController {
     dialog.innerHTML = `<form id="desk-form"><div class="dialog-heading"><h2>${t(mode === "add" ? "Add component" : mode === "background" ? "Desk background" : "Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">×</button></div><div class="desk-dialog-fields">${mode === "add" ? addWidgetFields(this.callbacks.icon) : mode === "background" ? colorFields(base.layout.background) : widgetSettings(widget, base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode === "configure" ? `<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>` : ""}<button type="submit" class="primary">${t(mode === "add" ? "Add component" : "Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
     const form = dialog.querySelector("form");
     let imageData = widget?.options?.imageData || null, imagePromise = null, imageGeneration = 0;
+    form.addEventListener("click", event => {
+      const tab = event.target.closest("[data-component-category]");
+      if (!tab) return;
+      const category = tab.dataset.componentCategory;
+      form.querySelectorAll("[data-component-category]").forEach(button => button.setAttribute("aria-selected", String(button === tab)));
+      form.querySelectorAll("[data-component-group]").forEach(group => group.hidden = group.dataset.componentGroup !== category);
+      const first = form.querySelector(`[data-component-group="${category}"] [name="widgetType"]`);
+      first.checked = true;
+      first.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     form.addEventListener("change", event => {
       if (event.target.name === "widgetType") {
         imageGeneration++; imageData = null;
@@ -316,6 +326,7 @@ export class WorkbenchController {
             width: Number(values.width),
             height: Number(values.height),
             options: optionsFromForm(widget.type, values, widget.options || {}, imageData),
+            devices: Object.fromEntries(["phone", "tablet", "desktop"].map(device => [device, !!values[`device-${device}`]])),
           });
         if (!remove && mode === "add" && values.widgetType === "image" && !imageData)
           throw Error("Choose a photo in card settings.");

@@ -130,18 +130,14 @@ test("overlapping timed items receive separate lanes; independent events use ful
   assert.notEqual(items[0].column, items[1].column);
   assert.equal(items[2].columns, 1);
 });
-test("responsive desk uses green phone and yellow tablet zones without overlapping cards", () => {
+test("responsive desk keeps every enabled card and respects device choices without overlap", () => {
   const layout = defaultWorkbench();
   layout.widgets[0].devices = { phone: false, tablet: true, desktop: true };
   validateWorkbench(layout);
   for (const device of ["phone", "tablet", "desktop"]) {
     const view = deviceWorkbench(layout, device);
     assert.equal(view.columns, { phone: 4, tablet: 8, desktop: 12 }[device]);
-    const expected = {
-      phone: [layout.widgets[0].id, layout.widgets[3].id],
-      tablet: [layout.widgets[0].id, layout.widgets[1].id, layout.widgets[3].id, layout.widgets[4].id],
-      desktop: layout.widgets.map(w => w.id),
-    }[device];
+    const expected = layout.widgets.filter(widget => widget.devices?.[device] !== false).map(widget => widget.id);
     assert.deepEqual(view.widgets.map(w => w.id), expected);
     for (const a of view.widgets) {
       assert.ok(a.x + a.width <= view.columns);

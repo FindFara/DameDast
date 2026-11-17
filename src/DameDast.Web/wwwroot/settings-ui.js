@@ -34,7 +34,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${c.space.startsWith("google:") ? row("Pending changes", "Changes waiting to be accepted by the server.", button("review-pending", "Review pending")) + row("Guest data", "Copy local records into your signed-in workspace.", button("migrate-guest", "Import")) : ""}
  ${c.session.authenticated ? row("Google account", "Signs this device out of your workspace.", button("logout", "Sign out")) : ""}
  ${endGroup}${startGroup("backups", "Backups", "data-settings")}
- ${row("Notes backup", "Includes notes, handwriting, to-dos, calendar items, reminders and PDF files.", button("backup-notes", "Export notes"))}
+ ${row("Notes backup", "Includes notes, drawings, tasks, calendar items and reminders.", button("backup-notes", "Export notes"))}
  ${row("Financial backup", "Includes accounts, transactions, installments, budgets, assets and financial plans.", button("backup-finance", "Export finances"))}
  ${row("Full backup", "Includes both sections and all app preferences.", button("backup", "Export everything"))}
  ${row("Restore backup", "Creates a separate local workspace from a validated backup. Your existing records are kept.", button("restore-backup", "Import backup"))}

@@ -133,6 +133,16 @@ function startsOn(e, date) {
     shiftCalendarMonth(e.startDate, months, e.repeatCalendar) === date
   );
 }
+export function nextCalendarOccurrence(entry, fromDate) {
+  const start = fromDate < entry.startDate ? entry.startDate : fromDate;
+  // Monthly repeats have at most 31 days between starts in either supported calendar.
+  for (let offset = 0; offset <= 31; offset++) {
+    const date = shiftDay(start, offset);
+    if (entry.repeatUntil && date > entry.repeatUntil) return null;
+    if (startsOn(entry, date)) return date;
+  }
+  return null;
+}
 export function expandCalendarEntry(record, start, end) {
   const e = validateCalendarEntry(record.data),
     duration = distanceDays(e.startDate, e.endDate),

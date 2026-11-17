@@ -31,7 +31,6 @@ import {
 } from "./planning.js";
 import {
   monthlyPlanPage,
-  notesPage,
   monthlyExpensesPage,
   planningEditorFields,
 } from "./planning-ui.js";
@@ -70,7 +69,7 @@ export const sections = {
     '<path d="M3 20h18M5 16l4-5 4 3 6-10M15 4h4v4"/>',
   ],
   canvas: [
-    "Handwritten notes",
+    "Drawings",
     '<path d="m4 20 5-1L21 7l-5-5L4 14ZM3 22h18M6 15l3 3"/>',
   ],
   organizer: ["Planner", '<path d="M5 3h14v18H5Zm4 5h6m-6 4h6m-6 4h4"/>'],

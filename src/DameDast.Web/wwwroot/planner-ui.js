@@ -126,19 +126,7 @@ export function plannerPage(c) {
         .map((item) => ({ note, item })),
     );
   return `<section class="planner-page"><div class="page-heading"><div><span class="eyebrow">${t("YOUR DAYS, AT A GLANCE")}</span><h1>${t("Calendar")}</h1></div><button class="primary" data-planner-action="new">+ ${t("Create")}</button></div>
- <nav class="organizer-tabs" aria-label="${t("Planner")}">${[
-   ["notes", "Notes"],
-   ["canvas", "Handwritten notes"],
-   ["calendar", "Calendar"],
-   ["tasks", "Tasks"],
-   ["reminders", "Reminders"],
-   ["goals", "Goals"],
- ]
-   .map(
-     ([key, name]) =>
-       `<a href="#${key}" ${key === "calendar" ? 'class="active"' : ""}>${t(name)}</a>`,
-   )
-   .join("")}</nav>
+
  <div class="planner-toolbar"><div class="planner-navigation"><button class="icon-button" data-planner-action="previous" aria-label="${t("Previous")}">‹</button><button class="secondary" data-planner-action="today">${t("Today")}</button><button class="icon-button" data-planner-action="next" aria-label="${t("Next")}">›</button><button class="planner-period" data-planner-action="jump">${state.view === "month" ? monthTitle(state.date, p.calendar) : state.view === "day" ? plannerDateText(state.date, p.calendar) : `${plannerDateText(range.start, p.calendar, false)} — ${plannerDateText(range.days.at(-1), p.calendar)}`}<small>${plannerDateText(state.date, p.calendar === "persian" ? "gregory" : "persian")}</small></button></div><div class="segment-control">${["day", "week", "month"].map((view) => `<button data-planner-action="view" data-view="${view}" class="${state.view === view ? "active" : ""}">${t({ day: "Day", week: "Week", month: "Month" }[view])}</button>`).join("")}</div></div>
  <div class="planner-layout"><section class="planner-surface">${state.view === "month" ? monthGrid(range.days, items, state.date, p, today) : timeGrid(range.days, items, p, today)}</section><aside class="planner-agenda"><section class="panel"><h2>${t("Unscheduled tasks")} <small>${localizedNumber(unscheduled.length)}</small></h2>${
    unscheduled

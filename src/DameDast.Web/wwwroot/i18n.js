@@ -1209,3 +1209,12 @@ Object.assign(fa, {
 });
 
 Object.assign(fa, {'You can add up to 4 photos to your workbench.': 'می‌توانی حداکثر ۴ عکس به میز کار اضافه کنی.'});
+
+Object.assign(fa, {
+ 'Drawings': 'طراحی‌ها', 'Search drawings': 'جست‌وجوی طراحی‌ها', 'Search tasks': 'جست‌وجوی تسک‌ها',
+ 'New task': 'تسک جدید', 'No tasks yet.': 'هنوز تسکی ثبت نشده است.',
+ 'Search the web': 'در وب جست‌وجو کن…', 'Search with Google': 'جست‌وجو با گوگل', 'Quick access': 'دسترسی سریع',
+ 'Everyday tools': 'ابزارهای روزمره', 'Writing and planning': 'نوشتن و برنامه‌ریزی', 'Finances': 'امور مالی',
+ 'Components': 'بخش‌ها', 'A little company': 'همراه کوچک تو', 'Show on devices': 'نمایش در دستگاه‌ها',
+ 'Includes notes, drawings, tasks, calendar items and reminders.': 'یادداشت‌ها، طراحی‌ها، تسک‌ها، رویدادهای تقویم و یادآوری‌ها را شامل می‌شود.',
+});

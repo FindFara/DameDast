@@ -53,7 +53,7 @@ test("browser catalog matches the embedded .NET catalog; market search and categ
   assert.equal((html.match(/data-action="market-symbol"/g) || []).length, 1);
   assert.ok(html.includes('data-symbol="FOOLAD"'));
 });
-test("notes, tasks, reminders and goals share the planner, and user text stays escaped", () => {
+test("notes, drawings, tasks and reminders are independent pages and keep user text escaped", () => {
   setLanguage("fa");
   const note = {
     id: "note",
@@ -68,13 +68,14 @@ test("notes, tasks, reminders and goals share the planner, and user text stays e
   };
   for (const page of ["notes", "canvas", "calendar", "tasks", "reminders", "goals"]) {
     const html = renderPage({ ...base, page, records: [note], planner:{date:"2026-11-16",view:"month",filters:["event","task","reminder","installment","goal"]} });
-    assert.ok(html.includes("organizer-tabs"));
+    assert.ok(!html.includes("organizer-tabs"));
     assert.ok(!html.includes("<script>"));
     assert.ok(!html.includes("<img src=x>"));
   }
   const html = organizerEditorFields("note", note.data);
-  assert.ok(html.includes("&lt;b&gt;Task&lt;/b&gt;"));
-  assert.ok(html.includes('data-task-id="task"'));
+  assert.ok(html.includes("&lt;script&gt;bad()&lt;/script&gt;"));
+  assert.ok(!html.includes("data-task-id"));
+  assert.ok(!html.includes('name="pinned"'));
   setLanguage("en");
 });
 test("every pinned item appears on the dashboard, and notification times are Persian dates", () => {
@@ -113,7 +114,7 @@ test("every pinned item appears on the dashboard, and notification times are Per
   assert.deepEqual(planner.items, ["notes", "canvas", "calendar", "tasks", "reminders", "goals"]);
 });
 
-test("notes separate pins, filter checklist text, preserve attachments and support both views", () => {
+test("notes show only text and card pins, and keep grid/list views independent of tasks and files", () => {
   setLanguage("en");
   const notes = [false, true].map((pinned, i) => ({
     id: `note-${i}`, kind: "note", data: {
@@ -125,10 +126,9 @@ test("notes separate pins, filter checklist text, preserve attachments and suppo
   const html = renderPage({ ...base, page: "notes", records: notes });
   assert.ok(html.indexOf('data-note-open="note-1"') < html.indexOf('data-note-open="note-0"'));
   assert.match(html, /Take a note…/);
-  assert.match(html, /data-action="note-list-add"/);
-  assert.match(html, /data-pdf-open="pdf-0"/);
-  assert.match(html, /data-task-id="task-0"/);
-  const list = renderPage({ ...base, page: "notes", records: notes, notesView: "list", filter: "milk" });
+  assert.doesNotMatch(html, /note-list-add|data-pdf|data-task-id|canvas-open/);
+  assert.equal((html.match(/class="icon-button note-pin/g) || []).length, 2);
+  const list = renderPage({ ...base, page: "notes", records: notes, notesView: "list", filter: "short" });
   assert.match(list, /notes-grid notes-list/);
   assert.match(list, /Grid view/);
   const empty = renderPage({ ...base, page: "notes", records: notes, filter: "missing" });

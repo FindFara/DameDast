@@ -1,5 +1,8 @@
-const CACHE = "damedast-shell-v47";
+const CACHE = "damedast-shell-v48";
 const SHELL = [
+  "/notebook.js",
+  "/desk-home-ui.js",
+  "/desk-home.css",
   "/note-page.js",
   "/note-page.css",
   "/desk-tools.js",
@@ -47,9 +50,6 @@ const SHELL = [
   "/settings-ui.js",
   "/backup.js",
   "/pdf-store.js",
-  "/note-pdfs.js",
-  "/vendor/pdfjs/pdf.min.mjs",
-  "/vendor/pdfjs/pdf.worker.min.mjs",
   "/update.js",
   "/assets.js",
   "/assets-ui.js",
@@ -118,12 +118,12 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  if (!SHELL.includes(url.pathname) && !url.pathname.startsWith("/whiteboard/") && !url.pathname.startsWith("/vendor/pdfjs/")) return;
+  if (!SHELL.includes(url.pathname) && !url.pathname.startsWith("/whiteboard/") && !url.pathname.startsWith("/assets/pets/")) return;
   event.respondWith((async () => {
     const cached = await caches.match(event.request, { ignoreSearch: true });
     if (cached) return cached;
     const response = await fetch(event.request);
-    if (response.ok && url.pathname.startsWith("/vendor/pdfjs/")) {
+    if (response.ok && !url.pathname.endsWith("/sw.js") && !url.pathname.endsWith("/update.js")) {
       const cache = await caches.open(CACHE);
       await cache.put(event.request, response.clone());
     }

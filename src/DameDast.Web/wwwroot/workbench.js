@@ -149,11 +149,12 @@ export function defaultWorkbench() {
     rows: 6,
     background: null,
     widgets: [
-      card(1, "summary", 0, 0, 4, 2),
-      card(2, "markets", 4, 0, 4, 2),
-      card(3, "notes", 8, 0, 4, 3),
-      card(4, "installments", 0, 2, 4, 2),
-      card(5, "goals", 4, 2, 4, 2),
+      card(1, "clock", 0, 0, 4, 2),
+      card(2, "plainCalendar", 0, 2, 4, 3),
+      card(3, "summary", 4, 0, 4, 2),
+      card(4, "pet", 4, 2, 4, 2),
+      card(5, "notes", 8, 0, 4, 2),
+      card(6, "tasks", 8, 2, 4, 3),
     ],
   };
 }
@@ -207,8 +208,7 @@ export const deskDevices = {
 export const deviceForWidth = (width) =>
   width < 600 ? "phone" : width < 1100 ? "tablet" : "desktop";
 export function widgetVisibleOnDevice(widget, device) {
-  const columns = deskDevices[device]?.columns;
-  return Number.isInteger(columns) && widget.x + widget.width <= columns;
+  return !!deskDevices[device] && widget.devices?.[device] !== false;
 }
 export function deviceWorkbench(layout, device = "desktop") {
   validateWorkbench(layout);

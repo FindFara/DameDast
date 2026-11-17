@@ -10,6 +10,12 @@ export class DeskToolController {
     document.addEventListener("visibilitychange", () => this.schedule());
     document.addEventListener("click", event => void this.click(event).catch(callbacks.error));
     document.addEventListener("submit", event => {
+      if (event.target.matches("[data-desk-web-search]")) {
+        event.preventDefault();
+        const query = event.target.elements.query.value.trim();
+        if (query) window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, "_blank", "noopener,noreferrer");
+        return;
+      }
       if (!event.target.matches("[data-desk-calculator]")) return;
       event.preventDefault(); this.evaluate(event.target);
     });

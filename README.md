@@ -1,8 +1,8 @@
 # DameDast · دمِ دست
 
-Notes now open on dedicated pages with one PDF action beside the composer. The workbench has an Edit switch beside its title and supports bounded photos, plain calendars, bookmark previews, a calculator, Web Crypto keys, analog/digital clocks and a small animated pet. See [Workbench guide](docs/WORKBENCH-fa.md).
+Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The redesigned workbench has central web search, quick shortcuts, grouped components, an Edit switch beside its title and a natural cat companion. See [Workbench guide](docs/WORKBENCH-fa.md).
 
-Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use compact category lists in three desktop columns, two tablet columns and one mobile column. Settings groups start collapsed; mobile financial cards are shorter. Notes use a Keep-style masonry grid or saved list view, separate pinned notes, quick creation and inline checklists while retaining drawings and PDFs. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
+Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use compact category lists in three desktop columns, two tablet columns and one mobile column. Settings groups start collapsed; mobile financial and workbench cards fit their content. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
 
 Upgrade: legacy browser ledgers are copied without replacing newer data. A legacy server database is backed up into `damedast.db` on first startup; the original stays available. Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
 
@@ -16,7 +16,7 @@ Complete source: ASP.NET Core 10 backend, current web/PWA frontend, React/TypeSc
 
 [راهنمای فارسی](README-fa.md)
 
-Latest frontend: workbench/calendar settings, compact radial + menu, PDF note attachments and separate notes/finance/full backups. PDF bytes are browser-local and included in notes backups; PDF byte synchronization to the server is not implemented.
+Latest frontend: independent writing and planning sections, a redesigned workbench with explicit device visibility settings, compact radial + menu and separate notes/finance/full backups. Historical attachment bytes remain preserved in backup compatibility; there is no attachment interface.
 
 > **Fullscreen canvas / بوم تمام‌صفحه:** [Setup, storage, features and collaboration](docs/WHITEBOARD-fa.md) · [Verification](docs/WHITEBOARD-VERIFICATION.md)
 
@@ -55,7 +55,7 @@ Open `http://localhost:5000`. Start in your empty local workspace or select **Ex
 - 39 categorized instruments: 12 cryptocurrencies, 5 metals, 7 currencies, 5 funds and 10 stocks, with search, dated quotes and daily/weekly/monthly charts. Official unavailable NAV remains unavailable.
 - Daily, weekly and monthly cash-flow grouping.
 - Opt-in Web Push installment and personal recurring reminders while the app is closed (self-hosted .NET, supported browsers).
-- One planner for notes, checklists, repeating reminders and savings goals; pinned dashboard cards and an unread notification bell.
+- Independent Notes, Drawings and Tasks, plus repeating reminders and savings goals; pinned dashboard cards and an unread notification bell.
 - Google sign-in, user-isolated server persistence, offline IndexedDB queue and automatic sync while open.
 - Explicit conflict resolution when two devices edit the same record.
 - JSON data export, guest-to-Google data transfer, mobile navigation and PWA installation.
@@ -128,7 +128,7 @@ On Android Chrome, choose **Install app** or **Add to Home screen**. On iPhone S
 
 ## Data and backups
 
-Settings exports `damdast-v3` JSON backups for notes, finances, or the whole workspace. Notes backups include linked handwriting documents, checklists, and local PDF bytes; full backups also include preferences. Import validates the file and creates an isolated local workspace. Use the workspace selector to return to the original ledger. Personal component libraries, server secrets and unrelated/unlinked canvases are excluded. Legacy v1/v2 backups remain readable; financial-only legacy exports cannot recreate missing image bytes. See [calendar and backup details](docs/CALENDAR-SETTINGS-BACKUP-fa.md).
+Settings exports `damdast-v3` JSON backups for notes, finances, or the whole workspace. Notes backups include drawings and preserve historical checklists and local attachment bytes; full backups also include preferences. Import validates the file and creates an isolated local workspace. Use the workspace selector to return to the original ledger. Personal component libraries, server secrets and unrelated/unlinked canvases are excluded. Legacy v1/v2 backups remain readable; financial-only legacy exports cannot recreate missing image bytes. See [calendar and backup details](docs/CALENDAR-SETTINGS-BACKUP-fa.md).
 
 The server keeps one versioned JSON ledger per user in SQLite, plus a table of operation receipts. This design is intentionally compact for personal finance; each read returns a full snapshot. For very large ledgers or many users, evolve toward relational tables, delta sync and PostgreSQL. Run one app replica with the local persistent SQLite volume; do not put SQLite on a shared network filesystem.
 

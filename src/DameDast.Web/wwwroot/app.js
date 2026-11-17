@@ -1,7 +1,7 @@
 import { migrateLegacyPreferences } from "./legacy-storage.js";
 import { readPins, togglePin, savePins } from "./nav-pins.js";
 import "./select-sheet.js";
-import { NotePdfController } from "./note-pdfs.js";
+import { isDrawingNote, toggleTask } from "./notebook.js";
 import { NotePageController, isNoteRoute } from "./note-page.js";
 import { DeskToolController } from "./desk-tool-controller.js";
 import { PlannerController } from "./planner-controller.js";
@@ -45,7 +45,6 @@ import {
 } from "./organizer.js";
 import {
   organizerTab,
-  checklistRow,
   notificationsMarkup,
 } from "./organizer-ui.js";
 import {
@@ -236,11 +235,9 @@ const desk = new WorkbenchController({
   icon,
 });
 let workbenchSettingsOpen = false;
-const notePdfs = new NotePdfController({ context, error: showError });
 const notePage = new NotePageController({
-  context, pdfs: notePdfs, refresh: render, error: showError,
+  context, refresh: render, error: showError,
   save: (data, id, version) => commit("note", data, id, false, version),
-  drawing: id => openCanvas(id),
 });
 const deskTools = new DeskToolController({ context, error: showError });
 
@@ -452,7 +449,7 @@ function render() {
     void loadBenchmarks();
 }
 function openEditor(kind, id = null, type = null, preset = null) {
-  if (kind === "note") { notePage.open(id, preset); return; }
+  if (kind === "note") { if (id && isDrawingNote(records().find(record => record.id === id))) void openCanvas(id); else notePage.open(id, preset); return; }
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -480,7 +477,6 @@ function openEditor(kind, id = null, type = null, preset = null) {
     selectedMonth,
     categoryOptions(),
   );
-  if (kind === "note") notePdfs.begin(editing?.data || preset);
   formatNumericFields($("#editor"));
   updateAssetPreview();
   updatePlanTotal();
@@ -752,16 +748,6 @@ async function submitEditor(event) {
     }
     if (typeof data.title === "string") data.title = data.title.trim();
     if (editorKind === "category") data.name = data.name.trim();
-    if (editorKind === "note") {
-      data.title = data.title.trim();
-      data.pinned = !!data.pinned;
-      data.updatedOn = today();
-      data.checklist = collectChecklist();
-      data.drawing = editing?.data.drawing || null;
-      data.whiteboardId = editing?.data.whiteboardId || null;
-      data.whiteboardPreview = editing?.data.whiteboardPreview || null;
-      data.attachments = await notePdfs.saveAttachments(space);
-    }
     if (editorKind === "assetPosition") {
       data.name = data.name.trim();
       data.sourceKey =
@@ -1371,7 +1357,6 @@ async function changeLanguage(value) {
   render();
   if ($("#editor").open) {
     const values = Object.fromEntries(new FormData($("#editor-form")));
-    if (editorKind === "note") values.checklist = collectChecklist();
     if (editorKind === "assetPosition") {
       values.lots = collectAssetLots();
       values.valuations = parseAssetValuations(values.valuationsText);
@@ -1476,10 +1461,6 @@ async function onAction(event) {
     $('[data-action="notes-view"]')?.focus();
     return;
   }
-  if (action === "note-list-add") {
-    openEditor("note", null, null, { checklist: [{ id: crypto.randomUUID(), text: "", done: false }] });
-    return;
-  }
   if (action === "dashboard-privacy") {
     dashboardAmountsVisible = !dashboardAmountsVisible;
     render();
@@ -1515,14 +1496,10 @@ async function onAction(event) {
     }
     return;
   }
-  if (action === "task-row-add") {
-    if (document.querySelectorAll("[data-checklist-row]").length >= 50)
-      throw Error("Use up to 50 unique tasks, with text up to 200 characters.");
-    $("#checklist-editor-rows").insertAdjacentHTML("beforeend", checklistRow());
-    return;
-  }
-  if (action === "task-row-remove") {
-    element.closest("[data-checklist-row]").remove();
+  if (action === "task-add") { planner.dialog(null, { kind: "task", startDate: today() }); return; }
+  if (action === "task-toggle") {
+    const record = records().find(record => record.id === id && record.kind === "calendarEvent" && record.data.kind === "task");
+    if (record) await commit(record.kind, toggleTask(record.data, element.dataset.date || today()), id, false, record.version);
     return;
   }
   if (action === "todo-toggle") {
@@ -1899,10 +1876,6 @@ async function onAction(event) {
   if (action === "sync") await sync();
   if (action === "csv") exportCsv();
   if (action === "install") install();
-  if (action === "note-pdf-add") {
-    notePage.open(null, null, true);
-    return;
-  }
   if (["backup", "backup-notes", "backup-finance"].includes(action)) {
     const section = action === "backup-notes" ? "notes" : action === "backup-finance" ? "finance" : "all";
     toast("Preparing backup…");
@@ -2375,16 +2348,6 @@ async function importBenchmarkPrices() {
   );
 }
 
-function collectChecklist() {
-  return [...document.querySelectorAll("[data-checklist-row]")].map((row) => ({
-    ...(editing?.data.checklist?.find(
-      (item) => item.id === row.dataset.taskId,
-    ) || {}),
-    id: row.dataset.taskId,
-    text: row.querySelector("[data-task-text]").value.trim(),
-    done: row.querySelector("[data-task-done]").checked,
-  }));
-}
 function updateNotificationBell() {
   if (!state) return;
   const report = organizerReport(
@@ -2630,7 +2593,7 @@ document
       const backup = await readBackupFile(file);
       notify(
         "Restore a backup copy",
-        `${money(backup.records.length)} ${t("records")} · ${money(backup.whiteboards?.length || 0)} ${t("canvases")} · ${money(backup.pdfs?.length || 0)} PDF. ${t("A separate local workspace will be created. Your current records stay untouched.")}`,
+        `${money(backup.records.length)} ${t("records")} · ${money(backup.whiteboards?.length || 0)} ${t("canvases")} · ${t("A separate local workspace will be created. Your current records stay untouched.")}`,
         [
           {
             label: "Restore",
