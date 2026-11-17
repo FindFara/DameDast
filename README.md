@@ -1,3 +1,11 @@
+# DameDast · دمِ دست
+
+Current source uses DameDast project and namespace names. The UI includes searchable selection sheets, up to three pinned navigation shortcuts, category columns for transactions, and local holiday data through 1410.
+
+Upgrade: legacy browser ledgers are copied without replacing newer data. A legacy server database is backed up into `damedast.db` on first startup; the original stays available. Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
+
+Future lunar holiday dates are estimates. Calendar datasets are bundled locally; there is no calendar-source link in the interface. Internal data provenance: https://github.com/alirezadesh/jalali_calendar
+
 > UI update: dashboard amounts start hidden with an eye toggle, simpler task forms, aligned date controls, matte themes, and no canvas Libraries entry.
 
 # DameDast · دمِ دست
@@ -18,7 +26,7 @@ New: [Google sign-in, handwriting canvas, asset P/L and grouped numbers](docs/GO
 
 Architecture update: ASP.NET Core controllers dispatch through MediatR handlers, entity-organized interfaces, application services and repository contracts. See [Architecture guide](docs/ARCHITECTURE-fa.md). The self-hosted .NET backend and the separately hosted Worker remain distinct deployments.
 
-# Damdast · دمِ دست
+# DameDast · دمِ دست
 
 A bilingual English/Persian, mobile-first personal finance PWA with an ASP.NET Core 10 backend and Clean Architecture. The same server hosts both the web interface and the installable Android PWA. No separate frontend server or Node runtime is required in production.
 
@@ -27,8 +35,8 @@ A bilingual English/Persian, mobile-first personal finance PWA with an ASP.NET C
 Install the .NET 10 SDK, then run:
 
 ```bash
-dotnet restore Poolo.slnx
-dotnet run --project src/Poolo.Web --urls http://localhost:5000 --environment Development
+dotnet restore DameDast.slnx
+dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
 ```
 
 Open `http://localhost:5000`. Start in your empty local workspace or select **Explore the demo**. The demo is clearly labelled, isolated from real records, and never syncs to Google. To open it directly, use `http://localhost:5000/?demo=1`.
@@ -61,12 +69,12 @@ Open `http://localhost:5000`. Start in your empty local workspace or select **Ex
 
 | Project | Responsibility | Dependencies |
 | --- | --- | --- |
-| Poolo.Domain | Financial types, validation, record versions, recurrence, transfer and deletion rules | Common |
-| Poolo.Application | MediatR use cases, entity interfaces, application services and repository contracts | Domain, Common |
-| Poolo.Infrastructure | EF Core SQLite, migration, optimistic concurrency, operation receipts | Application, Common |
-| Poolo.Common | Shared TimeProvider-based time utilities | None |
-| Poolo.Web | controller-based API, cookie/OAuth authentication, CSRF and PWA assets | Infrastructure |
-| Poolo.Tests | Domain, SQLite concurrency, API authorization and CSRF checks | Web |
+| DameDast.Domain | Financial types, validation, record versions, recurrence, transfer and deletion rules | Common |
+| DameDast.Application | MediatR use cases, entity interfaces, application services and repository contracts | Domain, Common |
+| DameDast.Infrastructure | EF Core SQLite, migration, optimistic concurrency, operation receipts | Application, Common |
+| DameDast.Common | Shared TimeProvider-based time utilities | None |
+| DameDast.Web | controller-based API, cookie/OAuth authentication, CSRF and PWA assets | Infrastructure |
+| DameDast.Tests | Domain, SQLite concurrency, API authorization and CSRF checks | Web |
 
 The frontend uses browser-native ES modules and CSS so the installed app can run without a server connection. Business validation and the synchronization use case remain on the .NET side. This is a PWA plus an optional Manifest V3 browser extension, not a native .NET MAUI APK. No MAUI project or APK is included.
 
@@ -81,8 +89,8 @@ Google identifies the user. Financial data is stored in **your application's ser
 5. Set Client ID and Client Secret on the **server only**. For local development:
 
 ```bash
-dotnet user-secrets set "Authentication:Google:ClientId" "YOUR_CLIENT_ID" --project src/Poolo.Web
-dotnet user-secrets set "Authentication:Google:ClientSecret" "YOUR_CLIENT_SECRET" --project src/Poolo.Web
+dotnet user-secrets set "Authentication:Google:ClientId" "YOUR_CLIENT_ID" --project src/DameDast.Web
+dotnet user-secrets set "Authentication:Google:ClientSecret" "YOUR_CLIENT_SECRET" --project src/DameDast.Web
 ```
 
 If Google's app is in testing mode, add your Google account as a test user. Client credentials are intentionally absent from this repository. Without them, local use and the demo work; Google login and cross-device sync stay disabled.
@@ -129,9 +137,9 @@ Signing out clears the cached copy of the Google workspace from the current brow
 ## Validation
 
 ```bash
-dotnet test Poolo.slnx -m:1
+dotnet test DameDast.slnx -m:1
 node --test tests/*.test.mjs
-dotnet publish src/Poolo.Web -c Release -o outputs/publish
+dotnet publish src/DameDast.Web -c Release -o outputs/publish
 ```
 
 Node is only needed for the small client test suite and the optional internal preview command, not for the app at runtime.
@@ -181,13 +189,13 @@ Use the **EN / Fa** control in the top bar, or **Settings → Language**, to swi
 
 Choose light, dark or system appearance in Settings; the top-bar sun/moon button quickly toggles light/dark. Font files are bundled locally: Vazir for Persian, Manrope for English. Financial numbers are isolated from surrounding text to preserve signs, separators and direction. Chronological charts keep left-to-right time order in both languages. Reduced-motion preferences are respected.
 
-The application name and PWA manifest now show **دمِ دست**. Internal .NET project names, cookie keys, database path and IndexedDB identifiers retain their original Poolo names so existing records and sessions remain compatible. The added schema migration preserves old push subscriptions and defaults their language to English; choosing Persian updates an existing signed-in device registration without requesting notification permission again.
+The application name and PWA manifest now show **دمِ دست**. Internal .NET project names, cookie keys, database path and IndexedDB identifiers retain their original DameDast names so existing records and sessions remain compatible. The added schema migration preserves old push subscriptions and defaults their language to English; choosing Persian updates an existing signed-in device registration without requesting notification permission again.
 
 The service worker cache version is bumped with shell changes. Close old tabs and reopen if the browser is still serving the previous version. No financial database is cleared by a UI/theme/language update.
 
 ## Connected portfolio and personal extension
 
-Use **Connected portfolio** in the PWA. The extension source is `src/Poolo.Web/wwwroot/extension`; a ready-to-extract ZIP is in `src/Poolo.Web/wwwroot/downloads/damdast-extension.zip`. See the extension README and [Persian architecture and storage guide](docs/PORTFOLIO-fa.md). Capture is user-triggered and table-based, with reviewed mapping and a CSV fallback. Domain detection and synthetic fixtures cover EasyTrader, Agah, Nobitex, Digipay and SnappPay; their signed-in live pages have not been verified. No credential, cookie, private API, background trading or payment integration is included.
+Use **Connected portfolio** in the PWA. The extension source is `src/DameDast.Web/wwwroot/extension`; a ready-to-extract ZIP is in `src/DameDast.Web/wwwroot/downloads/damdast-extension.zip`. See the extension README and [Persian architecture and storage guide](docs/PORTFOLIO-fa.md). Capture is user-triggered and table-based, with reviewed mapping and a CSV fallback. Domain detection and synthetic fixtures cover EasyTrader, Agah, Nobitex, Digipay and SnappPay; their signed-in live pages have not been verified. No credential, cookie, private API, background trading or payment integration is included.
 
 `/api/portfolio/session`, `/api/portfolio` and `/api/portfolio/sync` isolate imported snapshots and use the existing Google identity, CSRF protection, ledger transaction and operation receipts on the .NET server. Imported installments with an explicit unpaid status and date participate in .NET Web Push reminders.
 

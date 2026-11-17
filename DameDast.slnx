@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DameDast.Application/DameDast.Application.csproj" />
+    <Project Path="src/DameDast.Common/DameDast.Common.csproj" />
+    <Project Path="src/DameDast.Domain/DameDast.Domain.csproj" />
+    <Project Path="src/DameDast.Infrastructure/DameDast.Infrastructure.csproj" />
+    <Project Path="src/DameDast.Web/DameDast.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DameDast.Tests/DameDast.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,14 +1,14 @@
 # بوم دمِ دست — راه‌اندازی، ذخیره و امکانات
 
-از منوی همبرگری، «دست‌نوشته‌ها» را باز کن؛ «دست‌نوشته جدید» بوم تمام‌صفحه را باز می‌کند. بوم‌های قبلی از تصویر پیش‌نمایش همان یادداشت باز می‌شوند. منوی اصلی همبرگری است و منوی طراحی، دکمهٔ سه‌نقطه با نشان قلم دارد. دکمه‌های شناور هنگام باز بودن پنل‌های ویرایش کنار می‌روند تا روی آن‌ها نیفتند. منوی اصلی روی بوم می‌آید؛ انتخاب بخش دیگر، ابتدا ذخیره و سپس خروج از بوم را انجام می‌دهد. نام محصول فقط «دمِ دست / Damdast» است.
+از منوی همبرگری، «دست‌نوشته‌ها» را باز کن؛ «دست‌نوشته جدید» بوم تمام‌صفحه را باز می‌کند. بوم‌های قبلی از تصویر پیش‌نمایش همان یادداشت باز می‌شوند. منوی اصلی همبرگری است و منوی طراحی، دکمهٔ سه‌نقطه با نشان قلم دارد. دکمه‌های شناور هنگام باز بودن پنل‌های ویرایش کنار می‌روند تا روی آن‌ها نیفتند. منوی اصلی روی بوم می‌آید؛ انتخاب بخش دیگر، ابتدا ذخیره و سپس خروج از بوم را انجام می‌دهد. نام محصول فقط «دمِ دست / DameDast» است.
 
 ## اجرا
 
 پروژه موجود ASP.NET Core 10، Clean Architecture و رابط اصلی JavaScript حفظ شده‌اند. ویرایشگر React/TypeScript/Vite جداگانه در `whiteboard/` ساخته و خروجی آن همراه وب‌اپ ارائه می‌شود. بسته دانلودی، خروجی آماده و فونت‌های محلی را دارد؛ اجرای عادی به Node نیاز ندارد.
 
 ```bash
-dotnet restore tests/Poolo.Tests/Poolo.Tests.csproj
-dotnet run --project src/Poolo.Web --environment Development --urls http://localhost:5000
+dotnet restore tests/DameDast.Tests/DameDast.Tests.csproj
+dotnet run --project src/DameDast.Web --environment Development --urls http://localhost:5000
 ```
 
 برای تغییر کد ویرایشگر، Node 22.12+ یا 24 و این دستورها لازم‌اند:
@@ -16,7 +16,7 @@ dotnet run --project src/Poolo.Web --environment Development --urls http://local
 ```bash
 npm ci --prefix whiteboard
 npm run build:whiteboard
-dotnet run --project src/Poolo.Web --environment Development --urls http://localhost:5000
+dotnet run --project src/DameDast.Web --environment Development --urls http://localhost:5000
 ```
 
 نسخه‌ها دقیق در package.json و package-lock قفل شده‌اند: Excalidraw 0.18.1، React/ReactDOM 19.3.1، Vite 8.3.8، TypeScript 7.0.2 و SignalR JS 10.0.11. وابستگی تست SignalR .NET نسخه 10.0.15 است. وابستگی‌های frontend را با `npm ci` نصب کن.
@@ -30,7 +30,7 @@ dotnet run --project src/Poolo.Web --environment Development --urls http://local
 | زوم و محل نمایش | بخش ui در همان IndexedDB؛ از سند و درخواست‌های تغییر جداست |
 | کتابخانه شخصی اجزا | بخش library در IndexedDB، مجزا برای هر فضای کار |
 | عنوان، شناسه بوم و پیش‌نمایش PNG در فهرست یادداشت‌ها | رکورد note دفتر اصلی؛ تصویر کوچک حداکثر حدود ۱۱۰ کیلوبایت |
-| نسخه سروری در برنامه .NET | SQLite در data/poolo.db، جدول Whiteboards با JSON کامل سند و revision |
+| نسخه سروری در برنامه .NET | SQLite در data/damedast.db، جدول Whiteboards با JSON کامل سند و revision |
 | رسید عملیات تکراری و مجوز لینک | WhiteboardOperations و WhiteboardShares؛ فقط هش توکن لینک ذخیره می‌شود |
 
 ذخیره محلی با تأخیر کوتاه و صف ترتیبی انجام می‌شود. ذخیره قدیمی نمی‌تواند بعد از ذخیره جدید جای آن را بگیرد. هر تب نسخه پیش‌نویس مستقل دارد. خطای ظرفیت/ذخیره پیام و «تلاش دوباره» دارد؛ فایل خراب بی‌خبر جای سند موجود نمی‌نشیند. بکاپ کامل در تنظیمات اکنون سند و بایت تصاویر همه بوم‌های متصل به یادداشت‌ها را هم شامل می‌شود. خروجی مستقل قابل ویرایش نیز در ویرایشگر موجود است. پاک کردن داده‌های مرورگر، نسخه‌های صرفاً محلی را پاک می‌کند.
@@ -50,7 +50,7 @@ dotnet run --project src/Poolo.Web --environment Development --urls http://local
 - `model.mjs`، `storage.mjs` و `sync.mjs`: فرمت سند، ذخیره محلی و هماهنگ‌کننده همگام‌سازی مستقل و قابل تست.
 - `runtime.ts`: اتصال موتور، bridge یادداشت، تصاویر، شبکه و چرخه ذخیره.
 
-زمان سرور از TimeProvider و extension موجود `Poolo.Common.Time.UtcNow()` گرفته می‌شود. عملیات async سرور CancellationToken را به EF، MediatR، HTTP و SignalR منتقل می‌کنند. cleanup قطع اتصال عمداً از توکن لغوشده اتصال استفاده نمی‌کند.
+زمان سرور از TimeProvider و extension موجود `DameDast.Common.Time.UtcNow()` گرفته می‌شود. عملیات async سرور CancellationToken را به EF، MediatR، HTTP و SignalR منتقل می‌کنند. cleanup قطع اتصال عمداً از توکن لغوشده اتصال استفاده نمی‌کند.
 
 ## امکانات و تفاوت با سایت Excalidraw
 
@@ -71,7 +71,7 @@ dotnet run --project src/Poolo.Web --environment Development --urls http://local
 | لینک فقط‌خواندنی/ویرایشی، اتاق زنده و اشاره‌گر همکاران | روی سرور .NET؛ میزبان Worker این قابلیت‌ها را غیرفعال نشان می‌دهد |
 | هوش مصنوعی و سرویس‌های تجاری Excalidraw.com | بخشی از این پیاده‌سازی نیست؛ هسته به آن‌ها وابسته نیست |
 
-سایت Excalidraw.com سرویس همکاری و ذخیره خودش را دارد؛ این سرویس‌ها همراه npm package منتشر نمی‌شوند. همکاری این پروژه جداگانه ساخته شده و نام/هویت آن «Damdast Canvas» است. نسخه 0.18.1 از APIهای همان نسخه مانند CaptureUpdateAction.NEVER، restore، exportToBlob، exportToSvg و onPointerUp استفاده می‌کند. locale فارسی داخل پکیج هست اما به دلیل پوشش ۸۴٪ از فهرست پیش‌فرض حذف شده؛ از فهرست عمومی languages ثبت شده است. بعضی عنوان‌های پیشرفته ترجمه‌نشده همچنان انگلیسی‌اند.
+سایت Excalidraw.com سرویس همکاری و ذخیره خودش را دارد؛ این سرویس‌ها همراه npm package منتشر نمی‌شوند. همکاری این پروژه جداگانه ساخته شده و نام/هویت آن «DameDast Canvas» است. نسخه 0.18.1 از APIهای همان نسخه مانند CaptureUpdateAction.NEVER، restore، exportToBlob، exportToSvg و onPointerUp استفاده می‌کند. locale فارسی داخل پکیج هست اما به دلیل پوشش ۸۴٪ از فهرست پیش‌فرض حذف شده؛ از فهرست عمومی languages ثبت شده است. بعضی عنوان‌های پیشرفته ترجمه‌نشده همچنان انگلیسی‌اند.
 
 ## همکاری و تعارض
 
@@ -90,7 +90,7 @@ SignalR فقط انتقال نسخه جدید، حضور و اشاره‌گر ر
 ```bash
 npm test
 npm run test:whiteboard
-dotnet test tests/Poolo.Tests/Poolo.Tests.csproj
+dotnet test tests/DameDast.Tests/DameDast.Tests.csproj
 ```
 
 نتیجه و محدوده بررسی‌ها در WHITEBOARD-VERIFICATION.md ثبت شده است. راه‌اندازی همکاری واقعی روی میزبان Worker ممکن نیست؛ برای آن خروجی .NET را روی سرور خودت اجرا کن.

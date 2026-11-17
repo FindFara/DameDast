@@ -5,7 +5,7 @@ import {
   validateDrawing,
   drawingSvg,
   translateElement,
-} from "../src/Poolo.Web/wwwroot/drawing.js";
+} from "../src/DameDast.Web/wwwroot/drawing.js";
 import {
   decimalUnits,
   decimalText,
@@ -13,11 +13,11 @@ import {
   assetEntries,
   assetHistory,
   validatePosition,
-} from "../src/Poolo.Web/wwwroot/assets.js";
+} from "../src/DameDast.Web/wwwroot/assets.js";
 import {
   groupedNumeric,
   plainNumeric,
-} from "../src/Poolo.Web/wwwroot/number-inputs.js";
+} from "../src/DameDast.Web/wwwroot/number-inputs.js";
 const id = () => crypto.randomUUID(),
   at = "2026-11-16T09:00:00Z";
 const position = (extra = {}) => ({
@@ -235,7 +235,7 @@ test("daily profit history retains multiple real observations on the same day", 
 
 test("a new asset form accepts empty initial data and keeps purchase cost optional", async () => {
   const { assetEditorFields } =
-    await import("../src/Poolo.Web/wwwroot/assets-ui.js");
+    await import("../src/DameDast.Web/wwwroot/assets-ui.js");
   const html = assetEditorFields({});
   assert.match(html, /data-lot-quantity[^>]*required/);
   assert.ok(!/data-lot-cost[^>]*required/.test(html));

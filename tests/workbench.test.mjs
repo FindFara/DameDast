@@ -9,11 +9,11 @@ import {
   replaceWidget,
   widgetCatalog,
   deskContrast,
-} from "../src/Poolo.Web/wwwroot/workbench.js";
-import { workbenchPage } from "../src/Poolo.Web/wwwroot/workbench-ui.js";
-import { setLanguage } from "../src/Poolo.Web/wwwroot/i18n.js";
-import { icon, renderPage } from "../src/Poolo.Web/wwwroot/ui.js";
-import { makeDemo, materialize } from "../src/Poolo.Web/wwwroot/finance.js";
+} from "../src/DameDast.Web/wwwroot/workbench.js";
+import { workbenchPage } from "../src/DameDast.Web/wwwroot/workbench-ui.js";
+import { setLanguage } from "../src/DameDast.Web/wwwroot/i18n.js";
+import { icon, renderPage } from "../src/DameDast.Web/wwwroot/ui.js";
+import { makeDemo, materialize } from "../src/DameDast.Web/wwwroot/finance.js";
 const id = () => crypto.randomUUID();
 const widget = (extra = {}) => ({
   id: id(),

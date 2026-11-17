@@ -594,3 +594,8 @@ button:focus-visible {
   --wb-border: #3b4945;
   background: #1b2426;
 }
+
+:root { --surface: #f0f2ec; --surface-soft: #e7ece4; --ink: #344238; --muted: #6c8075; --accent: #21765b; --accent-soft: #dfeade; --border: #d5ded4; --negative: #b7574b; }
+:root[data-theme="dark"] { --surface: #252f30; --surface-soft: #293636; --ink: #d9e2d9; --muted: #a8b8af; --accent: #92bca6; --accent-soft: #30443b; --border: #3b4945; --negative: #f1a098; }
+.wb-fatal-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.wb-fatal-actions button { font: inherit; padding: 10px 16px; border: 1px solid var(--border); border-radius: 10px; color: var(--ink); background: var(--surface); cursor: pointer; }

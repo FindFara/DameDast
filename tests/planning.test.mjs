@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {fromJalali,jalaliParts,monthOf,inMonth,monthBounds,addSolarMonths,solarText,budgetBounds} from '../src/Poolo.Web/wwwroot/calendar.js';
-import {setLanguage} from '../src/Poolo.Web/wwwroot/i18n.js';
-import {allocate,validatePlan,comparePlan,recurringForMonth,categoryList} from '../src/Poolo.Web/wwwroot/planning.js';
-import {categories} from '../src/Poolo.Web/wwwroot/finance.js';
+import {fromJalali,jalaliParts,monthOf,inMonth,monthBounds,addSolarMonths,solarText,budgetBounds} from '../src/DameDast.Web/wwwroot/calendar.js';
+import {setLanguage} from '../src/DameDast.Web/wwwroot/i18n.js';
+import {allocate,validatePlan,comparePlan,recurringForMonth,categoryList} from '../src/DameDast.Web/wwwroot/planning.js';
+import {categories} from '../src/DameDast.Web/wwwroot/finance.js';
 const record=(kind,data,id=crypto.randomUUID())=>({kind,data,id,version:1,deleted:false});
 
 test('Persian month boundaries cross Gregorian months without losing transactions',()=>{

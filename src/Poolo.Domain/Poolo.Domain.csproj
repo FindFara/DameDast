@@ -1,3 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup><ProjectReference Include="../Poolo.Common/Poolo.Common.csproj" /></ItemGroup>
-</Project>

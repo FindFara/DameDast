@@ -52,7 +52,7 @@ Controllerها منطق مالی، EF و SQL ندارند. Application به Infr
 
 ReminderWorker در Infrastructure هر دقیقه فقط زمان‌بندی را انجام می‌دهد و برای هر دور یک scope جدید می‌سازد. سرویس scoped یادآوری با Repositoryها کار می‌کند و ارسال واقعی پشت IPushGateway است. دریافت HTTP یا ارسال Push داخل تراکنش دفتر مالی نگه داشته نمی‌شود. بازه روزانه اقساط تهران، پیام عمومی بدون مبلغ/نام وام، رسید روزانه اقساط هر دستگاه و حذف اشتراک منقضی حفظ شده‌اند. یادآور شخصی در ساعت‌های انتخابی تهران و با رسید مستقل هر نوبت اجرا می‌شود. برای توضیح رفتار و ذخیره‌سازی برنامه‌ریز و بازار [این راهنما](ORGANIZER-MARKETS-fa.md) را ببین.
 
-مسیر پیش‌فرض SQLite `data/poolo.db` و کلیدها `data/keys` است. مقدار اختیاری `Storage:DataDirectory` ریشه مسیر کلیدها را مشخص می‌کند؛ مسیر SQLite جدا از ConnectionStrings:Finance تنظیم می‌شود. در Docker همچنان volume پوشه data را نگه دار. تست‌های HTTP مسیر کلید جداگانه دارند تا روی کلیدهای نصب واقعی یا تست هم‌زمان اثر نگذارند.
+مسیر پیش‌فرض SQLite `data/damedast.db` و کلیدها `data/keys` است. مقدار اختیاری `Storage:DataDirectory` ریشه مسیر کلیدها را مشخص می‌کند؛ مسیر SQLite جدا از ConnectionStrings:Finance تنظیم می‌شود. در Docker همچنان volume پوشه data را نگه دار. تست‌های HTTP مسیر کلید جداگانه دارند تا روی کلیدهای نصب واقعی یا تست هم‌زمان اثر نگذارند.
 
 ## بسته‌ها و اجرا
 
@@ -60,8 +60,8 @@ ReminderWorker در Infrastructure هر دقیقه فقط زمان‌بندی ر
 
 ```bash
 dotnet restore
-dotnet test tests/Poolo.Tests/Poolo.Tests.csproj
-dotnet run --project src/Poolo.Web --environment Development
+dotnet test tests/DameDast.Tests/DameDast.Tests.csproj
+dotnet run --project src/DameDast.Web --environment Development
 ```
 
 تست‌ها مرز وابستگی لایه‌ها، اجرای Controller از مسیر MediatR، جلوگیری از دور زدن احراز هویت در Application، اعتبار batch پیش از نوشتن، انتقال CancellationToken، مسیر قیمت‌ها بدون شبکه واقعی، CSRF و جداسازی مالک اشتراک اعلان، عدم نیاز به Migration و رفتار قبلی تراکنش/تعارض/همگام‌سازی را بررسی می‌کنند. ورود واقعی Google و تحویل واقعی Push در محیط شخصی نیازمند تنظیم و بررسی همان نصب هستند.

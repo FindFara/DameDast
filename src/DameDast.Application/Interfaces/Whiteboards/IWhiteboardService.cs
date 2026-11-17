@@ -1,0 +1,14 @@
+using System.Text.Json;
+using DameDast.Domain;
+
+namespace DameDast.Application.Interfaces.Whiteboards;
+
+public interface IWhiteboardService
+{
+    Task<WhiteboardAccess> ReadAsync(Guid id, string? userId, string? token, CancellationToken cancellationToken);
+    Task<WhiteboardState> ApplyAsync(Guid id, string? userId, string? token, WhiteboardPatch patch, CancellationToken cancellationToken);
+    Task<WhiteboardGrant> ShareAsync(Guid id, string userId, string role, CancellationToken cancellationToken);
+    Task RevokeAsync(Guid id, string userId, CancellationToken cancellationToken);
+    Task<JsonElement> ReadLibraryAsync(string userId, CancellationToken cancellationToken);
+    Task SaveLibraryAsync(string userId, JsonElement input, CancellationToken cancellationToken);
+}

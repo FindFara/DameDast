@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param([string]$ClientId, [string]$BaseUrl = 'http://localhost:5000')
 $ErrorActionPreference = 'Stop'
-$projectPath = Join-Path $PSScriptRoot '..\src\Poolo.Web'
+$projectPath = Join-Path $PSScriptRoot '..\src\DameDast.Web'
 if ([string]::IsNullOrWhiteSpace($ClientId)) { $ClientId = Read-Host 'Google OAuth Web client ID' }
 if ($ClientId -notmatch '\.apps\.googleusercontent\.com$') { throw 'Enter the Google Web OAuth client ID.' }
 $secretValue = Read-Host 'Google OAuth client secret (hidden)' -AsSecureString

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="damdast-version" content="damedast-columns-picker-21" />
+    <script src="/update.js?v=21" defer></script>
+    <meta name="damdast-app" content="portfolio-v1" />
+    <meta name="google" content="notranslate" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#e8ede8" />
+    <meta
+      name="description"
+      content="دمِ دست — حساب‌ها، اقساط و قیمت‌های روز. Your space, within reach."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>DameDast</title>
+    <script src="/appearance.js"></script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/connected.css" />
+    <link rel="stylesheet" href="/planning.css" />
+    <link rel="stylesheet" href="/experience.css" />
+    <script type="module" src="/app.js"></script>
+    <link rel="stylesheet" href="/workbench.css" />
+    <link rel="stylesheet" href="/creative.css" />
+    <link rel="stylesheet" href="/floating-shell.css" />
+    <link rel="stylesheet" href="/planner.css" />
+    <script type="module" src="/floating-shell.js"></script>
+    <link rel="stylesheet" href="/ui-polish.css" />
+    <link rel="stylesheet" href="/interaction.css" />
+  </head>
+  <body>
+    <div class="shell-tools" role="toolbar" aria-label="Quick actions">
+    <button id="app-menu-button" aria-label="Menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <button
+            id="sync-button"
+            class="icon-button"
+            aria-label="Sync"
+          ></button
+          ><button
+            id="notifications-button"
+            class="icon-button notification-bell"
+            aria-label="Notifications"
+            data-action="notifications-open"
+          ></button>
+    </div>
+    <div id="app-nav-backdrop" hidden></div>
+    <aside id="app-sidebar" class="sidebar" aria-hidden="true" inert>
+      <div class="sidebar-heading">
+      <a class="brand" href="#overview"
+        ><span class="brand-symbol" aria-hidden="true"
+          ><svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12 M11 11V3.5a1.5 1.5 0 0 1 3 0V12 M14 11V5a1.5 1.5 0 0 1 3 0v8 M17 11V8a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.8-2.4L3.5 13.5a1.75 1.75 0 0 1 2.7-2.2L8 13 M12 16h4"
+            /></svg></span
+        ><span
+          ><strong id="brand-name">دمِ دست</strong
+          ><small id="brand-caption" hidden></small></span
+        ></a
+      >
+      <button id="app-menu-close" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <div class="nav-label" id="workspace-label">Workspace</div>
+      <nav id="navigation" aria-label="Menu"></nav>
+      <button class="profile" id="profile-button">
+        <span class="avatar" aria-hidden="true"
+          ><svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 22v-3a8 8 0 0 1 16 0v3" /></svg></span
+        ><span id="profile-name">Workspace</span
+        ><span aria-hidden="true">⌘</span>
+      </button>
+    </aside>
+    <input id="backup-import" type="file" accept=".json,application/json" hidden>
+    <dialog id="calendar-dialog"></dialog>
+    <main>
+      <header class="topbar" hidden>
+        <strong id="page-label"></strong><span id="sync-status" role="status"></span>
+        <button id="theme-button" hidden></button><button id="google-button" hidden></button>
+      </header>
+      <section id="mode-banner" class="mode-banner" hidden></section>
+      <div id="view" aria-live="polite"></div>
+    </main>
+    <nav
+      id="mobile-navigation"
+      class="mobile-navigation"
+      aria-label="Menu"
+    ></nav>
+    <div id="global-create"><button id="mobile-add" class="mobile-add" aria-label="Add"></button></div>
+    <dialog id="pdf-reader"></dialog>
+    <dialog id="workbench-dialog"></dialog>
+    <dialog id="notification-center" class="notification-center"></dialog>
+    <section id="drawing-studio" class="drawing-studio" hidden></section>
+    <dialog id="editor">
+      <form id="editor-form">
+        <div class="dialog-heading">
+          <h2 id="dialog-title"></h2>
+          <button
+            type="button"
+            class="icon-button close-dialog"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div id="dialog-fields"></div>
+        <p id="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="submit" id="save-button" class="primary">Save</button
+          ><button
+            type="button"
+            id="cancel-button"
+            class="secondary close-dialog-button"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="notice"><div id="notice-content"></div></dialog>
+    <div id="toast" role="status"></div>
+  </body>
+</html>

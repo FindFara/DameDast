@@ -4,7 +4,7 @@
 
 | Suite | Result | Coverage |
 |---|---:|---|
-| `dotnet test tests/Poolo.Tests/Poolo.Tests.csproj` | 63 passed | Existing financial behavior and migrations; element CAS; idempotency; CSRF; view/share/revoke authorization; two real SignalR clients reconnecting through Long Polling, independent edits, cursor delivery and preserving a peer's element after undo |
+| `dotnet test tests/DameDast.Tests/DameDast.Tests.csproj` | 63 passed | Existing financial behavior and migrations; element CAS; idempotency; CSRF; view/share/revoke authorization; two real SignalR clients reconnecting through Long Polling, independent edits, cursor delivery and preserving a peer's element after undo |
 | `npm test` | 71 passed | Existing finance, organizer, assets, numbers, calendar, bridge and desk behavior |
 | `npm run test:whiteboard` | 8 passed | Corrupt data, bindings, independent merges/conflicts, in-flight edits, serial writes, quota retry, operation retry and ordinal fractional layer order |
 | Hosted Worker `npm test` | 27 passed | Existing OAuth/finance/market behavior; actual SQLite CAS and receipts with an R2 test adapter; tenant isolation; CSRF; storage failures and preserving canvas metadata during legacy edits |

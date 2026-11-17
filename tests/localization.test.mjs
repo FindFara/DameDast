@@ -7,9 +7,9 @@ import {
   effectiveTheme,
   t,
   countText,
-} from "../src/Poolo.Web/wwwroot/i18n.js";
-import { money, dateText } from "../src/Poolo.Web/wwwroot/finance.js";
-import { renderPage } from "../src/Poolo.Web/wwwroot/ui.js";
+} from "../src/DameDast.Web/wwwroot/i18n.js";
+import { money, dateText } from "../src/DameDast.Web/wwwroot/finance.js";
+import { renderPage } from "../src/DameDast.Web/wwwroot/ui.js";
 
 const base = {
   page: "overview",

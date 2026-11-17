@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><ProjectReference Include="../DameDast.Common/DameDast.Common.csproj" /></ItemGroup>
+</Project>

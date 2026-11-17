@@ -1,12 +1,16 @@
+import { normalizeSavedRecord } from "./recovery.mjs";
 const DB = "damdast-whiteboards-v1";
 export async function database() {
   return new Promise((resolve, reject) => {
-    const r = indexedDB.open(DB, 1);
+    const r = indexedDB.open(DB, 2);
     r.onupgradeneeded = () => {
       for (const n of ["documents", "index", "ui", "library"])
-        r.result.createObjectStore(n);
+        if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n);
     };
-    r.onsuccess = () => resolve(r.result);
+    r.onsuccess = () => {
+      r.result.onversionchange = () => r.result.close();
+      resolve(r.result);
+    };
     r.onerror = () => reject(r.error);
   });
 }
@@ -76,14 +80,41 @@ export class SerializedWriter {
   }
 }
 export async function loadDocument(scope, id, clientId) {
-  const key = `${scope}:${id}`,
-    own = await read("documents", `${key}:${clientId}`);
-  if (own) return own;
+  const key = `${scope}:${id}`, candidates = [], invalid = [];
+  const own = await read("documents", `${key}:${clientId}`);
+  if (own) candidates.push(own);
   const pointer = await read("index", key);
-  return pointer ? await read("documents", pointer) : null;
+  if (pointer && pointer !== `${key}:${clientId}`) {
+    const pointed = await read("documents", pointer);
+    if (pointed) candidates.push(pointed);
+  }
+  for (const candidate of candidates) {
+    try { return {...normalizeSavedRecord(candidate), recovered:invalid.length > 0}; }
+    catch { invalid.push(candidate); }
+  }
+  const db = await database();
+  const copies = await new Promise((resolve,reject)=>{
+    const values=[], prefix=key+":";
+    const request=db.transaction("documents").objectStore("documents").openCursor(IDBKeyRange.bound(prefix,prefix+"\uffff"));
+    request.onsuccess=()=>{const cursor=request.result;if(cursor){values.push(cursor.value);cursor.continue();}else resolve(values);};
+    request.onerror=()=>reject(request.error);
+  }).finally(()=>db.close());
+  for (const candidate of copies) {
+    try { return {...normalizeSavedRecord(candidate), recovered:true}; }
+    catch { invalid.push(candidate); }
+  }
+  if (invalid.length) throw Object.assign(Error("The saved canvas needs recovery. Download the saved data before trying another copy."),{recovery:invalid});
+  return null;
 }
 export async function saveDocument(scope, id, clientId, value) {
   const key = `${scope}:${id}:${clientId}`;
-  await write("documents", key, value);
-  await write("index", `${scope}:${id}`, key);
+  const db = await database();
+  try {
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["documents","index"],"readwrite");
+      tx.objectStore("documents").put(structuredClone(value),key);
+      tx.objectStore("index").put(key,`${scope}:${id}`);
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+  } finally { db.close(); }
 }

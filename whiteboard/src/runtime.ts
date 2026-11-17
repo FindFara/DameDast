@@ -20,6 +20,7 @@ import {
   write,
 } from "./storage.mjs";
 import { DocumentSync } from "./sync.mjs";
+import { canvasUi } from "./recovery.mjs";
 
 export const fileData = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -92,8 +93,9 @@ export class Runtime {
   constructor(ctx: any) {
     this.ctx = ctx;
     const key = "damdast-wb-client:" + ctx.space + ":" + ctx.id;
-    this.clientId = sessionStorage.getItem(key) || crypto.randomUUID();
-    sessionStorage.setItem(key, this.clientId);
+    try { this.clientId = sessionStorage.getItem(key) || crypto.randomUUID(); }
+    catch { this.clientId = crypto.randomUUID(); }
+    try { sessionStorage.setItem(key, this.clientId); } catch {}
   }
   onChange(fn: () => void) {
     this.listeners.add(fn);
@@ -143,8 +145,13 @@ export class Runtime {
     this.doc.title =
       saved?.document?.title || this.ctx.title || "Untitled canvas";
     validateDocument(this.doc);
-    this.ui = (await read("ui", this.ctx.space + ":" + this.ctx.id)) || {};
-    this.library = (await read("library", this.ctx.space)) || [];
+    this.ui = canvasUi(await read("ui", this.ctx.space + ":" + this.ctx.id).catch(()=>null));
+    this.library = [];
+    if (saved?.recovered) {
+      this.clientId = crypto.randomUUID();
+      try { sessionStorage.setItem("damdast-wb-client:" + this.ctx.space + ":" + this.ctx.id, this.clientId); } catch {}
+      this.error = "Recovered another saved copy. The original data was kept.";
+    }
     if (!saved && this.ctx.legacyDrawing)
       this.doc = this.convertLegacy(this.ctx.legacyDrawing);
     this.writer = new SerializedWriter(

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBackup, validateBackup, restoreBackup, selectBackupRecords} from '../src/Poolo.Web/wwwroot/backup.js';
-import {emptyDocument} from '../src/Poolo.Web/wwwroot/whiteboard/model.mjs';
+import {createBackup, validateBackup, restoreBackup, selectBackupRecords} from '../src/DameDast.Web/wwwroot/backup.js';
+import {emptyDocument} from '../src/DameDast.Web/wwwroot/whiteboard/model.mjs';
 const id = () => crypto.randomUUID();
 const bytes = new TextEncoder().encode('%PDF-1.7\nexample fixture\n%%EOF');
 const pdf = {id:id(),name:'study.pdf',size:bytes.length,type:'application/pdf'};
@@ -44,7 +44,7 @@ test('missing or corrupted PDF files cannot produce or restore a silently incomp
  assert.throws(()=>validateBackup({...backup,pdfs:[{...backup.pdfs[0],data:btoa('invalid')}]}),/PDF attachment/);
 });
 test('older complete backups and legacy tombstones remain readable',()=>{
- assert.equal(validateBackup({format:'poolo-v1',records:[{...finance[0],deleted:true}]}).format,'poolo-v1');
+ assert.equal(validateBackup({format:'damedast-v1',records:[{...finance[0],deleted:true}]}).format,'damedast-v1');
  assert.equal(validateBackup({format:'damdast-v2',records:finance,whiteboards:[]}).records.length,2);
  assert.throws(()=>selectBackupRecords(records,'wrong'),/Invalid backup section/);
 });

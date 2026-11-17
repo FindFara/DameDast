@@ -1,6 +1,6 @@
 import { cp, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-const output = path.resolve("../src/Poolo.Web/wwwroot/whiteboard");
+const output = path.resolve("../src/DameDast.Web/wwwroot/whiteboard");
 await cp(
   "node_modules/@excalidraw/excalidraw/dist/prod/fonts",
   path.join(output, "fonts"),
@@ -19,7 +19,7 @@ async function walk(dir) {
   }
   return out;
 }
-for (const file of ["model.mjs", "storage.mjs", "sync.mjs"])
+for (const file of ["model.mjs", "storage.mjs", "sync.mjs", "recovery.mjs"])
   await cp(path.join("src", file), path.join(output, file));
 const files = (await walk(output)).map(
   (p) => "/whiteboard/" + path.relative(output, p).replaceAll(path.sep, "/"),

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {FORMAT,BUNDLE,normalizeSnapshot,normalizeBundle,mergeSnapshot,portfolioTotals,providerForUrl,sumMoney} from '../src/Poolo.Web/wwwroot/extension/shared/portfolio.js';
-import {parseMoney,parseDate,parseStatus,parseDelimited,mapTable,suggestMapping} from '../src/Poolo.Web/wwwroot/extension/shared/extract.js';
-import {renderPortfolio} from '../src/Poolo.Web/wwwroot/extension/shared/view.js';
-import {syncBatch} from '../src/Poolo.Web/wwwroot/connected-store.js';
+import {FORMAT,BUNDLE,normalizeSnapshot,normalizeBundle,mergeSnapshot,portfolioTotals,providerForUrl,sumMoney} from '../src/DameDast.Web/wwwroot/extension/shared/portfolio.js';
+import {parseMoney,parseDate,parseStatus,parseDelimited,mapTable,suggestMapping} from '../src/DameDast.Web/wwwroot/extension/shared/extract.js';
+import {renderPortfolio} from '../src/DameDast.Web/wwwroot/extension/shared/view.js';
+import {syncBatch} from '../src/DameDast.Web/wwwroot/connected-store.js';
 const at='2026-11-15T12:00:00.000Z';
 const asset=(key,value='100')=>({key,label:key,assetType:'equity',symbol:key,quantity:'2',valueToman:value,lockedToman:null,observedAt:at});
 const snapshot=(items=[asset('A')],extra={})=>({format:FORMAT,captureId:'capture-1',provider:'easytrader',account:'Personal',scope:'Portfolio',category:'assets',capturedAt:at,coverage:'partial',items,...extra});
@@ -73,7 +73,7 @@ test('sync batches are bounded by UTF-8 bytes as well as item count',()=>{
  const pending=Array.from({length:5},(_,id)=>({id,data:'ف'.repeat(40000)}));const batch=syncBatch(pending);assert.equal(batch.length,2);assert.ok(new TextEncoder().encode(JSON.stringify({changes:batch})).length<256000);
 });
 test('extension uses an explicit active-tab capture and no cookie or global read permission',async()=>{
- const manifest=JSON.parse(await readFile(new URL('../src/Poolo.Web/wwwroot/extension/manifest.json',import.meta.url),'utf8'));
+ const manifest=JSON.parse(await readFile(new URL('../src/DameDast.Web/wwwroot/extension/manifest.json',import.meta.url),'utf8'));
  assert.deepEqual(manifest.permissions,['activeTab','scripting','storage']);assert.equal(manifest.host_permissions,undefined);assert.equal(manifest.content_scripts,undefined);assert.ok(!manifest.permissions.includes('cookies'));
 });
 test('bundle limits and malformed date, valuation and quantities are rejected',()=>{

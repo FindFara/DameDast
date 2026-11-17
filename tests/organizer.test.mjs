@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fromJalali } from "../src/Poolo.Web/wwwroot/calendar.js";
+import { fromJalali } from "../src/DameDast.Web/wwwroot/calendar.js";
 import {
   parseTimes,
   tehranParts,
@@ -10,7 +10,7 @@ import {
   organizerReport,
   notificationKey,
   validateReminder,
-} from "../src/Poolo.Web/wwwroot/organizer.js";
+} from "../src/DameDast.Web/wwwroot/organizer.js";
 const start = "2026-11-16",
   now = "2026-11-16T08:00:00Z";
 const reminder = (values = {}) => ({

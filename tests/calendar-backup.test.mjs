@@ -10,23 +10,23 @@ import {
   plannerItems,
   timedColumns,
   validateCalendarEntry,
-} from "../src/Poolo.Web/wwwroot/planner.js";
+} from "../src/DameDast.Web/wwwroot/planner.js";
 import {
   defaultWorkbench,
   deviceWorkbench,
   validateWorkbench,
   overlaps,
-} from "../src/Poolo.Web/wwwroot/workbench.js";
+} from "../src/DameDast.Web/wwwroot/workbench.js";
 import {
   createBackup,
   restoreBackup,
   validateBackup,
-} from "../src/Poolo.Web/wwwroot/backup.js";
+} from "../src/DameDast.Web/wwwroot/backup.js";
 import {
   emptyDocument,
   emptyServer,
-} from "../src/Poolo.Web/wwwroot/whiteboard/model.mjs";
-import { dayHoliday } from "../src/Poolo.Web/wwwroot/holidays.js";
+} from "../src/DameDast.Web/wwwroot/whiteboard/model.mjs";
+import { dayHoliday } from "../src/DameDast.Web/wwwroot/holidays.js";
 const id = () => crypto.randomUUID();
 const event = (extra = {}) => ({
   title: "جلسه / Meeting",
@@ -161,7 +161,7 @@ function canvas() {
   const document = emptyDocument(),
     fileId = "icon",
     bytes = readFileSync(
-      new URL("../src/Poolo.Web/wwwroot/icons/icon-192.png", import.meta.url),
+      new URL("../src/DameDast.Web/wwwroot/icons/icon-192.png", import.meta.url),
     );
   document.scene.elements = [
     {
@@ -231,7 +231,7 @@ test("missing or corrupted canvases reject a backup before any restore write", a
   );
   let writes = 0;
   await assert.rejects(() =>
-    restoreBackup({ format: "poolo-v1", records }, "guest", {
+    restoreBackup({ format: "damedast-v1", records }, "guest", {
       readCanvas: async () => null,
       writeCanvas: async () => writes++,
     }),

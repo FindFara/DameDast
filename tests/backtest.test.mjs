@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {mergedCurves,compareInvestments,historicalMix,parseBenchmarkCsv} from '../src/Poolo.Web/wwwroot/backtest.js';
+import {mergedCurves,compareInvestments,historicalMix,parseBenchmarkCsv} from '../src/DameDast.Web/wwwroot/backtest.js';
 const step=(date,amount=100)=>({data:{date,amount,title:'Step',actualValue:null,valueDate:null}});
 const curve=(first,last)=>[{date:'2026-01-01',price:first},{date:'2026-02-01',price:last}];
 const curves={GOLD:curve(100,150),FUND:curve(100,110),BTC:curve(100,200),USD:curve(100,120)};

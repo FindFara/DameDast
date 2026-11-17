@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { amountText } from '../src/Poolo.Web/wwwroot/privacy.js';
-import { renderPage } from '../src/Poolo.Web/wwwroot/ui.js';
-import { today } from '../src/Poolo.Web/wwwroot/finance.js';
-import { monthOf } from '../src/Poolo.Web/wwwroot/calendar.js';
-import { setLanguage, localizedNumber } from '../src/Poolo.Web/wwwroot/i18n.js';
+import { amountText } from '../src/DameDast.Web/wwwroot/privacy.js';
+import { renderPage } from '../src/DameDast.Web/wwwroot/ui.js';
+import { today } from '../src/DameDast.Web/wwwroot/finance.js';
+import { monthOf } from '../src/DameDast.Web/wwwroot/calendar.js';
+import { setLanguage, localizedNumber } from '../src/DameDast.Web/wwwroot/i18n.js';
 
 setLanguage('en');
 const accountId = crypto.randomUUID();

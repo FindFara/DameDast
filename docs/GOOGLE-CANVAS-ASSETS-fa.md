@@ -9,7 +9,7 @@
 1. در [Google Cloud](https://console.cloud.google.com/auth/clients) یک پروژه انتخاب کن و OAuth consent screen را تنظیم کن. برای استفاده شخصی، در حالت Testing حسابت را به Test users اضافه کن.
 2. OAuth Client از نوع **Web application** بساز.
 3. آدرس Authorized redirect URI را دقیقاً برابر آدرس برنامه + `/signin-google` بگذار؛ برای نمونه:
-   - نسخه خصوصی فعلی: `https://poolo-finance.sahar-tarkha-0855.chatgpt.site/signin-google`
+   - نسخه خصوصی فعلی: `https://damedast-finance.sahar-tarkha-0855.chatgpt.site/signin-google`
    - اجرای محلی: `http://localhost:5000/signin-google`
 4. Client ID و Client Secret را در تنظیمات سرور نگه دار. آنها را داخل فایل JavaScript، سورس عمومی یا پیام یادداشت وارد نکن.
 5. برنامه را دوباره اجرا/منتشر کن. در **Settings → Google sign-in setup** باید وضعیت آماده ورود دیده شود. سپس Sign in را بزن. برای هماهنگی دستگاه‌ها از همان URL و همان حساب استفاده کن.
@@ -25,7 +25,7 @@
 اسکریپت Client ID را می‌گیرد و Client Secret را به شکل مخفی می‌پرسد. تنظیمات را از stdin به `dotnet user-secrets` می‌دهد تا Secret در آرگومان خط فرمان نباشد. User Secrets ابزار توسعه محلی است و فایل آن رمزگذاری اختصاصی ندارد. برنامه را در Development دوباره اجرا کن:
 
 ```powershell
-dotnet run --project src/Poolo.Web --urls http://localhost:5000 --environment Development
+dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
 ```
 
 ### سرور شخصی .NET

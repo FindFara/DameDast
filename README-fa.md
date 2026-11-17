@@ -1,10 +1,16 @@
+# دمِ دست · DameDast
+
+نام پروژه‌ها و namespaceها DameDast است. انتخاب‌گرهای جست‌وجوشونده، حداکثر سه منوی پین‌شده و ستون‌های دسته‌بندی تراکنش‌ها اضافه شده‌اند. تقویم تعطیلات تا ۱۴۱۰ داخل برنامه است؛ تاریخ مناسبت‌های قمری آینده برآوردی است.
+
+در ارتقا، داده‌های مرورگر قدیمی خودکار منتقل می‌شوند؛ اطلاعات جدید جایگزین نمی‌شوند. دیتابیس سرور قدیمی در شروع به `damedast.db` کپی می‌شود و فایل اصلی باقی می‌ماند. به علت تغییر هویت برنامه ممکن است ورود دوباره لازم باشد. برای Docker، اگر نام پروژهٔ Compose قبلی متفاوت است، متغیر `DAMEDAST_DATA_VOLUME` را به نام volume فعلی تنظیم کن.
+
 > به‌روزرسانی رابط: مبلغ‌های داشبورد ابتدا پنهان‌اند؛ دکمهٔ چشم، فرم تودوی ساده با «بیشتر»، تاریخ‌های مرتب، ظاهر مات و حذف گزینهٔ Libraries اضافه شده‌اند.
 
 > این مخزن شامل سورس کامل بک‌اند ASP.NET Core 10، رابط وب و PWA، سورس React/TypeScript بوم، افزونه، تست‌ها و فایل‌های استقرار است.
 >
 > آخرین تغییرات: تنظیمات میز کار و تقویم، منوی شعاعی آیکونی +، نمایش PDF در یادداشت‌ها و بکاپ جداگانهٔ یادداشت‌ها و اطلاعات مالی. فایل‌های PDF در مرورگر نگه‌داری می‌شوند و با بکاپ یادداشت‌ها منتقل می‌شوند؛ همگام‌سازی بایت‌های PDF با سرور پیاده‌سازی نشده است.
 >
-> اجرای محلی: `dotnet run --project src/Poolo.Web --urls http://localhost:5000 --environment Development` (نیازمند SDK دات‌نت ۱۰).
+> اجرای محلی: `dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development` (نیازمند SDK دات‌نت ۱۰).
 
 > **Fullscreen canvas / بوم تمام‌صفحه:** [Setup, storage, features and collaboration](docs/WHITEBOARD-fa.md) · [Verification](docs/WHITEBOARD-VERIFICATION.md)
 
@@ -31,7 +37,7 @@
 پس از نصب SDK دات‌نت ۱۰، از پوشهٔ پروژه اجرا کن:
 
 ```bash
-dotnet run --project src/Poolo.Web --urls http://localhost:5000 --environment Development
+dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
 ```
 
 آدرس `http://localhost:5000` را باز کن. **Explore the demo** فضای نمونهٔ جدا از داده‌های واقعی است. بخش‌های Overview، Transactions، Accounts، Budgets، Savings goals، Reports و Settings آماده‌اند.

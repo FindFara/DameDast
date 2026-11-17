@@ -1,3 +1,5 @@
+import "../../src/DameDast.Web/wwwroot/select-sheet.js";
+import "../../src/DameDast.Web/wwwroot/interaction.css";
 import "./library-policy";
 import { embedDocumentFont } from "./svg-font";
 import React, {
@@ -31,7 +33,7 @@ import "./whiteboard.css";
 if (!languages.some((language) => language.code === "fa-IR"))
   languages.push({ code: "fa-IR", label: "Fa", rtl: false });
 (window as any).EXCALIDRAW_ASSET_PATH = "/whiteboard/";
-(window as any).EXCALIDRAW_EXPORT_SOURCE = "Damdast";
+(window as any).EXCALIDRAW_EXPORT_SOURCE = "DameDast";
 const words: any = {
   "Canvas menu": "منوی طراحی",
   "Prepare file": "آماده‌سازی فایل",
@@ -39,6 +41,7 @@ const words: any = {
   "Back to notes": "بازگشت به یادداشت‌ها",
   Local: "محلی",
   "Saved locally": "ذخیره روی دستگاه",
+  "Recovered another saved copy. The original data was kept.": "نسخهٔ ذخیره‌شدهٔ دیگری بازیابی شد؛ دادهٔ اصلی حفظ شده است.",
   Saving: "در حال ذخیره",
   Ready: "آماده",
   Synced: "همگام شد",
@@ -641,7 +644,7 @@ function App({ r }: { r: Runtime }) {
         </button>
         <div>
           <span>
-            Damdast <i>Canvas</i>
+            DameDast <i>Canvas</i>
           </span>
           <input
             aria-label={t("Canvas")}
@@ -1045,7 +1048,28 @@ async function start() {
     const back = document.createElement("a");
     back.href = "/#canvas";
     back.textContent = "Back to notes / بازگشت به یادداشت‌ها";
-    root.replaceChildren(title, text, back);
+    const actions = document.createElement("div");
+    actions.className = "wb-fatal-actions";
+    const retry = document.createElement("button");
+    retry.textContent = "Try again / تلاش دوباره";
+    retry.onclick = () => location.reload();
+    actions.append(retry);
+    if ((e as any).recovery) {
+      const download = document.createElement("button");
+      download.textContent = "Download saved data / دریافت دادهٔ ذخیره‌شده";
+      download.onclick = () => {
+        const url = URL.createObjectURL(new Blob([JSON.stringify({format:"damedast-canvas-recovery",copies:(e as any).recovery})],{type:"application/json"}));
+        const link = document.createElement("a");link.href=url;link.download="DameDast-canvas-recovery.json";link.click();
+        setTimeout(()=>URL.revokeObjectURL(url),1000);
+      };
+      actions.append(download);
+    }
+    if (parent !== window) back.onclick = event => {
+      event.preventDefault();
+      parent.postMessage({type:"damdast:whiteboard:cancel"}, location.origin);
+    };
+    actions.append(back);
+    root.replaceChildren(title, text, actions);
   }
 }
 void start();

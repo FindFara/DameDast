@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { renderPage } from "../src/Poolo.Web/wwwroot/ui.js";
+import { renderPage } from "../src/DameDast.Web/wwwroot/ui.js";
 import {
   organizerEditorFields,
   pinnedPanel,
   notificationsMarkup,
-} from "../src/Poolo.Web/wwwroot/organizer-ui.js";
-import { setLanguage } from "../src/Poolo.Web/wwwroot/i18n.js";
-import { instruments } from "../src/Poolo.Web/wwwroot/market-catalog.js";
-import { navigationGroups } from "../src/Poolo.Web/wwwroot/navigation.js";
+} from "../src/DameDast.Web/wwwroot/organizer-ui.js";
+import { setLanguage } from "../src/DameDast.Web/wwwroot/i18n.js";
+import { instruments } from "../src/DameDast.Web/wwwroot/market-catalog.js";
+import { navigationGroups } from "../src/DameDast.Web/wwwroot/navigation.js";
 const base = {
   page: "market",
   records: [],
@@ -36,7 +36,7 @@ test("browser catalog matches the embedded .NET catalog; market search and categ
     JSON.parse(
       fs.readFileSync(
         new URL(
-          "../src/Poolo.Application/Features/Market/market-catalog.json",
+          "../src/DameDast.Application/Features/Market/market-catalog.json",
           import.meta.url,
         ),
         "utf8",

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {materialize,balance,totals,addMonths} from '../src/Poolo.Web/wwwroot/finance.js';
+import {materialize,balance,totals,addMonths} from '../src/DameDast.Web/wwwroot/finance.js';
 
 test('internal transfer preserves total balance and does not become income or expense',()=>{
  const a={id:'a',data:{openingBalance:1000}},b={id:'b',data:{openingBalance:2000}};

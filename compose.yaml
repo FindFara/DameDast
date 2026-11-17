@@ -10,9 +10,9 @@ services:
       ReverseProxy__KnownProxy: 172.29.10.2
       Push__Subject: ${PUSH_SUBJECT:-}
     volumes:
-      - poolo_data:/app/data
+      - damedast_data:/app/data
     networks:
-      poolo:
+      damedast:
         ipv4_address: 172.29.10.3
   proxy:
     image: caddy:2-alpine
@@ -28,14 +28,15 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     networks:
-      poolo:
+      damedast:
         ipv4_address: 172.29.10.2
 networks:
-  poolo:
+  damedast:
     ipam:
       config:
         - subnet: 172.29.10.0/24
 volumes:
-  poolo_data:
+  damedast_data:
+    name: ${DAMEDAST_DATA_VOLUME:-${COMPOSE_PROJECT_NAME:-damedast}_poolo_data}
   caddy_data:
   caddy_config:
