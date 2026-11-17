@@ -1,6 +1,6 @@
 # DameDast · دمِ دست
 
-Current source uses DameDast project and namespace names. The UI includes searchable selection sheets, up to three pinned navigation shortcuts, category columns for transactions, and local holiday data through 1410.
+Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use compact category lists in three desktop columns, two tablet columns and one mobile column. Settings groups start collapsed; mobile financial cards are shorter. Notes use a Keep-style masonry grid or saved list view, separate pinned notes, quick creation and inline checklists while retaining drawings and PDFs. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
 
 Upgrade: legacy browser ledgers are copied without replacing newer data. A legacy server database is backed up into `damedast.db` on first startup; the original stays available. Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
 

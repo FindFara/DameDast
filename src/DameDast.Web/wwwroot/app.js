@@ -128,7 +128,18 @@ let marketCategory = "all",
   marketSearch = "",
   serverClockSkew = 0;
 const navGroupsOpen = {};
-let navPins = readPins(Object.keys(sections));
+const pinnablePages = navigationGroups.flatMap(group => group.items);
+let navPins = readPins(pinnablePages);
+let notesView = "grid";
+try { if (localStorage.getItem("damedast-notes-view") === "list") notesView = "list"; } catch {}
+const settingsGroupsOpen = {};
+const noteLayout = new ResizeObserver(entries => {
+  for (const { target } of entries) {
+    const gap = parseFloat(getComputedStyle(target).marginBottom) || 0;
+    const span = `span ${Math.ceil(target.getBoundingClientRect().height + gap)}`;
+    if (target.style.gridRowEnd !== span) target.style.gridRowEnd = span;
+  }
+});
 
 let benchmarkData = null,
   benchmarkLoading = false,
@@ -177,6 +188,8 @@ const numInput = (value) =>
 const context = () => ({
   amountsVisible: dashboardAmountsVisible,
   workbenchSettingsOpen,
+  settingsGroupsOpen,
+  notesView,
   workbenchEditing: desk.editing,
   planner: planner.state,
   assetKey,
@@ -334,12 +347,12 @@ function renderChrome() {
   $("#page-label").textContent = t(sections[page][0]);
   $("#navigation").setAttribute("aria-label", t("Menu"));
   const activePage = page === "organizer" ? "notes" : page;
-  const navLink = (key) =>
-    `<div class="nav-link-row"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a><button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button></div>`;
+  const navLink = (key, pinnable = false) =>
+    `<div class="nav-link-row"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
   $("#navigation").innerHTML =
-    (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${navPins.length}/3</small></header>${navPins.map(navLink).join("")}</section>` : "") +
+    (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
     navLink("overview") + navLink("workbench") +
-    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(navLink).join("")}</div></details>`).join("") +
+    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
     `<div class="nav-footer-links">${navLink("reports")}${navLink("settings")}</div>`;
   $("#mobile-navigation").innerHTML = [
     "overview",
@@ -398,12 +411,16 @@ function renderChrome() {
 }
 function render() {
   if (!state) return;
+  for (const group of document.querySelectorAll('#view [data-setting-group]'))
+    settingsGroupsOpen[group.dataset.settingGroup] = group.open;
   const hash = location.hash.slice(1);
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = Object.hasOwn(sections, hash) ? hash : "overview";
   renderChrome();
+  noteLayout.disconnect();
   $("#view").innerHTML = renderPage(context());
+  document.querySelectorAll('.notes-grid:not(.notes-list) > .note-card').forEach(card => noteLayout.observe(card));
   desk.attach();
   planner.attach();
   formatNumericFields($("#view"));
@@ -1422,14 +1439,31 @@ async function onAction(event) {
     return;
   }
   const element = event.target.closest("[data-action]");
-  if (!element) return;
+  if (!element) {
+    const note = event.target.closest("[data-note-open]");
+    if (note && !event.target.closest("button, a, input, label, summary"))
+      openEditor("note", note.dataset.noteOpen);
+    return;
+  }
   const { action, id, kind } = element.dataset;
   if (action === "nav-pin") {
+    if (!pinnablePages.includes(element.dataset.page)) return;
     try {
       navPins = togglePin(navPins, element.dataset.page);
       savePins(navPins);
       renderChrome();
     } catch (error) { toast(error.message); }
+    return;
+  }
+  if (action === "notes-view") {
+    notesView = notesView === "grid" ? "list" : "grid";
+    try { localStorage.setItem("damedast-notes-view", notesView); } catch {}
+    render();
+    $('[data-action="notes-view"]')?.focus();
+    return;
+  }
+  if (action === "note-list-add") {
+    openEditor("note", null, null, { checklist: [{ id: crypto.randomUUID(), text: "", done: false }] });
     return;
   }
   if (action === "dashboard-privacy") {

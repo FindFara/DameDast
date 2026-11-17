@@ -6,7 +6,7 @@ import {filterOptions} from '../src/DameDast.Web/wwwroot/select-sheet.js';
 import {holidayData,dayHoliday} from '../src/DameDast.Web/wwwroot/holidays.js';
 import {dateInMonth,jalaliParts} from '../src/DameDast.Web/wwwroot/calendar.js';
 
-test('seven categories yield seven columns and each transaction appears exactly once',()=>{
+test('seven categories yield seven groups and each transaction appears exactly once',()=>{
   const records=Array.from({length:21},(_,i)=>({id:String(i),data:{category:'category-'+(i%7),amount:i+1}}));
   const groups=groupTransactions(records,Array.from({length:7},(_,i)=>'category-'+i));
   assert.equal(groups.length,7);
@@ -14,14 +14,13 @@ test('seven categories yield seven columns and each transaction appears exactly 
   assert.equal(groups.reduce((sum,g)=>sum+g.records.reduce((n,r)=>n+r.data.amount,0),0),231);
   assert.equal(groupTransactions(records.filter(x=>x.data.category==='category-2')).length,1);
 });
-test('pins keep their order, reject a fourth pin and allow replacing one after unpinning',()=>{
+test('pins keep their order without a count limit and filter duplicate or unavailable menus',()=>{
   let pins=[];
-  for(const key of ['notes','calendar','transactions'])pins=togglePin(pins,key);
-  assert.throws(()=>togglePin(pins,'accounts'),/3/);
-  assert.deepEqual(pins,['notes','calendar','transactions']);
-  pins=togglePin(pins,'calendar');pins=togglePin(pins,'accounts');
+  for(const key of ['notes','calendar','transactions','accounts'])pins=togglePin(pins,key);
+  assert.deepEqual(pins,['notes','calendar','transactions','accounts']);
+  pins=togglePin(pins,'calendar');
   assert.deepEqual(pins,['notes','transactions','accounts']);
-  assert.deepEqual(validPins(['notes','notes','unknown','calendar','transactions','accounts'],['notes','calendar','transactions','accounts']),['notes','calendar','transactions']);
+  assert.deepEqual(validPins(['notes','notes','unknown','calendar','transactions','accounts'],['notes','calendar','transactions','accounts']),['notes','calendar','transactions','accounts']);
 });
 test('option search matches Persian and Arabic year digits and equivalent Persian letters',()=>{
   const options=[{text:'۱۴۰۵'},{text:'۱۴۰۶'},{text:'علي',hidden:false},{text:'hidden',hidden:true}];

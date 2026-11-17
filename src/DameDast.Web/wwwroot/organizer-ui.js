@@ -14,6 +14,17 @@ const button = (action, label, attrs = "", style = "secondary") =>
   `<button type="button" class="${style}" data-action="${action}" ${attrs}>${t(label)}</button>`;
 const title = (c, text) => esc(c.space === "demo" ? t(text) : text);
 const badge = (s) => `<span class="badge">${t(s)}</span>`;
+const noteIcon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${{
+  pin: '<path d="m9 3 6 0-1 6 4 4v2h-5v6l-2-3v-3H6v-2l4-4Z"/>',
+  edit: '<path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14Z"/>',
+  trash: '<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v6m4-6v6"/>',
+  canvas: '<path d="m4 17 11-11 3 3L7 20H4ZM14 7l3 3M4 4h7M4 8h3"/>',
+  list: '<path d="m3 5 2 2 3-3M11 6h10M3 12h4m4 0h10M3 18h4m4 0h10"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  pdf: '<path d="M14 3H5v18h14V8ZM14 3v6h5M8 14h8M8 17h6"/>',
+}[name]}</svg>`;
+const noteAction = (action, label, glyph, attrs = "") =>
+  `<button type="button" class="icon-button" data-action="${action}" aria-label="${esc(t(label))}" title="${esc(t(label))}" ${attrs}>${noteIcon(glyph)}</button>`;
 const pinnedButton = (r) =>
   button(
     "organizer-pin",
@@ -33,6 +44,18 @@ export function checklistRow(
 function taskRow(note, item, c) {
   return `<div class="checklist-item ${item.done ? "done" : ""}"><button type="button" role="checkbox" aria-checked="${!!item.done}" aria-label="${title(c, item.text)}" class="task-checkbox" data-action="todo-toggle" data-id="${note.id}" data-task-id="${item.id}">${item.done ? "✓" : ""}</button><span class="task-content"><span dir="auto">${title(c, item.text)}</span>${item.dueDate ? `<small class="task-due">${solarText(item.dueDate)}${item.dueTime ? ` · <bdi dir="ltr">${esc(item.dueTime)}</bdi>` : ""}</small>` : ""}</span></div>`;
 }
+function noteCard(c, r) {
+  const d = r.data, tasks = d.checklist || [],
+    open = tasks.filter(item => !item.done), completed = tasks.length - open.length;
+  return `<article class="note-card ${d.pinned ? "pinned" : ""}" data-note-open="${r.id}">
+    <button type="button" class="icon-button note-pin ${d.pinned ? "is-pinned" : ""}" data-action="organizer-pin" data-id="${r.id}" aria-pressed="${!!d.pinned}" aria-label="${t(d.pinned ? "Unpin" : "Pin")}" title="${t(d.pinned ? "Unpin" : "Pin")}">${noteIcon("pin")}</button>
+    ${d.whiteboardId ? `<button type="button" class="note-drawing-preview" data-action="canvas-open" data-id="${r.id}" aria-label="${t("Open canvas")}">${d.whiteboardPreview ? `<img src="${esc(d.whiteboardPreview)}" alt=""/>` : `<span class="whiteboard-placeholder">${t("Open canvas")} ↗</span>`}</button>` : !d.drawing ? "" : `<button type="button" class="note-drawing-preview" data-action="canvas-open" data-id="${r.id}" aria-label="${t("Open canvas")}">${drawingSvg(d.drawing, true)}</button>`}
+    <button type="button" class="note-open" data-action="edit" data-id="${r.id}" aria-label="${esc(t("Edit") + ": " + (c.space === "demo" ? t(d.title) : d.title))}"><span class="note-title" role="heading" aria-level="3" dir="auto">${title(c, d.title)}</span>${d.body ? `<span class="note-body" dir="auto">${title(c, d.body)}</span>` : ""}</button>
+    ${tasks.length ? `<div class="note-checklist">${open.slice(0, 6).map(item => taskRow(r, item, c)).join("")}${open.length > 6 ? `<button type="button" class="text-button note-more" data-action="edit" data-id="${r.id}">+${localizedNumber(open.length - 6)} ${t("More items")}</button>` : ""}${completed ? `<details class="note-completed"><summary>${localizedNumber(completed)} ${t("Completed items")}</summary>${tasks.filter(item => item.done).map(item => taskRow(r, item, c)).join("")}</details>` : ""}</div>` : ""}
+    ${notePdfLinks(r)}
+    <footer class="note-footer"><small>${solarText(d.updatedOn)}</small><div class="row-actions">${!d.drawing && !d.whiteboardId ? noteAction("canvas-open", "Add drawing", "canvas", `data-id="${r.id}"`) : ""}${noteAction("edit", "Edit", "edit", `data-id="${r.id}"`)}${noteAction("delete", "Delete", "trash", `data-id="${r.id}"`)}</div></footer>
+  </article>`;
+}
 function noteCards(c) {
   const notes = c.records
     .filter(
@@ -49,7 +72,10 @@ function noteCards(c) {
         Number(b.data.pinned) - Number(a.data.pinned) ||
         b.data.updatedOn.localeCompare(a.data.updatedOn),
     );
-  return `<div class="notes-grid">${notes.map((r) => `<article class="panel note-card ${r.data.pinned ? "pinned" : ""}"><div class="card-heading">${badge(r.data.pinned ? "Pinned" : "Note")}<small>${solarText(r.data.updatedOn)}</small></div><h2 dir="auto">${title(c, r.data.title)}</h2>${r.data.body ? `<p class="note-body" dir="auto">${title(c, r.data.body)}</p>` : ""}${r.data.whiteboardId ? `<button type="button" class="note-drawing-preview" data-action="canvas-open" data-id="${r.id}" aria-label="${t("Open canvas")}">${r.data.whiteboardPreview ? `<img src="${esc(r.data.whiteboardPreview)}" alt=""/>` : `<span class="whiteboard-placeholder">${t("Open canvas")} ↗</span>`}</button>` : ""}${!r.data.whiteboardId && r.data.drawing ? `<button type="button" class="note-drawing-preview" data-action="canvas-open" data-id="${r.id}" aria-label="${t("Open canvas")}">${drawingSvg(r.data.drawing, true)}</button>` : ""}${notePdfLinks(r)}${(r.data.checklist || []).length ? `<div class="note-checklist">${r.data.checklist.map((item) => taskRow(r, item, c)).join("")}</div>` : ""}<div class="card-foot">${pinnedButton(r)}<div class="row-actions">${!r.data.drawing && !r.data.whiteboardId ? button("canvas-open", "Add drawing", `data-id="${r.id}"`, "text-button") : ""}${button("edit", "Edit", `data-id="${r.id}"`, "text-button")}${button("delete", "Delete", `data-id="${r.id}"`, "text-button")}</div></div></article>`).join("") || `<section class="panel empty">${t("No notes yet.")}</section>`}</div>`;
+  if (!notes.length) return `<section class="panel empty">${t(c.filter ? "No matching notes." : "No notes yet.")}</section>`;
+  const pinned = notes.filter(r => r.data.pinned), others = notes.filter(r => !r.data.pinned);
+  const group = (label, items) => items.length ? `<section class="notes-section" aria-label="${t(label)}">${pinned.length ? `<h2 class="notes-section-title">${t(label)}</h2>` : ""}<div class="notes-grid ${c.notesView === "list" ? "notes-list" : ""}">${items.map(r => noteCard(c, r)).join("")}</div></section>` : "";
+  return group("Pinned", pinned) + group("Other notes", others);
 }
 function reminderCards(c) {
   return `<div class="cards-grid">${
@@ -93,7 +119,7 @@ export function organizerPage(c, renderGoals) {
   let content;
   if (tab === "notes" || tab === "canvas")
     content =
-      `<div class="notes-toolbar"><input id="search" type="search" value="${esc(c.filter)}" placeholder="${t("Search notes")}" aria-label="${t("Search notes")}">${c.page !== "canvas" ? button("note-pdf-add", "Add PDF", "", "secondary") : ""}</div>` +
+      `<div class="notes-toolbar"><input id="search" type="search" value="${esc(c.filter)}" placeholder="${t("Search notes")}" aria-label="${t("Search notes")}">${noteAction("notes-view", c.notesView === "list" ? "Grid view" : "List view", c.notesView === "list" ? "grid" : "list", `aria-pressed="${c.notesView === "list"}"`)}</div>${c.page !== "canvas" ? `<div class="note-composer"><button type="button" class="note-compose-start" data-action="add" data-kind="note">${t("Take a note…")}</button>${noteAction("note-list-add", "New list", "list")}${noteAction("canvas-add", "Add drawing", "canvas")}${noteAction("note-pdf-add", "Add PDF", "pdf")}</div>` : ""}` +
       noteCards(c);
   else if (tab === "tasks") {
     const tasks = report.tasks.filter(
@@ -107,7 +133,7 @@ export function organizerPage(c, renderGoals) {
     content = `<div class="organizer-summary"><strong>${localizedNumber(report.openTasks+calendarTasks.filter(r=>!r.data.done).length)}</strong><span>${t("Open tasks")}</span></div><section class="panel task-list">${tasks.map((x) => `<article>${taskRow(x.note, x.item, c)}<button type="button" class="text-button" data-action="edit" data-id="${x.note.id}" dir="auto">${title(c, x.note.data.title)}</button></article>`).join("") || `<div class="empty">${t("Add checklist tasks inside any note.")}</div>`}</section>${calendarTasks.length?`<section class="panel task-list"><h2>${t("Calendar tasks")}</h2>${calendarTasks.map(r=>`<article><span dir="auto">${esc(r.data.title)}</span><button class="text-button task-date" data-planner-action="open" data-id="${r.id}" data-date="${r.data.startDate}"><span>${solarText(r.data.startDate)}</span>${r.data.endDate !== r.data.startDate ? `<span>${solarText(r.data.endDate)}</span>` : ""}<span aria-hidden="true">↗</span></button></article>`).join("")}</section>`:""}`;
   } else if (tab === "reminders") content = reminderCards(c);
   else content = renderGoals();
-  return `<div class="page-heading"><div><h1>${t("Planner")}</h1><p class="small-note">${t("Notes, tasks, reminders and goals. Together.")}</p></div>${button(tab === "canvas" ? "canvas-add" : "add", tab === "canvas" ? "New canvas" : add, `data-kind="${kind}"`, "primary")}</div><nav class="organizer-tabs" aria-label="${t("Planner")}">${[
+  return `<div class="page-heading"><div><h1>${t(tab === "notes" ? "Notes" : "Planner")}</h1>${tab === "notes" ? "" : `<p class="small-note">${t("Notes, tasks, reminders and goals. Together.")}</p>`}</div>${button(tab === "canvas" ? "canvas-add" : "add", tab === "canvas" ? "New canvas" : add, `data-kind="${kind}"`, "primary")}</div><nav class="organizer-tabs" aria-label="${t("Planner")}">${[
     ["notes", "Notes"],
     ["canvas", "Handwritten notes"],
     ["calendar", "Calendar"],

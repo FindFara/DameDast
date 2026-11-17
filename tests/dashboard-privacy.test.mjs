@@ -24,14 +24,14 @@ test('dashboard defaults to masked figures, including chart tooltips, pinned goa
   for(const value of [987654321+87654321,87654321,123456789,456789123,345678])
     assert.equal(html.includes(localizedNumber(value)),false,`Leaked ${value}`);
   assert.match(html,/Show amounts/);
-  assert.match(html,/Income: ••••/);
+  assert.match(html,/Income: \*\*\*\*/);
 });
 test('showing figures reveals the same balances and hiding them again restores masking',()=>{
   const html=renderPage({...context,amountsVisible:true});
   for(const value of [987654321+87654321,87654321,123456789,456789123,345678])
     assert.ok(html.includes(localizedNumber(value)),`Missing ${value}`);
   assert.match(html,/Hide amounts/);
-  assert.equal(amountText(987654321,context),'••••');
+  assert.equal(amountText(987654321,context),'****');
 });
 test('dashboard masking does not conceal amounts on other pages or counts and dates',()=>{
   assert.equal(amountText(987654321,{page:'transactions',amountsVisible:false}),localizedNumber(987654321));

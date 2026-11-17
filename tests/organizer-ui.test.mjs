@@ -112,3 +112,34 @@ test("every pinned item appears on the dashboard, and notification times are Per
   const planner = navigationGroups.find((g) => g.items.includes("notes"));
   assert.deepEqual(planner.items, ["notes", "canvas", "calendar", "tasks", "reminders", "goals"]);
 });
+
+test("notes separate pins, filter checklist text, preserve attachments and support both views", () => {
+  setLanguage("en");
+  const notes = [false, true].map((pinned, i) => ({
+    id: `note-${i}`, kind: "note", data: {
+      title: `Note ${i}`, body: "A short note", pinned, updatedOn: "2026-11-16",
+      checklist: [{ id: `task-${i}`, text: "Buy milk", done: false }],
+      attachments: [{ id: `pdf-${i}`, name: "Receipt.pdf", size: 100 }],
+    },
+  }));
+  const html = renderPage({ ...base, page: "notes", records: notes });
+  assert.ok(html.indexOf('data-note-open="note-1"') < html.indexOf('data-note-open="note-0"'));
+  assert.match(html, /Take a note…/);
+  assert.match(html, /data-action="note-list-add"/);
+  assert.match(html, /data-pdf-open="pdf-0"/);
+  assert.match(html, /data-task-id="task-0"/);
+  const list = renderPage({ ...base, page: "notes", records: notes, notesView: "list", filter: "milk" });
+  assert.match(list, /notes-grid notes-list/);
+  assert.match(list, /Grid view/);
+  const empty = renderPage({ ...base, page: "notes", records: notes, filter: "missing" });
+  assert.match(empty, /No matching notes/);
+  assert.doesNotMatch(empty, /data-note-open/);
+});
+
+test("settings groups start closed and retain an explicitly opened group", () => {
+  const html = renderPage({ ...base, page: "settings" });
+  assert.doesNotMatch(html, /<details[^>]*\sopen(?:\s|>)/);
+  const opened = renderPage({ ...base, page: "settings", settingsGroupsOpen: { calendar: true } });
+  assert.match(opened, /data-setting-group="calendar" open/);
+  assert.doesNotMatch(opened, /data-setting-group="appearance" open/);
+});

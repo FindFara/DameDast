@@ -59,7 +59,6 @@ const fa = {
   "Pin menu": "پین کردن منو",
   "Unpin menu": "برداشتن پین",
   "Pinned menus": "منوهای پین‌شده",
-  "Pin up to 3 menus.": "حداکثر سه منو را می‌توان پین کرد.",
   "Search options": "جست‌وجو در گزینه‌ها",
   "Choose an option": "انتخاب گزینه",
   "No matching options": "گزینه‌ای پیدا نشد",
@@ -1173,3 +1172,14 @@ Object.assign(fa, {
 });
 
 Object.assign(fa, { 'Zoom in': 'بزرگ‌نمایی', 'Zoom out': 'کوچک‌نمایی', 'Quick actions': 'دسترسی سریع' });
+
+Object.assign(fa, {
+  'Other notes': 'سایر یادداشت‌ها',
+  'Grid view': 'نمای شبکه‌ای',
+  'List view': 'نمای لیستی',
+  'Take a note…': 'یادداشت بنویس…',
+  'New list': 'چک‌لیست جدید',
+  'More items': 'مورد دیگر',
+  'Completed items': 'مورد انجام‌شده',
+  'No matching notes.': 'یادداشتی پیدا نشد.',
+});

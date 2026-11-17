@@ -382,7 +382,7 @@ function transactions(c) {
   return `${pageHeading(c, "Transactions", "transaction")}<div class="toolbar"><label class="search-field"><span class="sr-only">${t("Search transactions")}</span><input id="search" type="search" placeholder="${t("Search")}" value="${esc(c.filter)}" aria-label="${t("Search transactions")}"></label><select id="type-filter" aria-label="${t("Type")}"><option value="">${t("All types")}</option>${["expense", "income", "transfer"].map((type) => `<option value="${type}" ${c.typeFilter === type ? "selected" : ""}>${t({ expense: "Expense", income: "Income", transfer: "Transfer" }[type])}</option>`).join("")}</select>${actionButton("csv", "Export CSV")}</div>${panel("Transactions", list.length ? transactionBoard(c,list,{icon,categoryTitle,accountName,dataText,categoryOrder:categoryList(c.records,categories).map(x=>x.id)}) : empty("No transactions","transaction"), `<span class="badge">${money(list.length)}</span>`)}`;
 }
 function accounts(c) {
-  return `${pageHeading(c, "Accounts", "account")}<div class="cards-grid">${kind(
+  return `${pageHeading(c, "Accounts", "account")}<div class="cards-grid compact-finance-grid">${kind(
     c,
     "account",
   )
@@ -396,10 +396,10 @@ function accounts(c) {
 }
 function budgets(c) {
   const list = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Budgets", "budget")}<div class="cards-grid">${list.map((b) => `<article class="panel">${progress(c, b)}<div class="card-foot"><span>${t("Month")} ${esc(b.data.calendar === "persian" ? monthText(b.data.month) : solarText(budgetBounds(b.data).start) + " – " + solarText(new Date(Date.parse(budgetBounds(b.data).end + "T12:00:00Z") - 86400000).toISOString().slice(0, 10)))}</span><div class="row-actions"><button class="icon-button" data-action="edit" data-id="${b.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${b.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></div></article>`).join("")}${!list.length ? empty("No budgets", "budget") : ""}</div><p class="small-note">${t("Solar Hijri calendar")}</p>`;
+  return `${pageHeading(c, "Budgets", "budget")}<div class="cards-grid compact-finance-grid">${list.map((b) => `<article class="panel">${progress(c, b)}<div class="card-foot"><span>${t("Month")} ${esc(b.data.calendar === "persian" ? monthText(b.data.month) : solarText(budgetBounds(b.data).start) + " – " + solarText(new Date(Date.parse(budgetBounds(b.data).end + "T12:00:00Z") - 86400000).toISOString().slice(0, 10)))}</span><div class="row-actions"><button class="icon-button" data-action="edit" data-id="${b.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${b.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></div></article>`).join("")}${!list.length ? empty("No budgets", "budget") : ""}</div><p class="small-note">${t("Solar Hijri calendar")}</p>`;
 }
 function goals(c, embedded = false) {
-  return `${embedded ? "" : pageHeading(c, "Savings goals", "goal")}<div class="cards-grid">${kind(
+  return `${embedded ? "" : pageHeading(c, "Savings goals", "goal")}<div class="cards-grid compact-finance-grid">${kind(
     c,
     "goal",
   )
