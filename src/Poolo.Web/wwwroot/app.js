@@ -101,6 +101,7 @@ import {
 
 const $ = (selector) => document.querySelector(selector);
 let connectedFilter = "all";
+let dashboardAmountsVisible = false;
 let assetKey = "",
   assetPeriod = 30,
   assetCurves = {},
@@ -179,6 +180,7 @@ const numInput = (value) =>
     .replace(/[,٬\s]/g, "")
     .replace(/٫/g, ".");
 const context = () => ({
+  amountsVisible: dashboardAmountsVisible,
   workbenchSettingsOpen,
   workbenchEditing: desk.editing,
   planner: planner.state,
@@ -442,6 +444,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
   }
   editing = id ? records().find((r) => r.id === id) : null;
   editorKind = kind;
+  $("#editor").dataset.editorKind = kind;
   if (kind === "transaction")
     movementType = type || editing?.data.type || "expense";
   $("#dialog-title").textContent = editing
@@ -1435,6 +1438,12 @@ async function onAction(event) {
   const element = event.target.closest("[data-action]");
   if (!element) return;
   const { action, id, kind } = element.dataset;
+  if (action === "dashboard-privacy") {
+    dashboardAmountsVisible = !dashboardAmountsVisible;
+    render();
+    $('[data-action="dashboard-privacy"]')?.focus();
+    return;
+  }
   if (action === "plan-row-add") {
     event.preventDefault();
     if (document.querySelectorAll("[data-plan-row]").length >= 30)

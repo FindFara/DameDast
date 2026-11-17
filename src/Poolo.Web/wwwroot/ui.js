@@ -1,3 +1,4 @@
+import { amountText, amountsHidden } from "./privacy.js";
 import {settingsPage} from "./settings-ui.js";
 import {plannerPage} from "./planner-ui.js";
 import { workbenchPage } from "./workbench-ui.js";
@@ -139,6 +140,8 @@ export const sections = {
 };
 const extraIcons = {
   plus: '<path d="M12 5v14M5 12h14"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.4 4.4M6.2 6.2A21 21 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"/>',
   moon: '<path d="M20 14A8.5 8.5 0 0 1 10 4 8.5 8.5 0 1 0 20 14Z"/>',
   refresh:
@@ -177,8 +180,8 @@ const categoryGlyph = {
   "Other income": "income",
   Other: "wallet",
 };
-export const number = (value, decimals = 0) =>
-  `<bdi class="number" dir="ltr">${localizedNumber(value, decimals)}</bdi>`;
+export const number = (value, decimals = 0, context) =>
+  `<bdi class="number" dir="ltr"${amountsHidden(context) ? ` aria-label="${t("Amount hidden")}"` : ""}>${amountText(value, context, decimals)}</bdi>`;
 const pct = (value) =>
   `<bdi class="number" dir="ltr">${percentage(value)}</bdi>`;
 const unit = () => `<span class="unit">${t("toman")}</span>`;
@@ -208,13 +211,13 @@ const monthPicker = (month) => monthControl(month, "month", true);
 const empty = (text, kind) =>
   `<div class="empty"><span class="empty-mark">${icon(kind === "installment" ? "installments" : kind === "locked" ? "locked" : "wallet")}</span><p>${t(text)}</p>${kind ? actionButton("add", addNames[kind], `data-kind="${kind}"`) : ""}</div>`;
 function pageHeading(c, title, kind = null) {
-  return `<div class="page-heading"><h1>${t(title)}</h1><div class="heading-actions">${["overview", "transactions", "budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : ""}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
+  return `<div class="page-heading"><h1>${t(title)}</h1><div class="heading-actions">${c.page === "overview" ? `<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>` : ""}${["overview", "transactions", "budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : ""}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
 }
 function panel(title, content, link = "") {
   return `<section class="panel"><div class="panel-head"><h2>${t(title)}</h2>${link}</div>${content}</section>`;
 }
-function amountCard(label, value, style = "", foot = "") {
-  return `<article class="stat-card ${style}"><div class="stat-top"><span>${t(label)}</span><span class="stat-icon">${icon(label === "Income" ? "income" : label === "Spending" ? "expense" : "wallet")}</span></div><div class="amount">${number(value)}${unit()}</div>${foot ? `<div class="stat-foot">${foot}</div>` : ""}</article>`;
+function amountCard(label, value, style = "", foot = "", context) {
+  return `<article class="stat-card ${style}"><div class="stat-top"><span>${t(label)}</span><span class="stat-icon">${icon(label === "Income" ? "income" : label === "Spending" ? "expense" : "wallet")}</span></div><div class="amount">${number(value, 0, context)}${unit()}</div>${foot ? `<div class="stat-foot">${foot}</div>` : ""}</article>`;
 }
 export function renderPage(c) {
   const views = {
@@ -290,7 +293,7 @@ function cashChart(c) {
       });
     }
   const max = Math.max(1, ...slots.flatMap((s) => [s.income, s.expense]));
-  return `<div class="chart-legend"><span><i class="dot"></i>${t("Income")}</span><span><i class="dot faded"></i>${t("Spending")}</span></div><div class="cash-chart" dir="ltr" role="img" aria-label="${t("Cash flow")}">${slots.map((s) => `<div class="bar-group"><div class="bar" style="height:${Math.max(1, (s.income / max) * 100)}%" title="${t("Income")}: ${money(s.income)}"></div><div class="bar expense" style="height:${Math.max(1, (s.expense / max) * 100)}%" title="${t("Spending")}: ${money(s.expense)}"></div><span class="chart-label">${esc(s.label)}</span></div>`).join("")}</div>`;
+  return `<div class="chart-legend"><span><i class="dot"></i>${t("Income")}</span><span><i class="dot faded"></i>${t("Spending")}</span></div><div class="cash-chart" dir="ltr" role="img" aria-label="${t("Cash flow")}">${slots.map((s) => `<div class="bar-group"><div class="bar" style="height:${Math.max(1, (s.income / max) * 100)}%" title="${t("Income")}: ${amountText(s.income, c)}"></div><div class="bar expense" style="height:${Math.max(1, (s.expense / max) * 100)}%" title="${t("Spending")}: ${amountText(s.expense, c)}"></div><span class="chart-label">${esc(s.label)}</span></div>`).join("")}</div>`;
 }
 function categoryTotals(c) {
   return categoryList(c.records, categories)
@@ -316,7 +319,7 @@ function donut(c) {
         })
         .join(",")
     : "var(--track) 0% 100%";
-  return `<div class="donut-wrap"><div class="donut" style="--ring:conic-gradient(${ring})"><div class="donut-center">${number(sum)}<small>${t("toman")}</small></div></div><div class="category-list">${
+  return `<div class="donut-wrap"><div class="donut" style="--ring:conic-gradient(${ring})"><div class="donut-center">${number(sum, 0, c)}<small>${t("toman")}</small></div></div><div class="category-list">${
     list.length
       ? list
           .slice(0, 5)
@@ -330,12 +333,12 @@ function donut(c) {
 }
 function movementList(c, list, full = false) {
   if (!list.length) return empty("No transactions", "transaction");
-  return `<div class="movement-list">${list.map((r) => `<article class="movement-row"><span class="category-icon ${r.data.type}">${icon(r.data.type === "transfer" ? "transactions" : categoryGlyph[r.data.category])}</span><div class="movement-description"><strong dir="auto">${dataText(c, r.data.note || categoryTitle(c, r.data.category))}</strong><small><bdi dir="auto">${dataText(c, accountName(c, r.data.accountId))}</bdi><span class="separator">·</span>${esc(categoryTitle(c, r.data.category))}</small></div><div class="movement-amount"><bdi class="number ${r.data.type === "income" ? "positive" : r.data.type === "expense" ? "negative" : ""}" dir="ltr">${r.data.type === "income" ? "+" : r.data.type === "expense" ? "−" : ""}${money(r.data.amount)}</bdi><small>${dateText(r.data.date)}</small></div>${full ? `<div class="row-actions"><button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div>` : ""}</article>`).join("")}</div>`;
+  return `<div class="movement-list">${list.map((r) => `<article class="movement-row"><span class="category-icon ${r.data.type}">${icon(r.data.type === "transfer" ? "transactions" : categoryGlyph[r.data.category])}</span><div class="movement-description"><strong dir="auto">${dataText(c, r.data.note || categoryTitle(c, r.data.category))}</strong><small><bdi dir="auto">${dataText(c, accountName(c, r.data.accountId))}</bdi><span class="separator">·</span>${esc(categoryTitle(c, r.data.category))}</small></div><div class="movement-amount"><bdi class="number ${r.data.type === "income" ? "positive" : r.data.type === "expense" ? "negative" : ""}" dir="ltr">${r.data.type === "income" ? "+" : r.data.type === "expense" ? "−" : ""}${amountText(r.data.amount, c)}</bdi><small>${dateText(r.data.date)}</small></div>${full ? `<div class="row-actions"><button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div>` : ""}</article>`).join("")}</div>`;
 }
 function progress(c, b) {
   const spent = spentForBudget(c.records, b),
     percent = (spent / b.data.limit) * 100;
-  return `<div class="budget-progress"><div class="progress-heading"><strong>${esc(categoryTitle(c, b.data.category))}</strong>${pct(percent)}</div><div class="progress-track"><div class="progress-fill ${percent > 100 ? "over" : ""}" style="width:${Math.min(percent, 100)}%"></div></div><div class="progress-detail"><span>${number(spent)}</span><span>${number(b.data.limit)} ${t("toman")}</span></div></div>`;
+  return `<div class="budget-progress"><div class="progress-heading"><strong>${esc(categoryTitle(c, b.data.category))}</strong>${pct(percent)}</div><div class="progress-track"><div class="progress-fill ${percent > 100 ? "over" : ""}" style="width:${Math.min(percent, 100)}%"></div></div><div class="progress-detail"><span>${number(spent, 0, c)}</span><span>${number(b.data.limit, 0, c)} ${t("toman")}</span></div></div>`;
 }
 function dueBanner(c) {
   const list = kind(c, "installment")
@@ -354,7 +357,7 @@ function overview(c) {
       0,
     ),
     budget = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Overview", "transaction")}${dueBanner(c)}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"))}${amountCard("Income", total.income, "", t("This month"))}${amountCard("Spending", total.expense, "", t("This month"))}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
+  return `${pageHeading(c, "Overview", "transaction")}${dueBanner(c)}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
     "Budgets",
     budget.length
       ? budget
@@ -481,7 +484,7 @@ function quoteCards(c, compact = false, list = null) {
           q &&
           (Date.now() - Date.parse(q.asOf) > 7200000 ||
             c.marketData?.issues?.[i.symbol]);
-      return `<button type="button" class="market-card ${!compact && c.marketSymbol === i.symbol ? "selected" : ""}" data-action="${compact ? "market-open" : "market-symbol"}" data-symbol="${i.symbol}" aria-label="${esc(marketName(i))}" ${!compact ? `aria-pressed="${c.marketSymbol === i.symbol}"` : ""}><div class="quote-heading"><span class="market-token token-${i.symbol}" aria-hidden="true">${esc(i.glyph)}</span><strong dir="auto">${esc(marketName(i))}</strong>${q && q.changePercent !== null && q.priceKind !== "nav" ? `<bdi class="quote-change ${q.changePercent < 0 ? "negative" : "positive"}" dir="ltr">${q.changePercent > 0 ? "+" : ""}${localizedNumber(q.changePercent, 2)}${isRtl() ? "٪" : "%"}</bdi>` : ""}</div><div class="quote-value">${q ? number(q.price, i.priceKind === "close" || i.priceKind === "nav" ? 1 : i.unit.startsWith("USD") ? (q.price < 1 ? 6 : q.price < 10 ? 4 : 2) : 0) : `<span class="skeleton-value">${c.marketLoading ? "···" : "—"}</span>`}</div><div class="quote-foot"><span>${t(i.unit)}</span>${q ? `<time datetime="${q.asOf}">${quoteTime(q.asOf)}</time>` : ""}</div>${compact ? "" : `<div class="quote-source"><span>${t(i.priceKind === "nav" ? "Redemption NAV" : i.priceKind === "close" ? "Closing price" : delayed ? "Delayed" : "Spot price")}</span><small class="${q ? (delayed ? "delayed" : "") : "negative"}">${q ? (delayed ? t("Last known") : q.source) : t(i.priceKind === "nav" ? "NAV unavailable" : "Unavailable")}</small></div>`}</button>`;
+      return `<button type="button" class="market-card ${!compact && c.marketSymbol === i.symbol ? "selected" : ""}" data-action="${compact ? "market-open" : "market-symbol"}" data-symbol="${i.symbol}" aria-label="${esc(marketName(i))}" ${!compact ? `aria-pressed="${c.marketSymbol === i.symbol}"` : ""}><div class="quote-heading"><span class="market-token token-${i.symbol}" aria-hidden="true">${esc(i.glyph)}</span><strong dir="auto">${esc(marketName(i))}</strong>${q && q.changePercent !== null && q.priceKind !== "nav" ? `<bdi class="quote-change ${q.changePercent < 0 ? "negative" : "positive"}" dir="ltr">${q.changePercent > 0 ? "+" : ""}${localizedNumber(q.changePercent, 2)}${isRtl() ? "٪" : "%"}</bdi>` : ""}</div><div class="quote-value">${q ? number(q.price, i.priceKind === "close" || i.priceKind === "nav" ? 1 : i.unit.startsWith("USD") ? (q.price < 1 ? 6 : q.price < 10 ? 4 : 2) : 0, c) : `<span class="skeleton-value">${c.marketLoading ? "···" : "—"}</span>`}</div><div class="quote-foot"><span>${t(i.unit)}</span>${q ? `<time datetime="${q.asOf}">${quoteTime(q.asOf)}</time>` : ""}</div>${compact ? "" : `<div class="quote-source"><span>${t(i.priceKind === "nav" ? "Redemption NAV" : i.priceKind === "close" ? "Closing price" : delayed ? "Delayed" : "Spot price")}</span><small class="${q ? (delayed ? "delayed" : "") : "negative"}">${q ? (delayed ? t("Last known") : q.source) : t(i.priceKind === "nav" ? "NAV unavailable" : "Unavailable")}</small></div>`}</button>`;
     })
     .join("")}</div>`;
 }
@@ -665,7 +668,7 @@ export function editorFields(
         )
         .join("")}</div>` +
       moneyField("Amount (toman)", "amount", d.amount || "") +
-      `<div class="field-grid">${selectField("From account", "accountId", accountsList, d.accountId || accountsList[0]?.[0], false)}${selectField("To account", "destinationId", accountsList, d.destinationId || accountsList[1]?.[0] || accountsList[0]?.[0], false)}</div><div class="field-grid">${selectField(
+      `<div class="field-grid">${selectField("From account", "accountId", accountsList, d.accountId || accountsList[0]?.[0], false)}${selectField("To account", "destinationId", accountsList, d.destinationId || accountsList[1]?.[0] || accountsList[0]?.[0], false)}</div><div class="transaction-details">${selectField(
         "Category",
         "category",
         categoryOptions,

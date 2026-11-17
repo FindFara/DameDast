@@ -1,3 +1,4 @@
+import { calendarEditorFields } from "./calendar-editor-ui.js";
 import { preferences, savePreferences } from "./preferences.js";
 import { t, getLanguage } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
@@ -142,7 +143,11 @@ export class PlannerController {
         ? dateControl(label, name, value, required)
         : `<label class="field">${t(label)}<input type="date" name="${name}" value="${value || ""}" min="2000-01-01" max="2100-12-31" ${required ? "required" : ""}><small>${value ? solarText(value) : ""}</small></label>`;
     const dialog = document.querySelector("#calendar-dialog");
-    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">×</button></div><div class="calendar-fields">${jump ? dateField("Date", "date", this.state.date) : `<label class="field">${t("Title")}<input name="title" value="${esc(d.title)}" maxlength="120" required dir="auto"></label>${task ? "" : `<label class="field">${t("Type")}<select name="kind">${["event", "task"].map((k) => `<option value="${k}" ${k === d.kind ? "selected" : ""}>${t(k === "task" ? "Task" : "Event")}</option>`).join("")}</select></label>`}<div class="calendar-field-pair">${dateField("Start date", "startDate", d.startDate)}${task ? "" : dateField("End date", "endDate", d.endDate)}</div><label class="checkbox-field"><input type="checkbox" name="allDay" ${d.allDay ? "checked" : ""}>${t("All day")}</label><div class="calendar-field-pair" data-time-fields><label class="field">${t("Start time")}<input type="time" name="startTime" value="${d.startTime}" required></label>${task ? "" : `<label class="field">${t("End time")}<input type="time" name="endTime" value="${d.endTime}" required></label>`}</div>${task ? "" : `<label class="field">${t("Description")}<textarea name="description" maxlength="4000" rows="3" dir="auto">${esc(d.description)}</textarea></label><div class="calendar-field-pair"><label class="field">${t("Repeat")}<select name="repeat">${["none", "daily", "weekly", "monthly"].map((r) => `<option value="${r}" ${r === d.repeat ? "selected" : ""}>${t({ none: "Does not repeat", daily: "Daily", weekly: "Weekly", monthly: "Monthly" }[r])}</option>`).join("")}</select></label>${dateField("Repeat until", "repeatUntil", d.repeatUntil, false)}</div><p class="small-note">${t("Monthly repeats follow the calendar chosen when the event is created. Editing changes the entire series.")}</p><label class="field">${t("Color")}<select name="color">${eventColors.map((color, i) => `<option value="${color}" ${color === d.color ? "selected" : ""}>${t(["Sage", "Blue", "Purple", "Gold", "Rose", "Teal"][i])}</option>`).join("")}</select></label>`}<label class="checkbox-field"><input name="done" type="checkbox" ${(d.repeat === "none" ? d.done : d.completedDates?.includes(preset.occurrence)) ? "checked" : ""}>${t("Completed")}${d.repeat !== "none" ? " · " + t("This occurrence") : ""}</label>`}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
+    const fields = jump ? dateField("Date", "date", this.state.date) : calendarEditorFields({
+      ...d,
+      completedForEditor: d.repeat === "none" ? d.done : d.completedDates?.includes(preset.occurrence),
+    }, dateField, !!task);
+    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">×</button></div><div class="calendar-fields">${fields}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
     const form = dialog.querySelector("form"),
       toggle = () => {
         if (jump) return;
@@ -151,9 +156,17 @@ export class PlannerController {
         for (const e of form.querySelectorAll("[data-time-fields] input"))
           e.required = !form.elements.allDay.checked;
       };
+    const toggleRepeat = () => {
+      const until = form.querySelector("[data-repeat-until]");
+      if (!until) return;
+      until.hidden = form.elements.repeat.value === "none";
+      until.querySelectorAll("input,select").forEach(input => input.disabled = until.hidden);
+    };
     toggle();
+    toggleRepeat();
     form.addEventListener("change", (event) => {
       if (event.target.name === "allDay") toggle();
+      if (event.target.name === "repeat") toggleRepeat();
     });
     dialog
       .querySelectorAll("[data-close]")
@@ -207,7 +220,7 @@ export class PlannerController {
             done: !!values.done,
             color: values.color,
             repeat: values.repeat,
-            repeatUntil: values.repeatUntil || null,
+            repeatUntil: values.repeat === "none" ? null : values.repeatUntil || null,
           };
           if (next.repeat !== "none") {
             next.done = false;

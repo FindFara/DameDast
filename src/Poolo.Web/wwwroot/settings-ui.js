@@ -27,7 +27,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${row("Show on calendar", "Choose which items appear on your calendar. This choice is saved on this device.", `<div class="calendar-visibility-options" role="group" aria-label="${t("Show on calendar")}">${calendarVisibilityOptions.map(([kind, label]) => `<label class="planner-filter"><input type="checkbox" data-calendar-item="${kind}" ${p.calendarItems.includes(kind) ? "checked" : ""}><span class="kind-dot kind-${kind}"></span>${t(label)}</label>`).join("")}</div>`)}
  <a class="holiday-source" href="${holidayData.source}" target="_blank" rel="noopener noreferrer">${t("Holiday source")} · ${holidayData.years.join(" · ")}</a>
  </section>
- <section class="panel"><h2>${t("Data and devices")}</h2>
+ <section class="panel data-settings"><h2>${t("Data and devices")}</h2>
  ${row("Sign in / sign up", "Google identifies your account; records and drawings sync to your app server.", button(c.space.startsWith("google:") ? "sync" : c.session.authenticated ? "workspace-google" : "google", c.space.startsWith("google:") ? "Sync" : c.session.authenticated ? "Open Google workspace" : "Sign in / sign up"))}
  ${c.space.startsWith("google:") ? row("Pending changes", "Changes waiting to be accepted by the server.", button("review-pending", "Review pending")) + row("Guest data", "Copy local records into your signed-in workspace.", button("migrate-guest", "Import")) : ""}
  <details class="backup-settings"><summary>${t("Backups")}</summary>

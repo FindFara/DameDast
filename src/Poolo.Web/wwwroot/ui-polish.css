@@ -1,0 +1,206 @@
+/* Quiet surfaces shared by the app and its embedded canvas. */
+:root {
+  --bg: #e8ede8;
+  --surface: #f0f2ec;
+  --surface-raised: #f4f5ef;
+  --surface-soft: #e7ece4;
+  --border: #d5ded4;
+  --track: #dfe7dc;
+  --accent-soft: #dfeade;
+}
+:root[data-theme="dark"] {
+  --bg: #1b2426;
+  --surface: #252f30;
+  --surface-raised: #2c3737;
+  --surface-soft: #293636;
+  --ink: #d9e2d9;
+  --muted: #a8b8af;
+  --border: #3b4945;
+  --accent: #92bca6;
+  --accent-hover: #a6cab6;
+  --accent-soft: #30443b;
+  --track: #364740;
+}
+.amounts-toggle { flex-shrink: 0; }
+.amounts-toggle[aria-pressed="false"] { color: var(--muted); }
+.amounts-toggle svg { width: 22px; height: 22px; }
+.create-plus {
+  width: 27px;
+  height: 27px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  transition: transform .18s ease;
+}
+[data-create-toggle][aria-expanded="true"] .create-plus { transform: rotate(45deg); }
+.create-launcher-floating > button { box-shadow: 0 5px 18px #203a2b25; }
+@keyframes create-radial-open {
+  from { opacity: 0; transform: translate(-50%, -50%) translate(var(--radial-x), var(--radial-y)) scale(.9); }
+  to { opacity: 1; transform: translate(-50%, -50%) translate(var(--radial-x), var(--radial-y)) scale(1); }
+}
+body:has(dialog[open]) #global-create { visibility: hidden; }
+#editor,
+#calendar-dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--surface) !important;
+  backdrop-filter: blur(18px) !important;
+  scrollbar-gutter: stable;
+}
+#editor form,
+#editor #dialog-fields,
+#calendar-dialog form,
+.calendar-fields,
+.calendar-field-pair > *,
+.field-grid > *,
+.transaction-details > * { min-width: 0; max-width: 100%; }
+#editor [hidden],
+#calendar-dialog [hidden] { display: none !important; }
+#editor .field,
+#calendar-dialog .field {
+  min-width: 0;
+  max-width: 100%;
+  margin-block: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  gap: 8px;
+}
+#dialog-fields { display: grid; gap: 18px; }
+#dialog-fields > .type-switch { margin-block: 0 4px; }
+#editor .field-grid,
+#calendar-dialog .calendar-field-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+#editor .transaction-details,
+.editor-more-fields { display: grid; gap: 18px; }
+#editor .field-grid:has(> [hidden]) { grid-template-columns: minmax(0, 1fr); }
+#editor :is(input, select, textarea),
+#calendar-dialog :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+}
+#editor .field :is(input, select),
+#calendar-dialog .field :is(input, select) {
+  width: 100%;
+  height: 46px;
+  padding-block: 10px;
+  box-sizing: border-box;
+}
+#editor .solar-date,
+#calendar-dialog .solar-date { display: block; border: 0; margin: 0; padding: 0; }
+.solar-date > legend { float: none; padding: 0; margin-block-end: 8px; line-height: 21px; }
+#editor .solar-date > div,
+#calendar-dialog .solar-date > div {
+  display: grid;
+  grid-template-columns: minmax(0, .65fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+#editor .solar-date select,
+#calendar-dialog .solar-date select,
+.solar-month select {
+  width: 100%;
+  padding-inline: 7px 24px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23819485' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 4.5 3 3 3-3'/%3E%3C/svg%3E") !important;
+  background-position: right 7px center !important;
+  background-size: 12px !important;
+  text-overflow: clip;
+}
+html[dir="rtl"] :is(#editor, #calendar-dialog) .solar-date select,
+html[dir="rtl"] .solar-month select {
+  padding-inline: 7px 24px !important;
+  background-position: left 7px center !important;
+}
+.date-preview {
+  display: block;
+  min-height: 20px;
+  margin-block-start: 7px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+#calendar-dialog .calendar-dates { grid-template-columns: minmax(0, 1fr); }
+#calendar-dialog .calendar-recurrence { grid-template-columns: minmax(0, 1fr); }
+.calendar-fields { gap: 18px; }
+.calendar-fields > .checkbox-field { margin-block: 0; }
+.editor-more { border: 1px solid var(--border); border-radius: 14px; padding: 0 15px; }
+.editor-more > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  list-style: none;
+}
+.editor-more > summary::after { content: "+"; margin-inline-start: auto; font-size: 20px; color: var(--muted); }
+.editor-more[open] > summary::after { content: "−"; }
+.editor-more > summary > span { font-size: 12px; font-weight: 400; color: var(--muted); }
+.editor-more-fields { padding-block: 4px 16px; }
+.editor-more-fields > .checkbox-field { margin-block: 0; }
+:is(#editor, #calendar-dialog) .dialog-actions {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block-start: 22px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--border);
+  background: none;
+}
+.settings-page .data-settings .setting-row { border-block: 0; }
+.settings-page .backup-settings { border: 0; box-shadow: none; }
+.settings-page .backup-settings > summary { padding-block: 12px; }
+.task-list article { flex-wrap: wrap; min-width: 0; }
+.task-list .task-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: start;
+  font-size: 13px;
+}
+.task-date > span { overflow-wrap: anywhere; }
+.task-content { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.task-due { display: block; color: var(--muted); font-size: 12px; line-height: 1.7; }
+/* Remove only the canvas library/catalogue entry points; keep drawing and search. */
+.excalidraw .default-sidebar-trigger,
+.excalidraw .library-menu-browse-button { display: none !important; }
+.wb-app {
+  --wb-panel: #f0f2ec;
+  --wb-ink: #344238;
+  --wb-border: #d5ded4;
+  background: #e8ede8;
+}
+.wb-app[data-theme="dark"] {
+  --wb-panel: #252f30;
+  --wb-ink: #d9e2d9;
+  --wb-border: #3b4945;
+  background: #1b2426;
+}
+@media (max-width: 600px) {
+  #editor, #calendar-dialog { padding: 20px 16px; scrollbar-gutter: auto; }
+  #editor .field-grid,
+  #calendar-dialog .calendar-field-pair { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .task-list .task-date { flex-basis: 100%; padding-inline: 0; justify-content: flex-start; }
+  .page-heading .heading-actions { min-width: 0; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .create-plus { transition: none; }
+}

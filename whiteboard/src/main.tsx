@@ -1,3 +1,4 @@
+import "./library-policy";
 import { embedDocumentFont } from "./svg-font";
 import React, {
   useState,

@@ -1,3 +1,5 @@
+> UI update: dashboard amounts start hidden with an eye toggle, simpler task forms, aligned date controls, matte themes, and no canvas Libraries entry.
+
 # DameDast · دمِ دست
 
 Complete source: ASP.NET Core 10 backend, current web/PWA frontend, React/TypeScript whiteboard, browser extension, tests and Docker deployment.

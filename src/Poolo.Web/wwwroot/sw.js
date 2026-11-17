@@ -1,8 +1,12 @@
-const CACHE = "poolo-shell-v39";
+const CACHE = "poolo-shell-v42";
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
+  "/ui-polish.css",
+  "/privacy.js",
+  "/calendar-editor-ui.js",
+  "/canvas-policy.js",
   "/app.js",
   "/store.js",
   "/finance.js",

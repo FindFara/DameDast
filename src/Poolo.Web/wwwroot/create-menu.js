@@ -7,7 +7,7 @@ const choices = [
 ];
 
 export function createLauncher() {
-  return `<div class="create-launcher create-launcher-floating"><button type="button" id="mobile-add" class="primary" aria-label="${t("Create")}" data-create-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="quick-create-menu"><span class="create-plus" aria-hidden="true">+</span></button><div class="create-fan" id="quick-create-menu" role="menu" aria-label="${t("Create")}" hidden>${choices.map(([kind, label, path], i) => `<button type="button" class="create-choice create-choice-${i}" role="menuitem" aria-label="${t(label)}" data-quick-create="${kind}"><span><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span></button>`).join("")}</div></div>`;
+  return `<div class="create-launcher create-launcher-floating"><button type="button" id="mobile-add" class="primary" aria-label="${t("Create")}" data-create-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="quick-create-menu"><svg class="create-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><div class="create-fan" id="quick-create-menu" role="menu" aria-label="${t("Create")}" hidden>${choices.map(([kind, label, path], i) => `<button type="button" class="create-choice create-choice-${i}" role="menuitem" aria-label="${t(label)}" data-quick-create="${kind}"><span><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span></button>`).join("")}</div></div>`;
 }
 
 export class CreateMenuController {

@@ -578,3 +578,19 @@ button:focus-visible {
   visibility: hidden;
   pointer-events: none;
 }
+
+/* Remove only the canvas library/catalogue entry points; keep drawing and search. */
+.excalidraw .default-sidebar-trigger,
+.excalidraw .library-menu-browse-button { display: none !important; }
+.wb-app {
+  --wb-panel: #f0f2ec;
+  --wb-ink: #344238;
+  --wb-border: #d5ded4;
+  background: #e8ede8;
+}
+.wb-app[data-theme="dark"] {
+  --wb-panel: #252f30;
+  --wb-ink: #d9e2d9;
+  --wb-border: #3b4945;
+  background: #1b2426;
+}
