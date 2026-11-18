@@ -1,4 +1,4 @@
-import { transactionBoard } from "./transaction-board.js";
+import { transactionBoard, filterTransactions } from "./transaction-board.js";
 import { amountText, amountsHidden } from "./privacy.js";
 import {settingsPage} from "./settings-ui.js";
 import {plannerPage} from "./planner-ui.js";
@@ -218,7 +218,7 @@ const monthPicker = (month) => monthControl(month, "month", true);
 const empty = (text, kind) =>
   `<div class="empty"><span class="empty-mark">${icon(kind === "installment" ? "installments" : kind === "locked" ? "locked" : "wallet")}</span><p>${t(text)}</p>${kind ? actionButton("add", addNames[kind], `data-kind="${kind}"`) : ""}</div>`;
 function pageHeading(c, title, kind = null) {
-  return `<div class="page-heading"><h1>${t(title)}</h1><div class="heading-actions">${c.page === "overview" ? `<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>` : ""}${["overview", "transactions", "budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : ""}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
+  return `<div class="page-heading"><h1>${t(title)}</h1><div class="heading-actions">${c.page === "overview" ? `<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>` : ""}${["overview", "budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : ""}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
 }
 function panel(title, content, link = "") {
   return `<section class="panel"><div class="panel-head"><h2>${t(title)}</h2>${link}</div>${content}</section>`;
@@ -376,16 +376,13 @@ function overview(c) {
   )}</div>`;
 }
 function transactions(c) {
-  const list = monthly(c).filter(
-    (r) =>
-      (!c.typeFilter || r.data.type === c.typeFilter) &&
-      (!c.filter ||
-        `${r.data.note} ${r.data.category} ${esc(categoryTitle(c, r.data.category))} ${accountName(c, r.data.accountId)}`
-          .toLowerCase()
-          .includes(c.filter.toLowerCase())),
-  );
-  return `${pageHeading(c, "Transactions", "transaction")}<div class="toolbar"><label class="search-field"><span class="sr-only">${t("Search transactions")}</span><input id="search" type="search" placeholder="${t("Search")}" value="${esc(c.filter)}" aria-label="${t("Search transactions")}"></label><select id="type-filter" aria-label="${t("Type")}"><option value="">${t("All types")}</option>${["expense", "income", "transfer"].map((type) => `<option value="${type}" ${c.typeFilter === type ? "selected" : ""}>${t({ expense: "Expense", income: "Income", transfer: "Transfer" }[type])}</option>`).join("")}</select>${actionButton("csv", "Export CSV")}</div>${panel("Transactions", list.length ? transactionBoard(c,list,{icon,categoryTitle,accountName,dataText,categoryOrder:categoryList(c.records,categories).map(x=>x.id)}) : empty("No transactions","transaction"), `<span class="badge">${money(list.length)}</span>`)}`;
+  const filters = c.transactionFilters || {};
+  const list = filterTransactions(c.records, filters, r => `${r.data.note || ""} ${categoryTitle(c, r.data.category)} ${accountName(c, r.data.accountId)}`);
+  const groups = [...new Set([...categoryList(c.records,categories).map(category=>category.id), ...kind(c,"transaction").map(record=>record.data.category).filter(Boolean)])];
+  const amount = (label,name) => `<label class="field">${t(label)}<input name="${name}" inputmode="decimal" value="${esc(filters[name] || "")}" dir="ltr" placeholder="${t("No limit")}"></label>`;
+  return `${pageHeading(c, "Transactions", "transaction")}<form id="transaction-filters" class="transaction-filters"><label class="field">${t("Search transactions")}<input name="search" type="search" value="${esc(filters.search || "")}"></label><label class="field">${t("Group")}<select name="group"><option value="">${t("All groups")}</option>${groups.map(group=>`<option value="${esc(group)}" ${filters.group===group?"selected":""}>${esc(categoryTitle(c,group))}</option>`).join("")}<option value="__uncategorized" ${filters.group==="__uncategorized"?"selected":""}>${t("Uncategorized")}</option></select></label><label class="field">${t("Type")}<select name="type"><option value="">${t("All types")}</option>${["expense","income","transfer"].map(type=>`<option value="${type}" ${filters.type===type?"selected":""}>${t({expense:"Expense",income:"Income",transfer:"Transfer"}[type])}</option>`).join("")}</select></label>${amount("Minimum amount", "minAmount")}${amount("Maximum amount", "maxAmount")}${dateControl("From date","dateFrom",filters.dateFrom || "")}${dateControl("To date","dateTo",filters.dateTo || "")}<div class="transaction-filter-actions"><button type="submit" class="primary">${t("Apply filters")}</button><button type="reset" class="secondary">${t("Clear filters")}</button>${actionButton("csv", "Export CSV")}</div><p class="transaction-filter-error" role="alert"></p></form>${panel("Transactions", list.length ? transactionBoard(c,list,{icon,categoryTitle,accountName,dataText}) : empty("No transactions","transaction"), `<span class="badge">${money(list.length)}</span>`)}`;
 }
+
 function accounts(c) {
   return `${pageHeading(c, "Accounts", "account")}<div class="cards-grid compact-finance-grid">${kind(
     c,

@@ -1,3 +1,4 @@
+import { drawPixelDog } from "./desk-dog.js";
 // Small voxel models, projected locally into a deliberately low-resolution canvas.
 // There are no image assets, GPU contexts, network requests or rendering dependencies.
 const colors = {
@@ -80,11 +81,12 @@ export function petFaces(style, yaw, phase, walking, blink) {
   }
   return result.sort((a, b) => a.depth - b.depth);
 }
-export function drawVoxelPet(canvas, { style = "cat", yaw = .6, phase = 0, walking = false, blink = false } = {}) {
+export function drawVoxelPet(canvas, { style = "dog", yaw = .6, phase = 0, walking = false, blink = false } = {}) {
   const context = canvas.getContext("2d");
   if (!context) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.imageSmoothingEnabled = false;
+  if (style === "dog") { drawPixelDog(context, canvas.width, canvas.height, { yaw, phase, walking, blink }); return; }
   const scale = Math.min(canvas.width / 3.3, canvas.height / 3.3), base = canvas.height * .81;
   context.fillStyle = "#193a3430";
   context.beginPath(); context.ellipse(canvas.width / 2, base + 2, scale * .85, scale * .2, 0, 0, Math.PI * 2); context.fill();

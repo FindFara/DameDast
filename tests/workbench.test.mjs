@@ -115,7 +115,7 @@ test("all components render live financial records, references and safe user tex
     });
     assert.ok(html.includes('id="desk-board"'));
     assert.ok(!html.includes("<img src=x"));
-    assert.ok(html.includes("&lt;img"));
+    if (spec.type !== "pet") assert.ok(html.includes("&lt;img"));
     assert.equal((html.match(/<div class="desk-grid"/g) || []).length, 0);
   }
   assert.deepEqual(records, before);

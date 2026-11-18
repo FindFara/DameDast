@@ -33,7 +33,7 @@ export function validateToolOptions(type, options) {
   if (options.description != null && (options.description.length > 200 || options.description !== options.description.trim())) throw Error("Invalid component settings.");
   if (options.imageData != null && !validImageData(options.imageData)) throw Error("Choose a PNG, JPEG or WebP image up to 5 MB.");
   if (options.url != null) safeLink(options.url);
-  for (const [key, values] of Object.entries({ calendar: ["persian", "gregory"], clockStyle: ["digital", "analog"], timeZone: ["local", "Asia/Tehran", "UTC"], petStyle: ["cat", "robot"] }))
+  for (const [key, values] of Object.entries({ calendar: ["persian", "gregory"], clockStyle: ["digital", "analog"], timeZone: ["local", "Asia/Tehran", "UTC"], petStyle: ["dog", "cat", "robot"] }))
     if (options[key] != null && !values.includes(options[key])) throw Error("Invalid component settings.");
 }
 

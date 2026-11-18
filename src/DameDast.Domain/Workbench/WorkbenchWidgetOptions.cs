@@ -24,7 +24,7 @@ public static class WorkbenchOptionRules
             (options.Calendar is not null && (type != "plainCalendar" || options.Calendar is not ("persian" or "gregory"))) ||
             (options.ClockStyle is not null && (type != "clock" || options.ClockStyle is not ("digital" or "analog"))) ||
             (options.TimeZone is not null && (type != "clock" || options.TimeZone is not ("local" or "Asia/Tehran" or "UTC"))) ||
-            (options.PetStyle is not null && (type != "pet" || options.PetStyle is not ("cat" or "robot"))) ||
+            (options.PetStyle is not null && (type != "pet" || options.PetStyle is not ("dog" or "cat" or "robot"))) ||
             (options.Description is not null && (options.Description.Length > 200 || options.Description != options.Description.Trim())))
             throw new FinanceException("Invalid component settings.");
 

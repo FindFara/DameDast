@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +38,7 @@ public static class DependencyInjection
 
     private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
     {
-        var authentication = services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
         {
             options.Cookie.Name = "DameDast.Session";
             options.Cookie.HttpOnly = true;
@@ -50,29 +49,7 @@ public static class DependencyInjection
             options.Events.OnRedirectToLogin = context => SetStatusCode(context.Response, StatusCodes.Status401Unauthorized);
             options.Events.OnRedirectToAccessDenied = context => SetStatusCode(context.Response, StatusCodes.Status403Forbidden);
         });
-        var configured = !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientId"]) && !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientSecret"]);
-        services.AddSingleton(new GoogleAuthenticationSettings(configured));
-        if (!configured)
-            return;
-        authentication.AddGoogle(options =>
-        {
-            options.ClientId = configuration["Authentication:Google:ClientId"]!;
-            options.ClientSecret = configuration["Authentication:Google:ClientSecret"]!;
-            options.SaveTokens = false;
-            options.UsePkce = true;
-            options.Scope.Add("openid");
-            options.Events.OnRedirectToAuthorizationEndpoint = context =>
-            {
-                context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
-                return Task.CompletedTask;
-            };
-            options.Events.OnRemoteFailure = context =>
-            {
-                context.HandleResponse();
-                context.Response.Redirect("/?authError=google");
-                return Task.CompletedTask;
-            };
-        });
+        services.AddGoogleSignIn(configuration);
     }
 
     private static Task SetStatusCode(HttpResponse response, int statusCode)

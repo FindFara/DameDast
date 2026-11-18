@@ -1,3 +1,4 @@
+import { filterTransactions, normalizeTransactionFilters } from "./transaction-board.js";
 import { migrateLegacyPreferences } from "./legacy-storage.js";
 import { readPins, togglePin, savePins } from "./nav-pins.js";
 import "./select-sheet.js";
@@ -57,6 +58,7 @@ import {
 } from "./calendar.js";
 import {
   categoryList,
+  categoryInfo,
   validatePlan,
   recurringForMonth,
   categoryColors,
@@ -124,6 +126,7 @@ let selectedMonth = monthOf(today()),
   filter = "",
   typeFilter = "",
   flowPeriod = "monthly";
+let transactionFilters = {};
 let editorPreset = null;
 let marketCategory = "all",
   marketSearch = "",
@@ -207,6 +210,7 @@ const context = () => ({
   month: selectedMonth,
   filter,
   typeFilter,
+  transactionFilters,
   flowPeriod,
   pendingCount: state.pending.length,
   marketData,
@@ -424,6 +428,7 @@ function render() {
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
+  document.body.classList.toggle("workbench-fullscreen", page === "workbench");
   renderChrome();
   noteLayout.disconnect();
   if (!isNoteRoute(hash)) notePage.deactivate();
@@ -1039,25 +1044,29 @@ async function changeSpace(next) {
   render();
   if (space.startsWith("google:")) void sync();
 }
-function googleLogin() {
-  localStorage.removeItem("damdast-active-local-workspace");
-  if (session.authenticated) {
-    location.hash = "settings";
-    return;
-  }
-  if (!session.googleConfigured) {
-    location.hash = "settings";
-    notify(
-      "Google sign-in is not configured.",
-      t(
-        "Google OAuth keys are not configured yet. See the Google sign-in setup section in Settings.",
-      ),
-    );
-    return;
-  }
-  location.href =
-    "/auth/google?returnUrl=" + encodeURIComponent("/" + location.hash);
+let googleLoginPending = false;
+async function googleLogin() {
+  if (googleLoginPending) return;
+  googleLoginPending = true;
+  try {
+    const response = await network("/api/session", { cache: "no-store" });
+    if (!response.ok) throw Error();
+    session = await response.json();
+    if (session.authenticated) { location.hash = "settings"; render(); return; }
+    if (!session.googleConfigured) {
+      document.querySelector('[data-setting-group="setup"]')?.setAttribute("open", "");
+      settingsGroupsOpen.setup = true;
+      location.hash = "settings"; render();
+      notify("Google sign-in is not configured.", t("Check Authentication:Google in appsettings.json, restart the app, and register the exact callback URL shown in Settings."));
+      return;
+    }
+    localStorage.removeItem("damdast-active-local-workspace");
+    location.href = "/auth/google?returnUrl=" + encodeURIComponent("/" + location.hash);
+  } catch {
+    notify("Sign-in failed.", t("Cannot reach the local app server. Start the app and try again."));
+  } finally { googleLoginPending = false; }
 }
+
 function install() {
   if (installPrompt) {
     installPrompt.prompt();
@@ -1087,8 +1096,10 @@ function exportCsv() {
       "To account",
       "Amount (toman)",
     ].map(t),
-    ...ofKind("transaction")
-      .filter((r) => inMonth(r.data.date, selectedMonth))
+    ...filterTransactions(records(), transactionFilters, r => {
+      const category = categoryInfo(records(), categories, r.data.category);
+      return `${r.data.note || ""} ${category.builtin ? t(category.name) : category.name} ${name(r.data.accountId)}`;
+    })
       .map((r) => [
         solarNumeric(r.data.date),
         t(
@@ -1905,6 +1916,18 @@ document.addEventListener(
   "click",
   (event) => void onAction(event).catch(showError),
 );
+document.addEventListener("submit", event => {
+  if (event.target.id !== "transaction-filters") return;
+  event.preventDefault();
+  try {
+    transactionFilters = normalizeTransactionFilters(Object.fromEntries(new FormData(event.target)));
+    render();
+  } catch (error) { event.target.querySelector(".transaction-filter-error").textContent = t(error.message); }
+});
+document.addEventListener("reset", event => {
+  if (event.target.id !== "transaction-filters") return;
+  event.preventDefault(); transactionFilters = {}; render();
+});
 $("#editor-form").addEventListener("submit", submitEditor);
 $("#editor-form").addEventListener(
   "invalid",
@@ -2176,10 +2199,12 @@ async function boot() {
       notify(
         "Sign-in failed.",
         t(
-          new URLSearchParams(location.search).get("authError") ===
-            "not-configured"
-            ? "Google OAuth keys are not configured yet. See the Google sign-in setup section in Settings."
-            : "Try signing in again.",
+          ({ "not-configured": "Check Authentication:Google in appsettings.json, restart the app, and register the exact callback URL shown in Settings.",
+            correlation: "Google sign-in could not verify its browser cookie. Use the same localhost address throughout sign-in, allow cookies, and try again.",
+            denied: "Google sign-in was cancelled or this account is not an OAuth test user.",
+            credentials: "Google rejected the client credentials. Check the Web application client in Google Cloud and restart the app.",
+            google: "Google sign-in failed. Check the exact callback URL in Settings and the OAuth test users in Google Cloud."
+          })[new URLSearchParams(location.search).get("authError")] || "Try signing in again.",
         ),
       );
       history.replaceState(null, "", location.pathname + location.hash);

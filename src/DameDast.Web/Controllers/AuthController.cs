@@ -19,7 +19,7 @@ public sealed class AuthController(GoogleAuthenticationSettings google) : Contro
     {
         configured = google.Configured,
         callbackUrl = $"{Request.Scheme}://{Request.Host}/signin-google",
-        missingSettings = google.Configured ? Array.Empty<string>() : new[] { "Authentication:Google:ClientId", "Authentication:Google:ClientSecret" }
+        missingSettings = google.MissingSettings
     });
 
     [HttpPost("logout")]

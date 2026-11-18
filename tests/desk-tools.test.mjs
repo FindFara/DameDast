@@ -31,7 +31,7 @@ test('links are bounded web addresses and previews cannot inject markup or opene
 test('photos and widget options have the same bounded format in settings and backups',()=>{
   assert.equal(validImageData(png),true);
   for(const data of ['data:image/svg+xml;base64,PHN2Zz4=', 'https://example.com/photo.png', 'data:image/png;base64,YmFk',png+'A'.repeat(120000)]) assert.equal(validImageData(data),false);
-  for(const [type,options] of [['image',{imageData:png}],['clock',{clockStyle:'analog',timeZone:'UTC'}],['pet',{petStyle:'cat'}],['plainCalendar',{calendar:'persian'}]]) validateToolOptions(type,options);
+  for(const [type,options] of [['image',{imageData:png}],['clock',{clockStyle:'analog',timeZone:'UTC'}],['pet',{petStyle:'dog'}],['pet',{petStyle:'cat'}],['plainCalendar',{calendar:'persian'}]]) validateToolOptions(type,options);
   for(const [type,options] of [['image',{imageData:'data:image/png;base64,YmFk'}],['clock',{clockStyle:'script'}],['pet',{petStyle:'unknown'}],['notes',{url:'https://example.com'}],['calculator',{imageData:png}]]) assert.throws(()=>validateToolOptions(type,options));
   const desk=defaultWorkbench(); desk.widgets=[];
   for(let i=0;i<4;i++) desk.widgets.push({id:crypto.randomUUID(),type:'image',x:i,y:0,width:1,height:1,background:null,options:{imageData:png}});

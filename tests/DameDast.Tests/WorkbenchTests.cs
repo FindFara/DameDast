@@ -69,7 +69,7 @@ public sealed class WorkbenchTests
         var cases = new (string Type, WorkbenchWidgetOptions Options)[]
         {
             ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")),
-            ("pet", new(PetStyle: "cat")), ("plainCalendar", new(Calendar: "persian")),
+            ("pet", new(PetStyle: "cat")), ("pet", new(PetStyle: "dog")), ("plainCalendar", new(Calendar: "persian")),
             ("link", new(Url: "https://example.com/path", Description: "A useful site")),
             ("calculator", new()), ("keyGenerator", new()),
             ("image", new(ImageData: "data:image/png;base64,iVBORw0KGgo="))

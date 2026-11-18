@@ -11,7 +11,7 @@ export function toolOptionFields(type, options = {}) {
   if (type === "link") return `<label class="field">${t("Website address")}<input name="toolUrl" type="url" placeholder="https://example.com" value="${esc(options.url || "")}" maxlength="2000" required dir="ltr"></label><label class="field">${t("Description")}<input name="toolDescription" maxlength="200" value="${esc(options.description || "")}" dir="auto"></label>`;
   if (type === "plainCalendar") return select("toolCalendar", "Calendar system", [["persian", "Solar Hijri"], ["gregory", "Gregorian"]], options.calendar || "persian");
   if (type === "clock") return select("toolClockStyle", "Clock style", [["digital", "Digital"], ["analog", "Analog"]], options.clockStyle || "digital") + select("toolTimeZone", "Time zone", [["local", "Device time"], ["Asia/Tehran", "Tehran"], ["UTC", "UTC"]], options.timeZone || "local");
-  if (type === "pet") return select("toolPetStyle", "Character", [["cat", "Cat"], ["robot", "Robot"]], options.petStyle || "cat");
+  if (type === "pet") return select("toolPetStyle", "Character", [["dog", "Dog"], ["cat", "Cat"], ["robot", "Robot"]], options.petStyle || "dog");
   return "";
 }
 export function optionsFromForm(type, values, previous = {}, imageData) {
@@ -19,7 +19,7 @@ export function optionsFromForm(type, values, previous = {}, imageData) {
   if (type === "link") return { url: safeLink(values.toolUrl || ""), description: (values.toolDescription || "").trim() };
   if (type === "plainCalendar") return { calendar: values.toolCalendar || "persian" };
   if (type === "clock") return { clockStyle: values.toolClockStyle || "digital", timeZone: values.toolTimeZone || "local" };
-  if (type === "pet") return { petStyle: values.toolPetStyle || "cat" };
+  if (type === "pet") return { petStyle: values.toolPetStyle || "dog" };
   return null;
 }
 

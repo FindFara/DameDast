@@ -1,34 +1,45 @@
 import { drawVoxelPet } from "./desk-pet-renderer.js";
-import { t } from "./i18n.js";
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 export function petBounds(rect, viewportHeight, size) {
   const minX = 4, maxX = Math.max(minX, rect.width - size - 4);
   const minY = Math.max(4, 8 - rect.top), maxY = Math.min(rect.height - size - 4, viewportHeight - rect.top - size - 12);
   return { minX, maxX, minY, maxY: Math.max(minY, maxY), visible: rect.bottom > size && rect.top < viewportHeight - size };
 }
+export const petHome = bounds => ({ x: Math.max(bounds.minX, bounds.maxX - 12), y: Math.max(bounds.minY, bounds.maxY - 8) });
+export function sendPetHome(state, bounds, immediately = false) {
+  const home = petHome(bounds);
+  return { ...state, targetX: home.x, targetY: home.y, wait: immediately ? 4 : 0, mode: immediately ? "home" : "running", ...(immediately ? home : {}) };
+}
 export function advancePet(state, bounds, seconds, random = Math.random) {
   const next = { ...state, x: clamp(state.x, bounds.minX, bounds.maxX), y: clamp(state.y, bounds.minY, bounds.maxY) };
-  next.phase += seconds * 8;
+  next.phase += seconds * (next.mode === "running" ? 19 : 8);
+  if (next.mode === "home") {
+    next.wait = Math.max(0, next.wait - seconds); next.walking = false;
+    if (!next.wait) { next.mode = "roaming"; next.targetX = null; next.wait = .5; }
+    return next;
+  }
+  if (next.mode === "running") { const home = petHome(bounds); next.targetX = home.x; next.targetY = home.y; }
   if (next.wait > 0) { next.wait = Math.max(0, next.wait - seconds); next.walking = false; return next; }
   if (next.targetX == null || Math.hypot(next.targetX - next.x, next.targetY - next.y) < 3) {
+    if (next.mode === "running") return { ...next, ...petHome(bounds), mode: "home", wait: 4, walking: false };
     next.targetX = bounds.minX + random() * (bounds.maxX - bounds.minX);
     next.targetY = bounds.minY + random() * (bounds.maxY - bounds.minY);
     next.wait = .8 + random() * 2.2; next.walking = false; return next;
   }
   next.targetX = clamp(next.targetX, bounds.minX, bounds.maxX); next.targetY = clamp(next.targetY, bounds.minY, bounds.maxY);
   const dx = next.targetX - next.x, dy = next.targetY - next.y, distance = Math.hypot(dx, dy);
-  const travel = Math.min(distance, seconds * 30);
+  const travel = Math.min(distance, seconds * (next.mode === "running" ? 165 : 30));
   next.walking = distance > 2;
   if (distance > 0) { next.x += dx / distance * travel; next.y += dy / distance * travel; }
   const heading = Math.atan2(dx, dy / .43), turn = Math.atan2(Math.sin(heading - next.yaw), Math.cos(heading - next.yaw));
-  next.yaw += clamp(turn, -seconds * 5, seconds * 5);
+  next.yaw += clamp(turn, -seconds * 7, seconds * 7);
   return next;
 }
 
 export class DeskPetController {
   constructor() {
     this.states = new Map(); this.items = []; this.motion = matchMedia("(prefers-reduced-motion: reduce)");
-    this.motion.addEventListener("change", () => { this.controls(); this.schedule(); });
+    this.motion.addEventListener("change", () => this.schedule());
     document.addEventListener("visibilitychange", () => this.schedule());
   }
   detach() {
@@ -45,7 +56,7 @@ export class DeskPetController {
     const ids = new Set();
     this.items = [...this.layer.querySelectorAll("[data-roaming-pet]")].map((element, index) => {
       const id = element.dataset.roamingPet; ids.add(id);
-      const state = this.states.get(id) || { x: 0, y: 0, yaw: .6, phase: index, wait: .6, initialized: false, paused: false };
+      const state = this.states.get(id) || { x: 0, y: 0, yaw: .6, phase: index, wait: .6, initialized: false, mode: "roaming" };
       this.states.set(id, state);
       return { id, element, canvas: element.querySelector("canvas"), style: element.dataset.petStyle };
     });
@@ -53,16 +64,20 @@ export class DeskPetController {
     this.events = new AbortController();
     const signal = this.events.signal;
     root.addEventListener("click", event => {
-      const button = event.target.closest("[data-desk-pet-toggle]");
-      if (!button || this.motion.matches) return;
-      const state = this.states.get(button.dataset.deskPetToggle);
-      if (state) { state.paused = !state.paused; this.controls(); this.schedule(); }
+      const button = event.target.closest("[data-roaming-pet],[data-pet-house]");
+      if (!button) return;
+      const id = button.dataset.roamingPet || button.dataset.petHouse, state = this.states.get(id);
+      if (!state) return;
+      event.stopPropagation();
+      if (button.hasAttribute("data-pet-house")) this.states.set(id, { ...state, mode: "roaming", targetX: null, wait: .1 });
+      else this.states.set(id, sendPetHome(state, this.bounds, this.motion.matches));
+      this.draw(); this.schedule();
     }, { signal });
     window.addEventListener("scroll", () => this.measure(), { signal, passive: true, capture: true });
     this.resizeObserver = new ResizeObserver(() => this.measure()); this.resizeObserver.observe(this.layer);
     this.intersectionObserver = new IntersectionObserver(entries => { this.inView = entries.some(entry => entry.isIntersecting); this.schedule(); });
     this.intersectionObserver.observe(this.layer);
-    this.inView = false; this.measure(); this.controls(); this.draw();
+    this.inView = false; this.measure(); this.draw();
   }
   measure() {
     if (!this.layer?.isConnected) return;
@@ -74,14 +89,7 @@ export class DeskPetController {
     }
     this.draw(); this.schedule();
   }
-  controls() {
-    for (const button of this.root?.querySelectorAll("[data-desk-pet-toggle]") || []) {
-      const stopped = this.motion.matches || !!this.states.get(button.dataset.deskPetToggle)?.paused;
-      button.setAttribute("aria-pressed", String(stopped)); button.disabled = this.motion.matches;
-      button.querySelector("[data-pet-toggle-label]").textContent = t(this.motion.matches ? "Resting" : stopped ? "Resume walking" : "Pause walking");
-    }
-  }
-  active() { return this.root?.isConnected && this.inView && this.bounds?.visible && !document.hidden && !this.motion.matches && this.items.some(item => !this.states.get(item.id)?.paused); }
+  active() { return this.root?.isConnected && this.inView && this.bounds?.visible && !document.hidden && !this.motion.matches && this.items.length > 0; }
   schedule() {
     cancelAnimationFrame(this.frame); this.frame = null; this.lastTime = null;
     if (this.active()) this.frame = requestAnimationFrame(time => this.tick(time));
@@ -96,7 +104,7 @@ export class DeskPetController {
     if (elapsed >= .05) {
       for (const item of this.items) {
         const state = this.states.get(item.id);
-        if (!state.paused) this.states.set(item.id, advancePet(state, this.bounds, Math.min(elapsed, .15)));
+        this.states.set(item.id, advancePet(state, this.bounds, Math.min(elapsed, .15)));
       }
       this.lastTime = time; this.draw();
     }
@@ -105,9 +113,15 @@ export class DeskPetController {
   draw() {
     for (const item of this.items) {
       const state = this.states.get(item.id);
+      const home = this.layer.querySelector(`[data-pet-house="${item.id}"]`), point = petHome(this.bounds);
+      home.style.transform = `translate3d(${Math.round(point.x)}px,${Math.round(point.y)}px,0)`;
+      home.classList.toggle("has-pet", state.mode === "home");
+      if (state.mode === "home" && document.activeElement === item.element) home.focus({ preventScroll: true });
+      item.element.tabIndex = state.mode === "home" ? -1 : 0;
+      item.element.setAttribute("aria-hidden", String(state.mode === "home"));
       item.element.style.transform = `translate3d(${Math.round(state.x)}px,${Math.round(state.y)}px,0)`;
-      item.element.dataset.petState = this.motion.matches || state.paused ? "resting" : state.walking ? "walking" : "idle";
-      drawVoxelPet(item.canvas, { style: item.style, yaw: state.yaw, phase: state.phase, walking: !!state.walking && !state.paused && !this.motion.matches, blink: state.phase % 51 > 49 });
+      item.element.dataset.petState = state.mode === "home" ? "home" : state.mode === "running" && !this.motion.matches ? "running" : this.motion.matches ? "resting" : state.walking ? "walking" : "idle";
+      drawVoxelPet(item.canvas, { style: item.style, yaw: state.yaw, phase: state.phase, walking: !!state.walking && !this.motion.matches, blink: state.phase % 51 > 49 });
     }
   }
 }

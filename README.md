@@ -1,8 +1,8 @@
 # DameDast · دمِ دست
 
-Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The redesigned workbench has central web search, quick shortcuts, grouped components, an Edit switch beside its title and a roaming 3D voxel companion. See [Workbench guide](docs/WORKBENCH-fa.md).
+Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The redesigned workbench has central web search, quick shortcuts, grouped components, an Edit switch beside its title and a black-and-tan pixel dog that runs home when clicked. See [Workbench guide](docs/WORKBENCH-fa.md).
 
-Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use compact category lists in three desktop columns, two tablet columns and one mobile column. Settings groups start collapsed; mobile financial and workbench cards fit their content. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
+Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use one compact list across every month and category, with group, type, amount and date filters; desktop shows three columns, tablet two and mobile one. Settings groups start collapsed; mobile financial and workbench cards fit their content. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
 
 Upgrade: legacy browser ledgers are copied without replacing newer data. A legacy server database is backed up into `damedast.db` on first startup; the original stays available. Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
 
@@ -94,6 +94,8 @@ Google identifies the user. Financial data is stored in **your application's ser
 dotnet user-secrets set "Authentication:Google:ClientId" "YOUR_CLIENT_ID" --project src/DameDast.Web
 dotnet user-secrets set "Authentication:Google:ClientSecret" "YOUR_CLIENT_SECRET" --project src/DameDast.Web
 ```
+
+For localhost:5000, put the keys under `Authentication` → `Google` → `ClientId` / `ClientSecret` in `src/DameDast.Web/appsettings.json`, or use User Secrets. Flat environment variables `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are also accepted. Keep credentials out of commits. Stop and restart the app after changing credentials. Open `http://localhost:5000`, and register `http://localhost:5000/signin-google` under **Authorized redirect URIs**, not just JavaScript origins. `/auth/google/status` reports the exact callback and missing setting names without credential values. The Sign in button rechecks the running server before navigating.
 
 If Google's app is in testing mode, add your Google account as a test user. Client credentials are intentionally absent from this repository. Without them, local use and the demo work; Google login and cross-device sync stay disabled.
 

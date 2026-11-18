@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { petBounds, advancePet } from '../src/DameDast.Web/wwwroot/desk-pet.js';
+import { petBounds, advancePet, sendPetHome } from '../src/DameDast.Web/wwwroot/desk-pet.js';
 import { petModel, petFaces } from '../src/DameDast.Web/wwwroot/desk-pet-renderer.js';
 import { workbenchPage } from '../src/DameDast.Web/wwwroot/workbench-ui.js';
 import { defaultWorkbench } from '../src/DameDast.Web/wwwroot/workbench.js';
@@ -42,10 +42,22 @@ test('a visible pet roams outside cards, remains escaped and follows device visi
   const desk=defaultWorkbench(),pet=desk.widgets.find(widget=>widget.type==='pet');pet.title='<img src=x onerror=bad()>';
   const context={records:[{kind:'workbench',data:desk}],space:'guest',now:'2026-11-18T12:00:00Z',connectedSnapshots:[]};
   let html=workbenchPage(context,icon);
-  assert.match(html,/data-roaming-pet=/);assert.match(html,/data-desk-pet-toggle=/);assert.doesNotMatch(html,/desk-widget-pet|tabby-cat|<img src=x/);
-  assert.match(html,/&lt;img/);
+  assert.match(html,/data-roaming-pet=/);assert.match(html,/data-pet-house=/);assert.match(html,/data-pet-style="dog"/);assert.doesNotMatch(html,/roaming-pet-name|data-desk-pet-toggle/);assert.doesNotMatch(html,/desk-widget-pet|tabby-cat|<img src=x/);
+  assert.doesNotMatch(html,/&lt;img/);
   pet.devices={desktop:false};html=workbenchPage(context,icon);assert.doesNotMatch(html,/data-roaming-pet=|data-desk-pet-toggle=/);
   savePreferences({workbenchEditing:true});html=workbenchPage(context,icon);
   assert.match(html,/desk-widget-pet/);assert.match(html,/desk-pet-preview/);assert.doesNotMatch(html,/data-roaming-pet=/);
   savePreferences({workbenchEditing:false});
+});
+
+test('clicking a pet interrupts wandering, runs to its kennel and rests before coming back out',()=>{
+ const bounds={minX:4,maxX:700,minY:4,maxY:480};
+ let state=sendPetHome({x:100,y:70,yaw:.6,phase:0,wait:2},bounds);
+ assert.equal(state.mode,'running');let frames=0;
+ while(state.mode!=='home'&&frames++<150)state=advancePet(state,bounds,.05);
+ assert.equal(state.mode,'home');assert.ok(frames<150);
+ assert.equal(state.x,688);assert.equal(state.y,472);assert.equal(state.walking,false);
+ for(let n=0;n<81;n++)state=advancePet(state,bounds,.05);
+ assert.equal(state.mode,'roaming');
+ assert.equal(sendPetHome(state,bounds,true).mode,'home');
 });
