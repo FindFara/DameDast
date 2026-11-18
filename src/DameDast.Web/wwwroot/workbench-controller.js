@@ -1,5 +1,5 @@
-import { workbenchRecord, defaultWorkbench, standardWorkbench, packStandardWidgets, validateWorkbench, validDeskColor } from "./workbench.js";
-import { addWidgetFields, widgetSettings, colorFields } from "./workbench-ui.js";
+import { workbenchRecord, defaultWorkbench, standardWorkbench, packStandardWidgets, standardSize, resizeWorkbenchWidget, validateWorkbench, deskColors } from "./workbench.js";
+import { addWidgetFields, widgetSettings } from "./workbench-ui.js";
 import { t } from "./i18n.js";
 import { preferences, savePreferences } from "./preferences.js";
 import { prepareDeskImage, MAX_DESK_IMAGES } from "./desk-tools.js";
@@ -76,12 +76,14 @@ export class WorkbenchController {
     if(target)try{await this.reorder(base,handle.dataset.deskDrag,target.id);}catch(error){this.callbacks.error(error);}
   }
   async click(event) {
+    const shortcut=event.target.closest?.(".desk-widget-shortcut .desk-shortcut");
+    if(shortcut&&this.editing&&!this.isInteracting){event.preventDefault();this.openDialog("configure",shortcut.closest(".desk-card").dataset.deskId);return;}
     const button=event.target.closest?.("[data-desk-action]");if(!button||this.isInteracting)return;
     const action=button.dataset.deskAction;
     if(action==="toggle-edit"||action==="done"){
       savePreferences({workbenchEditing:action==="toggle-edit"?!this.editing:false});this.callbacks.refresh();return;
     }
-    if(!["add","configure","background"].includes(action))return;
+    if(!["add","configure"].includes(action))return;
     if(action==="add"&&!this.editing){savePreferences({workbenchEditing:true});this.callbacks.refresh();}
     if(action==="configure"&&!this.editing)return;
     this.openDialog(action,button.dataset.id);
@@ -89,7 +91,7 @@ export class WorkbenchController {
   openDialog(mode,id) {
     const base=this.current(),widget=base.layout.widgets.find(widget=>widget.id===id),dialog=document.querySelector("#workbench-dialog");
     if(mode==="configure"&&!widget)return;
-    dialog.innerHTML=`<form id="desk-form"><div class="dialog-heading"><h2>${t(mode==="add"?"Add component":mode==="background"?"Desk background":"Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">×</button></div><div class="desk-dialog-fields">${mode==="add"?addWidgetFields(this.callbacks.icon):mode==="background"?colorFields(base.layout.background):widgetSettings(widget,base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode==="configure"?`<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>`:""}<button type="submit" class="primary">${t(mode==="add"?"Add component":"Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
+    dialog.innerHTML=`<form id="desk-form"><div class="dialog-heading"><h2>${t(mode==="add"?"Add component":"Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">×</button></div><div class="desk-dialog-fields">${mode==="add"?addWidgetFields(this.callbacks.icon):widgetSettings(widget,base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode==="configure"?`<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>`:""}<button type="submit" class="primary">${t(mode==="add"?"Add component":"Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
     const form=dialog.querySelector("form");let imageData=widget?.options?.imageData||null,imagePromise=null,generation=0;
     form.addEventListener("click",event=>{
       const tab=event.target.closest("[data-component-category]");if(!tab)return;
@@ -107,24 +109,28 @@ export class WorkbenchController {
       }
     });
     form.querySelectorAll("[data-desk-dialog-close]").forEach(button=>button.onclick=()=>dialog.close());
-    const setColor=color=>{form.elements.background.value=color;const picker=form.querySelector("[data-desk-color-picker]");if(picker&&color&&validDeskColor(color))picker.value=color;form.querySelectorAll("[data-desk-swatch]").forEach(button=>button.classList.toggle("selected",button.dataset.deskSwatch===color));};
+    const setColor=color=>{
+      if(!deskColors.includes(color))return;
+      form.elements.background.value=color;
+      form.querySelectorAll("[data-desk-swatch]").forEach(button=>{
+        const selected=button.dataset.deskSwatch===color;button.classList.toggle("selected",selected);button.setAttribute("aria-pressed",String(selected));
+      });
+    };
     form.querySelectorAll("[data-desk-swatch]").forEach(button=>button.onclick=()=>setColor(button.dataset.deskSwatch));
-    const picker=form.querySelector("[data-desk-color-picker]");if(picker)picker.oninput=()=>setColor(picker.value);
-    if(form.elements.background)form.elements.background.oninput=()=>setColor(form.elements.background.value);
     const submit=async remove=>{
       const error=form.querySelector("#desk-form-error");error.textContent="";
       try{
         await imagePromise;const values=Object.fromEntries(new FormData(form));let next=structuredClone(base.layout);
         if(remove)next.widgets=next.widgets.filter(widget=>widget.id!==id);
-        else if(mode==="background")next.background=values.background.trim()||null;
         else if(mode==="add"){
           if(next.widgets.length>=72)throw Error("You can add up to 72 components.");
           if(values.widgetType==="image"&&next.widgets.filter(widget=>widget.type==="image").length>=MAX_DESK_IMAGES)throw Error("You can add up to 4 photos to your workbench.");
           if(values.widgetType==="image"&&!imageData)throw Error("Choose a photo in card settings.");
-          next.widgets.push({id:crypto.randomUUID(),type:values.widgetType,x:0,y:0,width:1,height:1,background:null,title:null,referenceId:null,options:optionsFromForm(values.widgetType,values,{},imageData)});
+          next.widgets.push({id:crypto.randomUUID(),type:values.widgetType,x:0,y:0,...standardSize(values.widgetType),background:null,title:null,referenceId:null,options:optionsFromForm(values.widgetType,values,{},imageData)});
         }else next.widgets=next.widgets.map(previous=>previous.id===id?{...previous,referenceId:values.referenceId||null,background:values.background.trim()||null,devices:Object.fromEntries(["phone","tablet","desktop"].map(device=>[device,!!values[`device-${device}`]])),options:optionsFromForm(previous.type,values,previous.options||{},imageData)}:previous);
-        // Repack before validation; dimensions are derived from the component type, never form values.
-        next.widgets=packStandardWidgets(next.widgets);next.rows=Math.max(6,...next.widgets.map(widget=>widget.y+widget.height));
+        // New components use defaults; only the edit dialog submits dimensions.
+        next.widgets=packStandardWidgets(next.widgets);next.rows=Math.max(12,...next.widgets.map(widget=>widget.y+widget.height));
+        if(mode==="configure"&&!remove)next=resizeWorkbenchWidget(next,id,Number(values.width),Number(values.height));
         form.querySelectorAll("button").forEach(button=>button.disabled=true);await this.save(standardWorkbench(next),base);dialog.close();
       }catch(failure){error.textContent=t(failure.message);form.querySelectorAll("button").forEach(button=>button.disabled=false);}
     };

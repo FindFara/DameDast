@@ -1,6 +1,6 @@
 import { monthControl } from "./calendar.js";
 import { restoredWorkspaces } from "./backup.js";
-import { t, getLanguage, getTheme } from "./i18n.js";
+import { t, getLanguage, getTheme, effectiveTheme } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
 import { preferences, calendarVisibilityOptions } from "./preferences.js";
 import { holidayData } from "./holidays.js";
@@ -21,6 +21,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${startGroup("appearance", "Appearance")}
  ${row("Language", "Changes the app language and reading direction.", `<select id="language-setting" aria-label="${t("Language")}">${option("en", "English", getLanguage())}${option("fa", getLanguage() === "en" ? "Fa" : "فارسی", getLanguage())}</select>`)}
  ${row("Theme", "Choose light, dark, or follow your device.", `<select id="theme-setting" aria-label="${t("Theme")}">${["light", "dark", "system"].map((v) => option(v, v[0].toUpperCase() + v.slice(1), getTheme())).join("")}</select>`)}
+ ${row("App background", "Changes the background of every page, including the workbench.", `<div class="app-background-controls"><input type="color" id="app-background-setting" value="${p.mainBackground || (effectiveTheme()==="dark"?"#10171d":"#f5f7f6")}" aria-label="${t("App background")}"><button type="button" class="secondary" data-action="reset-app-background">${t("Use theme background")}</button></div>`)}
  ${endGroup}${startGroup("calendar", "Calendar")}
  ${row("Calendar system", "Calendar views and repeating events can use Persian or Gregorian months.", `<select data-preference="calendar" aria-label="${t("Calendar system")}">${option("persian", "Solar Hijri", p.calendar)}${option("gregory", "Gregorian", p.calendar)}</select>`)}
  ${row("First day of week", "Sets the first column in week and month views.", `<select data-preference="weekStart" aria-label="${t("First day of week")}">${option(6, "Saturday", p.weekStart)}${option(1, "Monday", p.weekStart)}${option(0, "Sunday", p.weekStart)}</select>`)}
@@ -45,9 +46,8 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  <details class="panel desk-settings-panel" id="workbench-settings" ${c.workbenchSettingsOpen ? "open" : ""}>
  <summary class="desk-settings-summary"><span>${icon("workbench")}<strong>${t("Workbench")}</strong></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
  <div class="desk-settings-content">
- ${row("Edit workbench", "Enable editing to arrange and add components. Sizes are set automatically.", `<label class="switch-control"><input type="checkbox" data-preference="workbenchEditing" ${p.workbenchEditing ? "checked" : ""} aria-label="${t("Edit workbench")}"><span></span></label>`)}
+ ${row("Edit workbench", "Enable editing to arrange components and change their size.", `<label class="switch-control"><input type="checkbox" data-preference="workbenchEditing" ${p.workbenchEditing ? "checked" : ""} aria-label="${t("Edit workbench")}"><span></span></label>`)}
  ${row("Reporting month", "Controls the period used by the financial components on your desk.", monthControl(c.month, "month", true))}
- ${row("Desk background", "Choose a background color for your workbench.", `<button class="secondary" data-desk-action="background">${t("Choose color")}</button>`)}
  <a class="secondary desk-open-link" href="#workbench">${t("Open workbench")}${icon("arrow")}</a>
  </div></details>
  ${startGroup("setup", "Google sign-in setup", "google-setup")}<p>${t("Google only identifies you. Your notes, drawings and financial records sync to this app server; Gmail messages are not accessed.")}</p><span class="badge">${t(c.session.googleConfigured ? "Ready to sign in" : "OAuth keys required")}</span><p>${t("Create a Web application OAuth client in Google Cloud, add your account as a test user, then register this exact redirect URI:")}</p><code>${esc(c.session.googleCallbackUrl || (typeof location !== "undefined" ? location.origin : "https://YOUR-DOMAIN") + "/signin-google")}</code><p>${t(c.session.hostedPreview ? "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET as server secrets." : "Set Authentication:Google:ClientId and Authentication:Google:ClientSecret on the .NET server. Use scripts/setup-google.ps1 for local setup.")}</p>${!c.session.hostedPreview ? `<p>${t("After changing appsettings.json, stop and restart the app. Register the callback under Authorized redirect URIs, not only JavaScript origins.")}</p>${c.session.googleMissingSettings?.length ? `<p class="small-note">${t("Missing settings")}: ${c.session.googleMissingSettings.map(esc).join(" · ")}</p>` : ""}<a class="text-link" href="/auth/google/status" target="_blank" rel="noopener">${t("Check Google sign-in status")}</a>` : ""}<div class="demo-actions">${button("demo", "Try demo")}${c.space === "demo" ? button("reset-demo", "Reset demo") : ""}</div>${endGroup}</div></div>`;

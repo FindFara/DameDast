@@ -24,8 +24,8 @@ public static class WorkbenchRules
 
     public static void Validate(WorkbenchLayout layout)
     {
-        if (layout.Version is not (1 or 2) || layout.Columns != Columns ||
-            (layout.Version == 1 ? layout.Rows != Rows : layout.Rows < Rows || layout.Rows > 72) ||
+        if (layout.Version is not (1 or 2 or 3) || layout.Columns != (layout.Version == 3 ? 24 : Columns) ||
+            (layout.Version == 1 ? layout.Rows != Rows : layout.Rows < (layout.Version == 3 ? 12 : Rows) || layout.Rows > (layout.Version == 3 ? 864 : 72)) ||
             !ValidColor(layout.Background) || layout.Widgets is null || layout.Widgets.Count > Columns * Rows ||
             layout.Widgets.Count(widget => widget?.Type == "image") > 4)
             throw new FinanceException("Invalid workbench layout.");
@@ -40,7 +40,7 @@ public static class WorkbenchRules
                 (widget.ReferenceId.HasValue && (widget.ReferenceId == Guid.Empty || widget.Type is not ("notes" or "canvas"))) ||
                 (layout.Version == 2 && StandardSize(widget.Type) != (widget.Width, widget.Height)) ||
                 widget.X < 0 || widget.Y < 0 || widget.Width < 1 || widget.Height < 1 ||
-                widget.Width > Columns || widget.Height > Rows || widget.X > Columns - widget.Width || widget.Y > layout.Rows - widget.Height)
+                widget.Width > layout.Columns || widget.Height > (layout.Version == 3 ? 12 : Rows) || widget.X > layout.Columns - widget.Width || widget.Y > layout.Rows - widget.Height)
                 throw new FinanceException("Invalid workbench card.");
             WorkbenchOptionRules.Validate(widget.Type, widget.Options);
 

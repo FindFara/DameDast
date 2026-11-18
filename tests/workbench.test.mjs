@@ -82,7 +82,7 @@ test("default layouts are independent copies with stable IDs; custom colors rema
   validateWorkbench(a);
   assert.deepEqual(a, b);
   a.widgets[0].width = 1;
-  assert.equal(b.widgets[0].width, 8);
+  assert.equal(b.widgets[0].width, 16);
   assert.equal(deskContrast("#ffffff"), "#18392e");
   assert.equal(deskContrast("#000000"), "#f2f6f3");
   assert.equal(deskContrast(null), null);

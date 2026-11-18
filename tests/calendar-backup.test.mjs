@@ -136,7 +136,7 @@ test("responsive desk keeps every enabled card and respects device choices witho
   validateWorkbench(layout);
   for (const device of ["phone", "tablet", "desktop"]) {
     const view = deviceWorkbench(layout, device);
-    assert.equal(view.columns, { phone: 4, tablet: 8, desktop: 12 }[device]);
+    assert.equal(view.columns, { phone: 8, tablet: 16, desktop: 24 }[device]);
     const expected = layout.widgets.filter(widget => widget.devices?.[device] !== false).map(widget => widget.id);
     assert.deepEqual(view.widgets.map(w => w.id), expected);
     for (const a of view.widgets) {

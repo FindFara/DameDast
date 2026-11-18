@@ -63,7 +63,14 @@ public sealed class WorkbenchTests
         Assert.Equal(2,FinanceRules.Read<WorkbenchLayout>(upgraded!.Record!.Data).Version);
         var forged = migrate with {OperationId=Guid.NewGuid(),ExpectedVersion=2,Data=JsonSerializer.SerializeToElement(standard with {Widgets=[card,search,shortcut with {Width=2}]},FinanceRules.Json)};
         Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsJsonAsync("/api/sync",new SyncRequest([forged]),CancellationToken.None)).StatusCode);
-        var removeCard = desk with { OperationId = Guid.NewGuid(), ExpectedVersion = 2, Data = JsonSerializer.SerializeToElement(new WorkbenchLayout(2,12,6,null,[]), FinanceRules.Json) };
+        var fine = new WorkbenchLayout(3,24,12,null,[card with {Width=8,Height=4},search with {X=8,Width=16,Height=2},shortcut with {X=8,Y=2}]);
+        var fineChange = desk with { OperationId=Guid.NewGuid(),ExpectedVersion=2,Data=JsonSerializer.SerializeToElement(fine,FinanceRules.Json) };
+        Assert.Equal(HttpStatusCode.OK,(await client.PostAsJsonAsync("/api/sync",new SyncRequest([fineChange]),CancellationToken.None)).StatusCode);
+        var resize = fineChange with {OperationId=Guid.NewGuid(),ExpectedVersion=3,Data=JsonSerializer.SerializeToElement(fine with {Widgets=[fine.Widgets[0] with {Width=6,Height=3},fine.Widgets[1],fine.Widgets[2]]},FinanceRules.Json)};
+        Assert.Equal(HttpStatusCode.OK,(await client.PostAsJsonAsync("/api/sync",new SyncRequest([resize]),CancellationToken.None)).StatusCode);
+        var resized = await client.GetFromJsonAsync<WorkbenchOverview>("/api/workbench",CancellationToken.None);
+        Assert.Equal(6,FinanceRules.Read<WorkbenchLayout>(resized!.Record!.Data).Widgets[0].Width);
+        var removeCard = desk with { OperationId = Guid.NewGuid(), ExpectedVersion = 4, Data = JsonSerializer.SerializeToElement(new WorkbenchLayout(3,24,12,null,[]), FinanceRules.Json) };
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/sync", new SyncRequest([removeCard]), CancellationToken.None)).StatusCode);
         var all = await client.GetFromJsonAsync<Snapshot>("/api/finance", CancellationToken.None);
         Assert.Single(all!.Records, r => r.Id == note.Id && !r.Deleted);
@@ -128,6 +135,20 @@ public sealed class WorkbenchTests
         WorkbenchRules.Validate(older);
         WorkbenchRules.Validate(layout with {Rows=12,Widgets=[shortcut with {Y=11}]});
         Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Rows=73}));
+    }
+
+    [Fact]
+    public void FineGridDimensionsAreEditableWithinBoundsAndOldVersionsStayValid()
+    {
+        var card = Card() with {Width=8,Height=4};
+        var layout = new WorkbenchLayout(3,24,12,null,[card]);
+        WorkbenchRules.Validate(layout);
+        WorkbenchRules.Validate(layout with {Widgets=[card with {Width=7,Height=5}]});
+        WorkbenchRules.Validate(layout with {Rows=864,Widgets=[card with {Y=860}]});
+        foreach(var invalid in new[]{card with {Width=25},card with {Height=13},card with {Width=0},card with {X=20}})
+            Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Widgets=[invalid]}));
+        Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Columns=12}));
+        Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Rows=865}));
     }
 
     private static WorkbenchWidget Card() => new(Guid.NewGuid(), "notes", 0, 0, 4, 2);

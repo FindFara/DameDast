@@ -12,6 +12,7 @@ const defaults = {
   weekend: "friday",
   holidays: true,
   workbenchEditing: false,
+  mainBackground: null,
   calendarItems: calendarVisibilityOptions.map(([kind]) => kind),
 };
 export function preferences() {
@@ -33,6 +34,7 @@ export function validatePreferences(value) {
     typeof value.holidays !== "boolean" ||
     (value.workbenchEditing !== undefined &&
       typeof value.workbenchEditing !== "boolean") ||
+    (value.mainBackground != null && !/^#[0-9a-f]{6}$/i.test(value.mainBackground)) ||
     (value.calendarItems !== undefined &&
       (!Array.isArray(value.calendarItems) ||
         value.calendarItems.some((kind) =>

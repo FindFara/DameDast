@@ -5,6 +5,8 @@ import {
   workbenchRecord,
   widgetCatalog,
   deskColors,
+  deskColorNames,
+  shortcutColors,
   deskContrast,
   deviceWorkbench,
   deviceForWidth,
@@ -252,18 +254,22 @@ function widgetMarkup(c, w, icon) {
   const spec = widgetCatalog.find(spec=>spec.type===w.type), heading = t(spec.title), fg = deskContrast(w.background);
   const style = `grid-column:${w.x+1}/span ${w.width};grid-row:${w.y+1}/span ${w.height};${fg ? `--desk-card-bg:${w.background};--ink:${fg};--muted:${fg};--accent:${fg};--border:color-mix(in srgb,${fg} 15%,transparent);` : ""}`;
   const page = Object.hasOwn(shortcutPages,w.options?.page) ? w.options.page : "notes";
-  const body = w.type === "search" ? deskSearchMarkup(icon) : w.type === "shortcut" ? `<a class="desk-shortcut" href="#${page}" aria-label="${t(shortcutPages[page])}" title="${t(shortcutPages[page])}">${icon(page)}</a>` : components[w.type](c,w);
+  const body = w.type === "search" ? deskSearchMarkup(icon) : w.type === "shortcut" ? `<a class="desk-shortcut" href="#${page}" aria-label="${c.workbenchEditing ? t("Card settings")+": " : ""}${t(shortcutPages[page])}" title="${t(shortcutPages[page])}"><span class="desk-shortcut-symbol" style="--shortcut-color:${shortcutColors[page]}">${icon(page)}</span></a>` : components[w.type](c,w);
   return `<article class="desk-card desk-widget-${w.type}${fg?" desk-custom-color":""}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(w.type === "shortcut" ? t(shortcutPages[page]) : heading)}">${c.workbenchEditing ? `<div class="desk-card-tools"><button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}">${grip}</button><button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button></div>` : ""}<div class="desk-card-body">${body}</div></article>`;
 }
 export function workbenchPage(c, icon) {
   const source = standardWorkbench(workbenchRecord(c.records)?.data || defaultWorkbench());
   const editing = preferences().workbenchEditing, device = deviceForWidth(typeof innerWidth === "number" ? innerWidth : 1400);
-  const layout = deviceWorkbench(source,device), fg = deskContrast(layout.background);
-  const usedRows = Math.max(device === "desktop" ? 6 : 1,...layout.widgets.map(widget=>widget.y+widget.height));
-  return `<section aria-label="${t("Workbench")}" class="workbench-page desk-home${editing ? " workbench-editing" : ""}" style="${layout.background ? `--desk-wallpaper:${layout.background};--desk-wallpaper-ink:${fg};` : ""}"><div class="desk-scroll"><div id="desk-board" class="desk-board${editing ? " is-arranging" : ""}" data-device="${device}" style="--desk-columns:${layout.columns};--desk-rows:${usedRows}" dir="ltr">${layout.widgets.map(widget=>widgetMarkup({...c,workbenchEditing:editing},widget,icon)).join("")}</div></div><output class="sr-only desk-live-status" role="status"></output></section>`;
+  const layout = deviceWorkbench(source,device);
+  const usedRows = Math.max(device === "desktop" ? 12 : 1,...layout.widgets.map(widget=>widget.y+widget.height));
+  return `<section aria-label="${t("Workbench")}" class="workbench-page desk-home${editing ? " workbench-editing" : ""}" ><div class="desk-scroll"><div id="desk-board" class="desk-board${editing ? " is-arranging" : ""}" data-device="${device}" style="--desk-columns:${layout.columns};--desk-rows:${usedRows}" dir="ltr">${layout.widgets.map(widget=>widgetMarkup({...c,workbenchEditing:editing},widget,icon)).join("")}</div></div><output class="sr-only desk-live-status" role="status"></output></section>`;
 }
 export function colorFields(color) {
-  return `<div class="desk-color-swatches"><button type="button" data-desk-swatch="" class="desk-auto-swatch${!color ? " selected" : ""}">${t("Theme color")}</button>${deskColors.map((hex) => `<button type="button" style="background:${hex}" data-desk-swatch="${hex}" aria-label="${t("Use color")} ${hex}" class="${color === hex ? "selected" : ""}"></button>`).join("")}</div><div class="desk-custom-colors"><label class="field">${t("Custom color")}<input type="color" data-desk-color-picker value="${color || "#e3eeea"}" aria-label="${t("Color picker")}"></label><label class="field">${t("Hex color")}<input name="background" value="${color || ""}" maxlength="7" pattern="#[0-9a-fA-F]{6}" placeholder="#e3eeea" dir="ltr" autocomplete="off"></label></div><p class="small-note">${t("Leave empty to follow the app theme.")}</p>`;
+  return `<input type="hidden" name="background" value="${esc(color || "")}"><div class="desk-color-swatches" role="group" aria-label="${t("Card background")}">${deskColors.map((hex,index)=>`<button type="button" style="background:${hex}" data-desk-swatch="${hex}" aria-label="${t(deskColorNames[index])}" title="${t(deskColorNames[index])}" aria-pressed="${color === hex}" class="${color === hex ? "selected" : ""}"></button>`).join("")}</div>`;
+}
+export function widgetSizeFields(widget) {
+  const dimension = (name,label,max,value) => `<label class="field">${t(label)}<select name="${name}" aria-label="${t(label)}">${Array.from({length:max},(_,index)=>index+1).map(number=>`<option value="${number}" ${number === value ? "selected" : ""}>${localizedNumber(number)}</option>`).join("")}</select></label>`;
+  return `<div class="desk-size-fields">${dimension("width","Width",24,widget.width)}${dimension("height","Height",12,widget.height)}</div>`;
 }
 export function widgetSettings(w, c) {
   const referenceNotes = w.type === "canvas" ? rowsOf(c, "note").filter(isDrawingNote) : textNotes(c.records);
@@ -278,7 +284,7 @@ export function widgetSettings(w, c) {
             "",
           )}${w.referenceId && !referenceNotes.some((r) => r.id === w.referenceId) ? `<option selected value="${w.referenceId}">${t("Unavailable")}</option>` : ""}</select></label>`
       : ""
-  }<fieldset class="desk-visibility"><legend>${t("Show on devices")}</legend>${["phone", "tablet", "desktop"].map(device=>`<label><input type="checkbox" name="device-${device}" ${w.devices?.[device] !== false ? "checked" : ""}>${t({phone:"Phone",tablet:"Tablet",desktop:"Desktop"}[device])}</label>`).join("")}</fieldset>${toolOptionFields(w.type, w.options || {})}<strong class="desk-field-heading">${t("Card background")}</strong>${colorFields(w.background)}`;
+  }<fieldset class="desk-visibility"><legend>${t("Show on devices")}</legend>${["phone", "tablet", "desktop"].map(device=>`<label><input type="checkbox" name="device-${device}" ${w.devices?.[device] !== false ? "checked" : ""}>${t({phone:"Phone",tablet:"Tablet",desktop:"Desktop"}[device])}</label>`).join("")}</fieldset>${toolOptionFields(w.type, w.options || {})}<strong class="desk-field-heading">${t("Card background")}</strong>${colorFields(w.background)}${widgetSizeFields(w)}`;
 }
 export function addWidgetFields(icon) {
   return `${componentPicker(widgetCatalog,icon)}<div data-widget-options>${toolOptionFields("search")}</div>`;

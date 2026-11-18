@@ -1473,6 +1473,7 @@ async function onAction(event) {
     $('[data-action="notes-view"]')?.focus();
     return;
   }
+  if (action === "reset-app-background") { savePreferences({mainBackground:null}); render(); return; }
   if (action === "dashboard-privacy") {
     dashboardAmountsVisible = !dashboardAmountsVisible;
     render();
@@ -2027,6 +2028,10 @@ document.addEventListener("change", (event) => {
   }
   if (event.target.id === "language-setting")
     void changeLanguage(event.target.value);
+  if (event.target.id === "app-background-setting") {
+    savePreferences({mainBackground:event.target.value});
+    render();
+  }
   if (event.target.id === "theme-setting") {
     setTheme(event.target.value);
     render();

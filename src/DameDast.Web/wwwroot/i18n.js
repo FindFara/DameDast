@@ -1,3 +1,4 @@
+import { preferences } from "./preferences.js";
 const readPreference = (name, fallback) => {
   try {
     return globalThis.localStorage?.getItem(name) || fallback;
@@ -44,17 +45,39 @@ export function applyPreferences() {
   document.documentElement.dir = isRtl() ? "rtl" : "ltr";
   document.documentElement.dataset.theme = effectiveTheme();
   document.documentElement.style.colorScheme = effectiveTheme();
+  const background = preferences().mainBackground;
+  if (background) {
+    document.documentElement.style.setProperty?.("--bg", background);
+    const rgb = [1,3,5].map(index=>parseInt(background.slice(index,index+2),16));
+    const light = rgb[0]*.299+rgb[1]*.587+rgb[2]*.114 > 145;
+    document.documentElement.style.setProperty?.("--app-background-ink", light ? "#18392e" : "#f2f6f3");
+  } else {
+    document.documentElement.style.removeProperty?.("--bg");
+    document.documentElement.style.removeProperty?.("--app-background-ink");
+  }
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute(
       "content",
-      effectiveTheme() === "dark" ? "#141c23" : "#f5f7f6",
+      background || (effectiveTheme() === "dark" ? "#141c23" : "#f5f7f6"),
     );
   document.title = isRtl()
     ? "دمِ دست"
     : "DameDast";
 }
 const fa = {
+  "Indigo blue": "آبی نیلی",
+  "Canary yellow": "زرد قناری",
+  "Red": "قرمز",
+  "Matte white": "سفید مات",
+  "Matte black": "مشکی مات",
+  "App background": "پس‌زمینهٔ اصلی برنامه",
+  "Changes the background of every page, including the workbench.": "رنگ زمینهٔ تمام صفحه‌ها، از جمله میز کار، را تغییر می‌دهد.",
+  "Use theme background": "استفاده از زمینهٔ پوسته",
+  "Enter a valid component size.": "اندازهٔ معتبر برای کامپوننت انتخاب کن.",
+  "Not enough room for this component.": "فضای کافی برای این کامپوننت وجود ندارد.",
+  "Enable editing to arrange components and change their size.": "ویرایش را برای چیدن کامپوننت‌ها و تغییر اندازهٔ آن‌ها روشن کن.",
+
   "Google search": "جست‌وجوی گوگل",
   "App shortcut": "میان‌بر برنامه",
   "Destination": "مقصد",
