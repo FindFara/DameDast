@@ -1,3 +1,4 @@
+import { scopedStorageKey } from "./account-scope.js";
 const key = "damdast-preferences-v2";
 export const calendarVisibilityOptions = [
   ["event", "Events"],
@@ -19,7 +20,7 @@ export function preferences() {
   try {
     return validatePreferences({
       ...defaults,
-      ...JSON.parse(localStorage.getItem(key) || "{}"),
+      ...JSON.parse(localStorage.getItem(scopedStorageKey(key)) || "{}"),
     });
   } catch {
     return { ...defaults };
@@ -46,6 +47,6 @@ export function validatePreferences(value) {
 }
 export function savePreferences(value) {
   const next = validatePreferences({ ...preferences(), ...value });
-  localStorage.setItem(key, JSON.stringify(next));
+  localStorage.setItem(scopedStorageKey(key), JSON.stringify(next));
   return next;
 }

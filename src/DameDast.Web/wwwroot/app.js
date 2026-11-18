@@ -1,3 +1,5 @@
+import { accountSpace, setAccountScope, scopedStorageKey, accountHeaders, initialSpace, canOpenSpace } from "./account-scope.js";
+import { ProfileMenu } from "./profile-menu.js";
 import { filterTransactions, normalizeTransactionFilters } from "./transaction-board.js";
 import { migrateLegacyPreferences } from "./legacy-storage.js";
 import { readPins, togglePin, savePins } from "./nav-pins.js";
@@ -108,6 +110,7 @@ import {
 
 migrateLegacyPreferences();
 const $ = (selector) => document.querySelector(selector);
+const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
 let dashboardAmountsVisible = false;
 let assetKey = "",
@@ -119,7 +122,7 @@ let drawingDraftId = null;
 const connected = new ConnectedStore(() => {
   if (ready && ["connected", "workbench"].includes(page)) render();
 });
-let session = { authenticated: false, googleConfigured: false },
+let session = { authenticated: false, googleConfigured: false, demoEnabled: false },
   space = "guest",
   state,
   page = "overview";
@@ -136,7 +139,7 @@ const navGroupsOpen = {};
 const pinnablePages = navigationGroups.flatMap(group => group.items);
 let navPins = readPins(pinnablePages);
 let notesView = "grid";
-try { if (localStorage.getItem("damedast-notes-view") === "list") notesView = "list"; } catch {}
+try { if (localStorage.getItem(scopedStorageKey("damedast-notes-view")) === "list") notesView = "list"; } catch {}
 const settingsGroupsOpen = {};
 const noteLayout = new ResizeObserver(entries => {
   for (const { target } of entries) {
@@ -259,11 +262,15 @@ async function saveWorkbenchLayout(layout, base) {
   toast("Saved.");
 }
 
-const network = (url, options = {}) =>
-  fetch(url, {
+const network = async (url, options = {}) => {
+  const response = await fetch(url, {
     ...options,
+    headers: { ...(url === "/api/session" ? {} : accountHeaders(session)), ...options.headers },
     signal: options.signal || AbortSignal.timeout(25000),
   });
+  if (response.status === 401 && session.authenticated && url !== "/api/session") reloadAccount();
+  return response;
+};
 
 function toast(key) {
   $("#toast").textContent = t(key);
@@ -378,6 +385,7 @@ function renderChrome() {
       return `<a href="#${key}" class="${active ? "active" : ""}" ${active ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(key === "settings" ? "More" : sections[key][0])}</span></a>`;
     })
     .join("");
+  profileMenu.render(session);
   $("#profile-name").innerHTML =
     `<bdi dir="auto">${esc(session.authenticated && space !== "demo" ? session.name || t("Google account") : t("Workspace"))}</bdi><small>${t(space === "demo" ? "Demo" : space.startsWith("google:") ? "Google account" : "Local")}</small>`;
 
@@ -420,7 +428,7 @@ function renderChrome() {
   $(".close-dialog").setAttribute("aria-label", t("Close"));
 }
 function render() {
-  if (!state) return;
+  if (!state || accountReloading) return;
   notePage.capture();
   deskTools.capture();
   for (const group of document.querySelectorAll('#view [data-setting-group]'))
@@ -844,13 +852,7 @@ async function sync() {
       if (!response.ok) throw Error("Server unavailable.");
       const current = await response.json();
       if (!current.authenticated || `google:${current.userId}` !== space) {
-        session = {
-          ...session,
-          authenticated: false,
-          googleConfigured: current.googleConfigured,
-        };
-        render();
-        updateStatus("Sign in to sync");
+        reloadAccount();
         return;
       }
       session = current;
@@ -1035,6 +1037,7 @@ async function loadHistory() {
   }
 }
 async function changeSpace(next) {
+  if (!canOpenSpace(next, session, restoredWorkspaces())) throw Error("Sign in to continue.");
   if (syncPromise) await syncPromise;
   const url = new URL(location.href);
   if (next === "demo") url.searchParams.set("demo", "1");
@@ -1053,15 +1056,12 @@ async function googleLogin() {
     const response = await network("/api/session", { cache: "no-store" });
     if (!response.ok) throw Error();
     session = await response.json();
-    if (session.authenticated) { location.hash = "settings"; render(); return; }
+    if (session.authenticated) { reloadAccount(); return; }
     if (!session.googleConfigured) {
-      document.querySelector('[data-setting-group="setup"]')?.setAttribute("open", "");
-      settingsGroupsOpen.setup = true;
-      location.hash = "settings"; render();
-      notify("Google sign-in is not configured.", t("Check Authentication:Google in appsettings.json, restart the app, and register the exact callback URL shown in Settings."));
+      notify("Sign-in unavailable.", t("Google sign-in is temporarily unavailable. Please try again later."));
       return;
     }
-    localStorage.removeItem("damdast-active-local-workspace");
+    localStorage.removeItem(scopedStorageKey("damdast-active-local-workspace"));
     location.href = "/auth/google?returnUrl=" + encodeURIComponent("/" + location.hash);
   } catch {
     notify("Sign-in failed.", t("Cannot reach the local app server. Start the app and try again."));
@@ -1314,8 +1314,9 @@ async function migrateGuest() {
   );
 }
 async function logout() {
+  const accountKey = accountSpace(session);
   const hasPending =
-    state.pending.length ||
+    (await loadSpace(accountKey)).pending.length ||
     (connected.session.userId === session.userId &&
       connected.state.pending.length);
   notify(
@@ -1341,6 +1342,8 @@ async function logout() {
             className: "danger",
             run: async () => {
               if (syncPromise) await syncPromise;
+              if (connected.syncPromise) await connected.syncPromise;
+              if ((await loadSpace(accountKey)).pending.length || connected.state.pending.length) throw Error("Sync pending changes first.");
               if (session.pushConfigured) await removeDevicePush();
               const response = await network("/auth/logout", {
                 method: "POST",
@@ -1354,7 +1357,11 @@ async function logout() {
               session = {
                 authenticated: false,
                 googleConfigured: session.googleConfigured,
+                demoEnabled: session.demoEnabled,
               };
+              setAccountScope(session);
+              navPins = readPins(pinnablePages);
+              notesView = localStorage.getItem(scopedStorageKey("damedast-notes-view")) === "list" ? "list" : "grid";
               await changeSpace("guest");
             },
           },
@@ -1468,7 +1475,7 @@ async function onAction(event) {
   }
   if (action === "notes-view") {
     notesView = notesView === "grid" ? "list" : "grid";
-    try { localStorage.setItem("damedast-notes-view", notesView); } catch {}
+    try { localStorage.setItem(scopedStorageKey("damedast-notes-view"), notesView); } catch {}
     render();
     $('[data-action="notes-view"]')?.focus();
     return;
@@ -1862,6 +1869,7 @@ async function onAction(event) {
     render();
   }
   if (action === "demo") {
+    if (!session.demoEnabled) return;
     await changeSpace("demo");
     if (!records().length || state.demoVersion !== 4) {
       state = makeDemo();
@@ -1869,7 +1877,7 @@ async function onAction(event) {
       render();
     }
   }
-  if (action === "reset-demo")
+  if (action === "reset-demo" && session.demoEnabled && space === "demo")
     notify("Reset sample data?", t("Demo only. Your records stay separate."), [
       {
         label: "Reset demo",
@@ -1906,7 +1914,7 @@ async function onAction(event) {
     );
   }
   if (action === "workspace-google") {
-    localStorage.removeItem("damdast-active-local-workspace");
+    localStorage.removeItem(scopedStorageKey("damdast-active-local-workspace"));
     await changeSpace(`google:${session.userId}`);
   }
   if (action === "restore-backup")
@@ -1961,7 +1969,7 @@ $("#theme-button").onclick = () => {
   setTheme(effectiveTheme() === "dark" ? "light" : "dark");
   render();
 };
-$("#profile-button").onclick = () => (location.hash = "settings");
+
 document.addEventListener("change", (event) => {
   if (event.target.name === "marketSymbol") {
     const instrument = marketInstruments.find(
@@ -2088,6 +2096,7 @@ window.addEventListener("online", () => {
   void sync();
   if (["overview", "market", "workbench"].includes(page)) void loadMarket();
 });
+window.addEventListener("damedast:session-changed", reloadAccount);
 window.addEventListener("offline", () => {
   updateStatus();
   if (marketData) marketData = { ...marketData, stale: true };
@@ -2107,13 +2116,9 @@ window.addEventListener("storage", (event) => {
   }
 });
 channel?.addEventListener("message", async (event) => {
-  if (event.data.logout && space === `google:${event.data.logout}`) {
-    session = {
-      authenticated: false,
-      googleConfigured: session.googleConfigured,
-    };
-    await changeSpace("guest");
-    return;
+  if (ready && ((event.data.logout && accountSpace(session) === `google:${event.data.logout}`) ||
+      (event.data.accountChanged && event.data.accountChanged !== accountSpace(session)))) {
+    reloadAccount(); return;
   }
   if (ready && event.data.space === space && !syncPromise) {
     state = await loadSpace(space);
@@ -2143,6 +2148,15 @@ setInterval(() => {
   )
     void loadMarket();
 }, 300000);
+let accountReloading = false;
+function reloadAccount() {
+  if (accountReloading) return;
+  accountReloading = true; ready = false;
+  document.querySelectorAll("dialog[open]").forEach(dialog => dialog.close());
+  $("#view").replaceChildren(); $("#drawing-studio").hidden = true;
+  profileMenu.toggle(false);
+  location.reload();
+}
 async function boot() {
   applyPreferences();
   try {
@@ -2156,31 +2170,20 @@ async function boot() {
       const response = await network("/api/session", { cache: "no-store" });
       if (!response.ok) throw Error();
       session = await response.json();
-      if (session.authenticated) {
-        space = `google:${session.userId}`;
-        localStorage.setItem(
-          "damedast-last-user",
-          JSON.stringify({ userId: session.userId, name: session.name }),
-        );
-      }
     } catch {
-      const last = JSON.parse(
-        localStorage.getItem("damedast-last-user") || "null",
-      );
-      if (last) {
-        space = `google:${last.userId}`;
-        session = { ...session, ...last, authenticated: true };
-      }
+      // A cached identifier is not a verified session on a shared browser.
+      session = { authenticated:false, googleConfigured:false, demoEnabled:false };
     }
-    const restoredChoice = localStorage.getItem(
-      "damdast-active-local-workspace",
-    );
-    if (
-      restoredWorkspaces().some((w) => w.scope === restoredChoice) ||
-      restoredChoice === "guest"
-    )
-      space = restoredChoice;
-    if (new URLSearchParams(location.search).has("demo")) space = "demo";
+    setAccountScope(session);
+    localStorage.removeItem("damedast-last-user");
+    localStorage.removeItem("damdast-portfolio-user");
+    navPins = readPins(pinnablePages);
+    notesView = localStorage.getItem(scopedStorageKey("damedast-notes-view")) === "list" ? "list" : "grid";
+    space = initialSpace(session, localStorage.getItem(scopedStorageKey("damdast-active-local-workspace")), restoredWorkspaces(), new URLSearchParams(location.search).has("demo"));
+    if (space !== "demo" && new URLSearchParams(location.search).has("demo")) {
+      const url = new URL(location.href); url.searchParams.delete("demo"); history.replaceState(null,"",url.pathname+url.search+url.hash);
+    }
+    channel?.postMessage({ accountChanged:accountSpace(session) });
     state = await loadSpace(space);
     if (
       space === "demo" &&
@@ -2195,7 +2198,7 @@ async function boot() {
     } catch {}
     ready = true;
     render();
-    void connected.initialize().catch(() => {});
+    void connected.initialize(session).catch(() => {});
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     void sync();
@@ -2205,11 +2208,11 @@ async function boot() {
       notify(
         "Sign-in failed.",
         t(
-          ({ "not-configured": "Check Authentication:Google in appsettings.json, restart the app, and register the exact callback URL shown in Settings.",
+          ({ "not-configured": "Google sign-in is temporarily unavailable. Please try again later.",
             correlation: "Google sign-in could not verify its browser cookie. Use the same localhost address throughout sign-in, allow cookies, and try again.",
             denied: "Google sign-in was cancelled or this account is not an OAuth test user.",
             credentials: "Google rejected the client credentials. Check the Web application client in Google Cloud and restart the app.",
-            google: "Google sign-in failed. Check the exact callback URL in Settings and the OAuth test users in Google Cloud."
+            google: "Google sign-in failed. Please try again."
           })[new URLSearchParams(location.search).get("authError")] || "Try signing in again.",
         ),
       );
@@ -2681,8 +2684,8 @@ document.addEventListener("change", async (event) => {
   }
   if (el.matches("#workspace-setting")) {
     if (el.value === "google")
-      localStorage.removeItem("damdast-active-local-workspace");
-    else localStorage.setItem("damdast-active-local-workspace", el.value);
+      localStorage.removeItem(scopedStorageKey("damdast-active-local-workspace"));
+    else localStorage.setItem(scopedStorageKey("damdast-active-local-workspace"), el.value);
     await changeSpace(
       el.value === "google" ? `google:${session.userId}` : el.value,
     );

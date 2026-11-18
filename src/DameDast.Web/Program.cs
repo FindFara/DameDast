@@ -29,6 +29,7 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 app.UseAuthentication();
+app.UseMiddleware<AccountScopeMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapWhiteboards();

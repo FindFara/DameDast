@@ -1,3 +1,4 @@
+import { accountSpace, accountHeaders } from "./account-scope.js";
 import {loadSpace,saveSpace} from './store.js';
 import {materialize} from './finance.js';
 import {normalizeBundle,normalizeSnapshot,mergeSnapshot,scopeKey} from './extension/shared/portfolio.js';
@@ -10,12 +11,20 @@ export function syncBatch(pending) {
 export class ConnectedStore {
   constructor(onChange){this.onChange=onChange;this.state=empty();this.session={authenticated:false};this.key='portfolio:guest';this.status='local';this.busy=false;this.error='';}
   get snapshots(){return materialize(this.state).filter(r=>!r.deleted&&r.kind==='externalSnapshot').map(r=>({...normalizeSnapshot(r.data),recordId:r.id}));}
-  async request(path,options={}) {return fetch(path,{...options,cache:'no-store',signal:AbortSignal.timeout(25000)});}
+  async request(path,options={}) {
+    const response=await fetch(path,{...options,headers:{...(path.endsWith('/session')?{}:accountHeaders(this.session)),...options.headers},cache:'no-store',signal:AbortSignal.timeout(25000)});
+    if(response.status===401&&this.session.authenticated)globalThis.dispatchEvent?.(new Event('damedast:session-changed'));
+    return response;
+  }
   lock(run){return navigator.locks?navigator.locks.request(this.key,run):run();}
-  async initialize(){
-    try{const r=await this.request('/api/portfolio/session');if(r.ok)this.session=await r.json();if(this.session.authenticated)localStorage.setItem('damdast-portfolio-user',this.session.userId);}
-    catch{const last=localStorage.getItem('damdast-portfolio-user');if(last)this.session={authenticated:false,userId:last};}
-    this.key='portfolio:'+(this.session.userId||'guest');this.state=await loadSpace(this.key);this.status=this.session.authenticated?'synced':'local';this.onChange();void this.sync();
+  async initialize(verifiedSession=null){
+    if(this.syncPromise)await this.syncPromise;
+    this.session={authenticated:false};this.state=empty();
+    if(verifiedSession!==null)this.session={...verifiedSession};
+    else try{const r=await this.request('/api/portfolio/session');if(r.ok)this.session=await r.json();}catch{}
+    if(accountSpace(this.session)==='guest')this.session={authenticated:false};
+    this.key='portfolio:'+(this.session.authenticated?this.session.userId:'guest');
+    this.state=await loadSpace(this.key);this.status=this.session.authenticated?'synced':'local';this.onChange();void this.sync();
   }
   async import(input){
     const imports=normalizeBundle(input);
@@ -34,8 +43,12 @@ export class ConnectedStore {
   async remove(id){
     await this.lock(async()=>{this.state=await loadSpace(this.key);const row=materialize(this.state).find(r=>r.id===id&&!r.deleted);if(!row)return;this.state.pending.push({operationId:crypto.randomUUID(),id,kind:'externalSnapshot',expectedVersion:row.version,delete:true,data:null});await saveSpace(this.key,this.state);});this.onChange();await this.sync();
   }
-  async sync(){
-    if(this.busy||!this.session.authenticated||!navigator.onLine)return;
+  sync(){
+    if(this.syncPromise)return this.syncPromise;
+    if(!this.session.authenticated||!navigator.onLine)return Promise.resolve();
+    this.syncPromise=this.performSync().finally(()=>{this.syncPromise=null;});return this.syncPromise;
+  }
+  async performSync(){
     this.busy=true;this.status='syncing';this.onChange();
     try{await this.lock(async()=>{
       this.state=await loadSpace(this.key);
@@ -55,6 +68,7 @@ export class ConnectedStore {
     if(!this.session.authenticated)return;const r=await this.request('/api/portfolio');if(!r.ok)throw Error('Server unavailable.');const snapshot=await r.json();await this.lock(async()=>{this.state={snapshot,pending:[]};await saveSpace(this.key,this.state);});this.error='';this.status='synced';this.onChange();
   }
   async clearLocal(){
+    if(this.syncPromise)await this.syncPromise;
     const previousKey=this.key;
     this.session={authenticated:false};
     await this.lock(async()=>{if(previousKey!=='portfolio:guest')await saveSpace(previousKey,empty());this.state=await loadSpace('portfolio:guest');});

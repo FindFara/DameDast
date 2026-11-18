@@ -1,9 +1,10 @@
+import { scopedStorageKey } from "./account-scope.js";
 const storageKey = "damedast-nav-pins";
 export function validPins(value, allowed) {
   return Array.isArray(value) ? [...new Set(value)].filter(key => allowed.includes(key)) : [];
 }
 export function readPins(allowed) {
-  try { return validPins(JSON.parse(localStorage.getItem(storageKey) || "[]"), allowed); }
+  try { return validPins(JSON.parse(localStorage.getItem(scopedStorageKey(storageKey)) || "[]"), allowed); }
   catch { return []; }
 }
 export function togglePin(pins, key) {
@@ -11,5 +12,5 @@ export function togglePin(pins, key) {
   return [...pins, key];
 }
 export function savePins(pins) {
-  try { localStorage.setItem(storageKey, JSON.stringify(pins)); } catch {}
+  try { localStorage.setItem(scopedStorageKey(storageKey), JSON.stringify(pins)); } catch {}
 }

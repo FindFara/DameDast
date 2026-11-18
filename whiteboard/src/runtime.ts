@@ -21,6 +21,7 @@ import {
 } from "./storage.mjs";
 import { DocumentSync } from "./sync.mjs";
 import { canvasUi } from "./recovery.mjs";
+import { accountHeaders } from "../../src/DameDast.Web/wwwroot/account-scope.js";
 
 export const fileData = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -120,6 +121,7 @@ export class Runtime {
       signal: options.signal || AbortSignal.timeout(20000),
       headers: {
         "Content-Type": "application/json",
+        ...accountHeaders(this.ctx.session),
         ...(this.ctx.session?.csrf
           ? { "X-CSRF-TOKEN": this.ctx.session.csrf }
           : {}),
@@ -394,7 +396,7 @@ export class Runtime {
     if (this.hub && this.hub.state !== "Disconnected") return;
     if (!this.hub) {
       this.hub = new HubConnectionBuilder()
-        .withUrl("/hubs/whiteboard")
+        .withUrl("/hubs/whiteboard", { headers: accountHeaders(this.ctx.session) })
         .withAutomaticReconnect([0, 1000, 3000, 8000])
         .configureLogging(LogLevel.Error)
         .build();

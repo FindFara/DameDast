@@ -2,8 +2,8 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <meta name="damdast-version" content="damedast-fara-fine-grid-29" />
-    <script src="/update.js?v=29" defer></script>
+    <meta name="damdast-version" content="damedast-fara-accounts-30" />
+    <script src="/update.js?v=30" defer></script>
     <meta name="damdast-app" content="portfolio-v1" />
     <meta name="google" content="notranslate" />
     <meta
@@ -78,14 +78,17 @@
       </div>
       <div class="nav-label" id="workspace-label">Workspace</div>
       <nav id="navigation" aria-label="Menu"></nav>
-      <button class="profile" id="profile-button">
+      <div class="profile-area">
+      <div class="profile-menu" id="profile-menu" aria-label="Account" hidden></div>
+      <button type="button" class="profile" id="profile-button" aria-controls="profile-menu" aria-expanded="false">
         <span class="avatar" aria-hidden="true"
           ><svg viewBox="0 0 24 24">
             <circle cx="12" cy="8" r="4" />
             <path d="M4 22v-3a8 8 0 0 1 16 0v3" /></svg></span
         ><span id="profile-name">Workspace</span
-        ><span aria-hidden="true">⌘</span>
+        ><span aria-hidden="true">⌃</span>
       </button>
+      </div>
     </aside>
     <input id="backup-import" type="file" accept=".json,application/json" hidden>
     <dialog id="calendar-dialog"></dialog>

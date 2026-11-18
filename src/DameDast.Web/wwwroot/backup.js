@@ -1,3 +1,4 @@
+import { scopedStorageKey } from "./account-scope.js";
 import { LEGACY_BACKUP_FORMAT } from "./legacy-storage.js";
 import { readPdf, writePdf, validatePdfMetadata, base64ToBytes, bytesToBase64, MAX_NOTE_PDFS } from "./pdf-store.js";
 import { validatePreferences } from "./preferences.js";
@@ -271,7 +272,7 @@ export async function restoreBackup(
 export function restoredWorkspaces() {
   try {
     const list = JSON.parse(
-      localStorage.getItem("damdast-restored-workspaces") || "[]",
+      localStorage.getItem(scopedStorageKey("damdast-restored-workspaces")) || "[]",
     );
     return Array.isArray(list)
       ? list.filter(
@@ -286,8 +287,8 @@ export function restoredWorkspaces() {
 }
 export function rememberRestoredWorkspace(scope, name) {
   localStorage.setItem(
-    "damdast-restored-workspaces",
+    scopedStorageKey("damdast-restored-workspaces"),
     JSON.stringify([...restoredWorkspaces(), { scope, name }]),
   );
-  localStorage.setItem("damdast-active-local-workspace", scope);
+  localStorage.setItem(scopedStorageKey("damdast-active-local-workspace"), scope);
 }

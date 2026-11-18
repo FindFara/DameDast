@@ -66,6 +66,14 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Sign in with Google": "ورود با گوگل",
+  "My workspace": "فضای شخصی من",
+  "Account": "حساب کاربری",
+  "Sample data": "دادهٔ نمونه",
+  "Sign-in unavailable.": "ورود در دسترس نیست.",
+  "Google sign-in is temporarily unavailable. Please try again later.": "ورود با گوگل فعلاً در دسترس نیست؛ کمی بعد دوباره امتحان کن.",
+  "Google sign-in failed. Please try again.": "ورود با گوگل انجام نشد؛ دوباره امتحان کن.",
+  "The signed-in account has changed. Reload to continue.": "حساب کاربری تغییر کرده؛ برای ادامه صفحه را دوباره باز کن.",
   "Indigo blue": "آبی نیلی",
   "Canary yellow": "زرد قناری",
   "Red": "قرمز",

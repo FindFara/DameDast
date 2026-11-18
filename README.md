@@ -41,7 +41,9 @@ dotnet restore DameDast.slnx
 dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
 ```
 
-Open `http://localhost:5000`. Start in your empty local workspace or select **Explore the demo**. The demo is clearly labelled, isolated from real records, and never syncs to Google. To open it directly, use `http://localhost:5000/?demo=1`.
+Open `http://localhost:5000`. Click the person icon at the bottom of the main menu to open **Sign in with Google**. A verified session opens that user's own records; anonymous use has a separate local workspace. OAuth configuration instructions are kept in the deployment documentation, not in the settings screen.
+
+Sample data is disabled by default. Set `Features:DemoData` to `true` in `src/DameDast.Web/appsettings.json` (or `Features__DemoData=true` in the environment) and restart the server to enable **Settings → Sample data → Try demo** and `/?demo=1`. When disabled, the button and direct demo entry are unavailable. The labelled demo stays separate from personal data and never syncs.
 
 ## Features
 
@@ -97,13 +99,15 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "YOUR_CLIENT_SECRET
 
 For localhost:5000, put the keys under `Authentication` → `Google` → `ClientId` / `ClientSecret` in `src/DameDast.Web/appsettings.json`, or use User Secrets. Flat environment variables `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are also accepted. Keep credentials out of commits. Stop and restart the app after changing credentials. Open `http://localhost:5000`, and register `http://localhost:5000/signin-google` under **Authorized redirect URIs**, not just JavaScript origins. `/auth/google/status` reports the exact callback and missing setting names without credential values. The Sign in button rechecks the running server before navigating.
 
-If Google's app is in testing mode, add your Google account as a test user. Client credentials are intentionally absent from this repository. Without them, local use and the demo work; Google login and cross-device sync stay disabled.
+If Google's app is in testing mode, add your Google account as a test user. Client credentials are intentionally absent from this repository. Without them, local use works; Google login and cross-device sync stay disabled. Sample data also requires `Features:DemoData=true`.
 
 Official setup reference: https://learn.microsoft.com/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-10.0
 
 ### Sync behavior
 
-- Each browser workspace has a cached snapshot and a durable queue of operations. Google account workspaces and the guest/demo spaces use separate storage keys.
+- Each browser workspace has a cached snapshot and a durable queue of operations. Google account workspaces and guest/demo spaces use separate storage keys. Calendar/workbench preferences, navigation pins and restored-workspace lists are scoped to the verified account on that browser.
+- A successful session check selects the user's workspace. Cached user IDs never authenticate a user or reopen private data when session verification is unavailable. An already open, verified workspace can keep editing offline; after an offline reload, sign in/verify the session again to reopen its saved queue.
+- Requests carry the account that created them. If the cookie changes in another tab, stale requests are rejected and the app reloads the current session; pending changes stay under their original account. Guest records are imported only by explicit user action.
 - A client-generated operation UUID makes a network retry idempotent. A reused UUID with changed content is rejected. Receipts and ledger writes commit in the same database transaction.
 - Each record has a version. A stale edit returns HTTP 409. The UI asks whether to keep the server record or explicitly apply the local changes. Deleted server records cannot be silently resurrected.
 - SQLite optimistic concurrency and bounded retries protect writes from concurrent processes. A whole batch is atomic; unrelated records can be applied after a retry, while edits to the same record require review.
