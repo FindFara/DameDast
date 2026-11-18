@@ -2,6 +2,8 @@ export const DESK_COLUMNS = 12,
   DESK_ROWS = 6;
 export const WORKBENCH_ID = "dc7da320-bd12-4e87-a4fb-06b79f2b9f40";
 export const widgetCatalog = [
+  { type: "search", title: "Google search", glyph: "search" },
+  { type: "shortcut", title: "App shortcut", glyph: "link" },
   { type: "image", title: "Photo", glyph: "photo" },
   { type: "plainCalendar", title: "Simple calendar", glyph: "calendar" },
   { type: "link", title: "Website link", glyph: "link" },
@@ -57,6 +59,14 @@ export const widgetCatalog = [
     glyph: "reminders",
   },
 ];
+export const shortcutPages = {
+  overview:"Overview", notes:"Notes", tasks:"Tasks", calendar:"Calendar", canvas:"Drawings", accounts:"Accounts", transactions:"Transactions", budgets:"Budgets", goals:"Savings goals", reminders:"Reminders", assets:"Asset performance", market:"Market", installments:"Installments", monthlyPlan:"Monthly plan", monthlyExpenses:"Monthly expenses", receivables:"Money lent", connected:"Connected", suggestions:"Suggestions", locked:"Locked assets", reports:"Reports", settings:"Settings"
+};
+export function standardSize(type) {
+  if (type === "shortcut") return { width: 1, height: 1 };
+  if (type === "search") return { width: 8, height: 1 };
+  return { width: 4, height: ["plainCalendar", "calculator", "keyGenerator", "allocation"].includes(type) ? 3 : 2 };
+}
 export const deskColors = [
   "#f2f5f1",
   "#f4eddf",
@@ -86,18 +96,18 @@ export function canPlace(layout, rect, exceptId = null) {
     rect.width >= 1 &&
     rect.height >= 1 &&
     rect.width <= DESK_COLUMNS &&
-    rect.height <= DESK_ROWS &&
+    rect.height <= (layout.rows || DESK_ROWS) &&
     rect.x <= DESK_COLUMNS - rect.width &&
-    rect.y <= DESK_ROWS - rect.height &&
+    rect.y <= (layout.rows || DESK_ROWS) - rect.height &&
     !layout.widgets.some((w) => w && w.id !== exceptId && overlaps(w, rect))
   );
 }
 export function validateWorkbench(layout) {
   if (
     !layout ||
-    layout.version !== 1 ||
+    ![1,2].includes(layout.version) ||
     layout.columns !== DESK_COLUMNS ||
-    layout.rows !== DESK_ROWS ||
+    (layout.version === 1 ? layout.rows !== DESK_ROWS : !Number.isInteger(layout.rows) || layout.rows < 6 || layout.rows > 72) ||
     !validDeskColor(layout.background) ||
     !Array.isArray(layout.widgets) ||
     layout.widgets.length > 72 || layout.widgets.filter(w => w?.type === "image").length > MAX_DESK_IMAGES
@@ -123,6 +133,7 @@ export function validateWorkbench(layout) {
             (k) => !["phone", "tablet", "desktop"].includes(k),
           ) ||
           Object.values(w.devices).some((v) => typeof v !== "boolean"))) ||
+      (layout.version === 2 && (w.width !== standardSize(w.type).width || w.height !== standardSize(w.type).height)) ||
       !canPlace(layout, w, w.id)
     )
       throw Error("Invalid workbench card.");
@@ -131,32 +142,36 @@ export function validateWorkbench(layout) {
   }
   return layout;
 }
+const defaultCard = (n, type, options = null) => ({
+  id: `735adba9-2173-4dc3-899b-${String(n).padStart(12,"0")}`, type, x:0, y:0, ...standardSize(type), background:null, title:null, referenceId:null, options,
+});
+export function packStandardWidgets(widgets, columns = 12) {
+  const result = [];
+  for (const widget of widgets) {
+    const size = standardSize(widget.type), width = Math.min(columns, size.width), height = size.height;
+    let placed = false;
+    for (let y = 0; !placed && y < 216; y++) for (let x = 0; x <= columns - width; x++) {
+      const rect = { x, y, width, height };
+      if (!result.some(other => overlaps(other, rect))) { result.push({ ...widget, ...rect }); placed = true; break; }
+    }
+  }
+  return result;
+}
+export function standardWorkbench(layout, includeLegacyTools = true) {
+  validateWorkbench(layout);
+  const widgets = layout.version === 1 ? [...layout.widgets].sort((a,b)=>a.y-b.y||a.x-b.x) : [...layout.widgets];
+  if (layout.version === 1 && includeLegacyTools) {
+    const additions = [defaultCard(101,"search"), ...["notes","tasks","calendar","canvas"].map((page,index)=>defaultCard(102+index,"shortcut",{page}))];
+    widgets.unshift(...additions.filter(candidate => !widgets.some(widget=>widget.id===candidate.id)).slice(0,Math.max(0,72-widgets.length)));
+  }
+  const packed = packStandardWidgets(widgets);
+  return validateWorkbench({ ...layout, version:2, columns:12, rows:Math.max(6,...packed.map(widget=>widget.y+widget.height)), widgets:packed });
+}
 export function defaultWorkbench() {
-  const card = (n, type, x, y, width, height) => ({
-    id: `735adba9-2173-4dc3-899b-${String(n).padStart(12, "0")}`,
-    type,
-    x,
-    y,
-    width,
-    height,
-    background: null,
-    title: null,
-    referenceId: null,
-  });
-  return {
-    version: 1,
-    columns: 12,
-    rows: 6,
-    background: null,
-    widgets: [
-      card(1, "clock", 0, 0, 4, 2),
-      card(2, "plainCalendar", 0, 2, 4, 3),
-      card(3, "summary", 4, 0, 4, 2),
-      card(4, "pet", 4, 2, 4, 2),
-      card(5, "notes", 8, 0, 4, 2),
-      card(6, "tasks", 8, 2, 4, 3),
-    ],
-  };
+  return standardWorkbench({version:2, columns:12, rows:6, background:null, widgets:packStandardWidgets([
+      defaultCard(101,"search"), ...["notes","tasks","calendar","canvas"].map((page,index)=>defaultCard(102+index,"shortcut",{page})),
+      defaultCard(1,"clock"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(2,"plainCalendar"),defaultCard(5,"notes"),defaultCard(6,"tasks")
+    ])});
 }
 export function firstFreeSpace(layout, width, height) {
   for (let y = 0; y <= DESK_ROWS - height; y++)
@@ -218,6 +233,10 @@ export function deviceWorkbench(layout, device = "desktop") {
   const candidates = layout.widgets.filter(
     (w) => widgetVisibleOnDevice(w, device),
   );
+  if (layout.version === 2) {
+    const packed = packStandardWidgets(candidates, grid.columns);
+    return { ...layout, columns:grid.columns, rows:Math.max(1,...packed.map(widget=>widget.y+widget.height)), widgets:packed, device };
+  }
   if (device === "desktop") return { ...layout, widgets: candidates, device };
   for (const w of candidates) {
     const width = Math.min(grid.columns, w.width),

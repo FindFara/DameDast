@@ -81,12 +81,12 @@ export function petFaces(style, yaw, phase, walking, blink) {
   }
   return result.sort((a, b) => a.depth - b.depth);
 }
-export function drawVoxelPet(canvas, { style = "dog", yaw = .6, phase = 0, walking = false, blink = false } = {}) {
+export function drawVoxelPet(canvas, { style = "dog", yaw = .6, phase = 0, walking = false, blink = false, mood = "happy" } = {}) {
   const context = canvas.getContext("2d");
   if (!context) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.imageSmoothingEnabled = false;
-  if (style === "dog") { drawPixelDog(context, canvas.width, canvas.height, { yaw, phase, walking, blink }); return; }
+  if (style === "dog") { drawPixelDog(context, canvas.width, canvas.height, { yaw, phase, walking, blink, mood }); return; }
   const scale = Math.min(canvas.width / 3.3, canvas.height / 3.3), base = canvas.height * .81;
   context.fillStyle = "#193a3430";
   context.beginPath(); context.ellipse(canvas.width / 2, base + 2, scale * .85, scale * .2, 0, 0, Math.PI * 2); context.fill();

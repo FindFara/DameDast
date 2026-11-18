@@ -1,6 +1,6 @@
 export const MAX_DESK_IMAGES = 4;
 export const MAX_IMAGE_DATA = 120000;
-export const toolTypes = ["image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
+export const toolTypes = ["search", "shortcut", "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
 
 export function safeLink(value) {
   if (typeof value !== "string" || value.length > 2000 || /[\s\u0000-\u001f\u007f]/.test(value)) throw Error("Enter a valid http or https link.");
@@ -22,7 +22,7 @@ export function validImageData(value) {
   } catch { return false; }
 }
 const optionKeys = {
-  image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
+  search: [], shortcut: ["page"], image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
   clock: ["clockStyle", "timeZone"], pet: ["petStyle"], calculator: [], keyGenerator: [],
 };
 export function validateToolOptions(type, options) {
@@ -33,6 +33,7 @@ export function validateToolOptions(type, options) {
   if (options.description != null && (options.description.length > 200 || options.description !== options.description.trim())) throw Error("Invalid component settings.");
   if (options.imageData != null && !validImageData(options.imageData)) throw Error("Choose a PNG, JPEG or WebP image up to 5 MB.");
   if (options.url != null) safeLink(options.url);
+  if (options.page != null && !["overview","notes","tasks","calendar","canvas","accounts","transactions","budgets","goals","reminders","assets","market","installments","monthlyPlan","monthlyExpenses","receivables","connected","suggestions","locked","reports","settings"].includes(options.page)) throw Error("Invalid component settings.");
   for (const [key, values] of Object.entries({ calendar: ["persian", "gregory"], clockStyle: ["digital", "analog"], timeZone: ["local", "Asia/Tehran", "UTC"], petStyle: ["dog", "cat", "robot"] }))
     if (options[key] != null && !values.includes(options[key])) throw Error("Invalid component settings.");
 }

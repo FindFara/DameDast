@@ -55,6 +55,16 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Google search": "جست‌وجوی گوگل",
+  "App shortcut": "میان‌بر برنامه",
+  "Destination": "مقصد",
+  "Finish editing": "پایان ویرایش",
+  "Happy dog. Change mood.": "سگ خوشحال است؛ تغییر حالت",
+  "Sad dog. Change mood.": "سگ ناراحت است؛ تغییر حالت",
+  "Angry dog. Change mood.": "سگ عصبانی است؛ تغییر حالت",
+  "Enable editing to arrange and add components. Sizes are set automatically.": "ویرایش را برای چیدن و افزودن کامپوننت‌ها روشن کن. اندازه‌ها خودکار تعیین می‌شوند.",
+  "You can add up to 72 components.": "می‌توانی تا ۷۲ کامپوننت اضافه کنی.",
+
   "Dog": "سگ",
   "Send pet home": "برو خانه",
   "Call pet outside": "پت را صدا بزن",

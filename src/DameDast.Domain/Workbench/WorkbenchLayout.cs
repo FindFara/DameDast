@@ -15,11 +15,17 @@ public static class WorkbenchRules
     public const int Rows = 6;
     public static readonly string[] WidgetTypes =
         ["summary", "accounts", "installments", "notes", "canvas", "tasks", "goals", "markets", "allocation", "assets", "receivables", "reminders",
-         "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
+         "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet", "search", "shortcut"];
+
+    public static (int Width, int Height) StandardSize(string type) => type switch {
+        "shortcut" => (1,1), "search" => (8,1),
+        "plainCalendar" or "calculator" or "keyGenerator" or "allocation" => (4,3), _ => (4,2)
+    };
 
     public static void Validate(WorkbenchLayout layout)
     {
-        if (layout.Version != 1 || layout.Columns != Columns || layout.Rows != Rows ||
+        if (layout.Version is not (1 or 2) || layout.Columns != Columns ||
+            (layout.Version == 1 ? layout.Rows != Rows : layout.Rows < Rows || layout.Rows > 72) ||
             !ValidColor(layout.Background) || layout.Widgets is null || layout.Widgets.Count > Columns * Rows ||
             layout.Widgets.Count(widget => widget?.Type == "image") > 4)
             throw new FinanceException("Invalid workbench layout.");
@@ -32,8 +38,9 @@ public static class WorkbenchRules
                 !WidgetTypes.Contains(widget.Type) || !ValidColor(widget.Background) ||
                 (widget.Title is not null && (widget.Title.Length > 60 || widget.Title != widget.Title.Trim())) ||
                 (widget.ReferenceId.HasValue && (widget.ReferenceId == Guid.Empty || widget.Type is not ("notes" or "canvas"))) ||
+                (layout.Version == 2 && StandardSize(widget.Type) != (widget.Width, widget.Height)) ||
                 widget.X < 0 || widget.Y < 0 || widget.Width < 1 || widget.Height < 1 ||
-                widget.Width > Columns || widget.Height > Rows || widget.X > Columns - widget.Width || widget.Y > Rows - widget.Height)
+                widget.Width > Columns || widget.Height > Rows || widget.X > Columns - widget.Width || widget.Y > layout.Rows - widget.Height)
                 throw new FinanceException("Invalid workbench card.");
             WorkbenchOptionRules.Validate(widget.Type, widget.Options);
 

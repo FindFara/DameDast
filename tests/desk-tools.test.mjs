@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculate, randomKey, safeLink, validImageData, validateToolOptions } from '../src/DameDast.Web/wwwroot/desk-tools.js';
-import { defaultWorkbench, validateWorkbench } from '../src/DameDast.Web/wwwroot/workbench.js';
+import { defaultWorkbench, validateWorkbench, packStandardWidgets } from '../src/DameDast.Web/wwwroot/workbench.js';
 import { plainCalendarMarkup, toolMarkup } from '../src/DameDast.Web/wwwroot/desk-tool-ui.js';
 import { renderPage } from '../src/DameDast.Web/wwwroot/ui.js';
 import { isNoteRoute } from '../src/DameDast.Web/wwwroot/note-page.js';
@@ -35,6 +35,7 @@ test('photos and widget options have the same bounded format in settings and bac
   for(const [type,options] of [['image',{imageData:'data:image/png;base64,YmFk'}],['clock',{clockStyle:'script'}],['pet',{petStyle:'unknown'}],['notes',{url:'https://example.com'}],['calculator',{imageData:png}]]) assert.throws(()=>validateToolOptions(type,options));
   const desk=defaultWorkbench(); desk.widgets=[];
   for(let i=0;i<4;i++) desk.widgets.push({id:crypto.randomUUID(),type:'image',x:i,y:0,width:1,height:1,background:null,options:{imageData:png}});
+  desk.widgets=packStandardWidgets(desk.widgets);
   validateWorkbench(desk);
   desk.widgets.push({...desk.widgets[0],id:crypto.randomUUID(),x:4}); assert.throws(()=>validateWorkbench(desk));
 });

@@ -139,6 +139,7 @@ export const sections = {
   ],
 };
 const extraIcons = {
+  search: '<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/>',
   photo: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="2"/><path d="m3 17 5-5 4 4 4-6 5 7"/>',
   link: '<path d="m9 15 6-6M8 16l-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m4 0 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/>',
   calculator: '<rect x="4" y="2" width="16" height="20" rx="3"/><path d="M7 6h10M7 11h2m6 0h2M7 15h2m6 0h2M7 19h2m6 0h2"/>',

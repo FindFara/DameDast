@@ -17,6 +17,7 @@ import {
 } from "./backup.js";
 import { WorkbenchController } from "./workbench-controller.js";
 import { CreateMenuController, createLauncher } from "./create-menu.js";
+import { deskFloatingActions } from "./desk-home-ui.js";
 import { WORKBENCH_ID, validateWorkbench } from "./workbench.js";
 import { DrawingStudio } from "./drawing-studio.js";
 import { validateDrawing } from "./drawing.js";
@@ -346,7 +347,7 @@ new CreateMenuController({
 function renderChrome() {
   applyPreferences();
   $(".shell-tools").setAttribute("aria-label", t("Quick actions"));
-  $("#global-create").innerHTML = createLauncher();
+  $("#global-create").innerHTML = page === "workbench" ? deskFloatingActions(preferences().workbenchEditing,icon) : createLauncher();
   $("#app-menu-button").setAttribute("aria-label", t("Menu"));
   $("#app-menu-close").setAttribute("aria-label", t("Close"));
   $("#brand-name").textContent = t("DameDast");

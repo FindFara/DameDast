@@ -1,14 +1,15 @@
-.desk-pet-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 4; direction: ltr; contain: layout paint; }
-.desk-roaming-pet, .desk-pet-house { position: absolute; top: 0; left: 0; width: 112px; height: 112px; padding: 0; min-width: 0; min-height: 0; border: 0; background: transparent; pointer-events: auto; cursor: pointer; user-select: none; will-change: transform; }
-.desk-roaming-pet canvas { display: block; width: 112px; height: 112px; image-rendering: pixelated; pointer-events: none; }
-.desk-roaming-pet:focus-visible, .desk-pet-house:focus-visible { outline: 2px dashed var(--accent); outline-offset: -8px; border-radius: 14px; }
-.desk-roaming-pet[data-pet-state="home"] { opacity: 0; pointer-events: none; }
-.desk-pet-house { display: grid; align-content: end; justify-items: center; }
-.desk-pet-house svg { width: 70px; height: 70px; margin-block-end: 7px; filter: drop-shadow(0 3px 0 #193a3418); }
-.desk-pet-house.has-pet svg { filter: drop-shadow(0 0 6px #efbd6c60); }
-.desk-pet-preview { display: grid; place-items: center; }
-.desk-pet-preview canvas { width: 140px; height: 150px; max-width: 100%; image-rendering: pixelated; }
-@media (max-width: 599px) {
-  .desk-roaming-pet, .desk-roaming-pet canvas, .desk-pet-house { width: 88px; height: 88px; }
-  .desk-pet-house svg { width: 56px; height: 56px; }
-}
+.desk-pet-scene { position: relative; height: 100%; min-height: 150px; overflow: hidden; background: radial-gradient(ellipse at 30% 10%, #f4db9d35, transparent 70%), #dce8dc; transition: background-color .3s; }
+.desk-pet-scene[data-pet-mood="sad"] { background-color: #d4e1e9; }
+.desk-pet-scene[data-pet-mood="angry"] { background-color: #edddd5; }
+:root[data-theme="dark"] .desk-pet-scene { background-color: #2b3e36; }
+:root[data-theme="dark"] .desk-pet-scene[data-pet-mood="sad"] { background-color: #2b3c4d; }
+:root[data-theme="dark"] .desk-pet-scene[data-pet-mood="angry"] { background-color: #493b38; }
+.desk-pet-ground { position: absolute; inset: 65% 0 0; background: #74a47c18; border-block-start: 1px solid #77a48320; }
+.desk-pet-house { position: absolute; inset-inline-end: 20px; bottom: 23px; width: 80px; height: 80px; pointer-events: none; }
+.desk-pet-house svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 #193a3418); }
+.desk-pet-character { position: absolute; inset-inline-start: 20px; bottom: 8px; width: 132px; height: 144px; padding: 0; min-height: 0; min-width: 0; border: 0; background: transparent; cursor: pointer; }
+.desk-pet-character canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; }
+.desk-pet-character:focus-visible { outline: 2px dashed var(--accent); outline-offset: -8px; border-radius: 14px; }
+.workbench-editing .desk-pet-character { pointer-events: none; }
+@media (max-width: 599px) { .desk-pet-character { inset-inline-start: 10px; } .desk-pet-house { inset-inline-end: 14px; width: 70px; height: 70px; } }
+@media (prefers-reduced-motion: reduce) { .desk-pet-scene { transition: none; } }

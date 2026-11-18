@@ -45,7 +45,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  <details class="panel desk-settings-panel" id="workbench-settings" ${c.workbenchSettingsOpen ? "open" : ""}>
  <summary class="desk-settings-summary"><span>${icon("workbench")}<strong>${t("Workbench")}</strong></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
  <div class="desk-settings-content">
- ${row("Edit workbench", "Enable editing to move, resize and add cards directly on your workbench.", `<label class="switch-control"><input type="checkbox" data-preference="workbenchEditing" ${p.workbenchEditing ? "checked" : ""} aria-label="${t("Edit workbench")}"><span></span></label>`)}
+ ${row("Edit workbench", "Enable editing to arrange and add components. Sizes are set automatically.", `<label class="switch-control"><input type="checkbox" data-preference="workbenchEditing" ${p.workbenchEditing ? "checked" : ""} aria-label="${t("Edit workbench")}"><span></span></label>`)}
  ${row("Reporting month", "Controls the period used by the financial components on your desk.", monthControl(c.month, "month", true))}
  ${row("Desk background", "Choose a background color for your workbench.", `<button class="secondary" data-desk-action="background">${t("Choose color")}</button>`)}
  <a class="secondary desk-open-link" href="#workbench">${t("Open workbench")}${icon("arrow")}</a>

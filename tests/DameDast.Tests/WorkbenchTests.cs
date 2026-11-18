@@ -54,7 +54,16 @@ public sealed class WorkbenchTests
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/sync", input, CancellationToken.None)).StatusCode);
         var saved = await client.GetFromJsonAsync<WorkbenchOverview>("/api/workbench", CancellationToken.None);
         Assert.Equal(note.Id, FinanceRules.Read<WorkbenchLayout>(saved!.Record!.Data).Widgets[0].ReferenceId);
-        var removeCard = desk with { OperationId = Guid.NewGuid(), ExpectedVersion = 1, Data = JsonSerializer.SerializeToElement(Layout(), FinanceRules.Json) };
+        var search = Card() with { Type="search", X=4, Width=8, Height=1, ReferenceId=null };
+        var shortcut = Card() with { Type="shortcut", X=4, Y=1, Width=1, Height=1, ReferenceId=null, Options=new(Page:"calendar") };
+        var standard = new WorkbenchLayout(2,12,6,null,[card,search,shortcut]);
+        var migrate = desk with { OperationId=Guid.NewGuid(), ExpectedVersion=1, Data=JsonSerializer.SerializeToElement(standard,FinanceRules.Json) };
+        Assert.Equal(HttpStatusCode.OK,(await client.PostAsJsonAsync("/api/sync",new SyncRequest([migrate]),CancellationToken.None)).StatusCode);
+        var upgraded = await client.GetFromJsonAsync<WorkbenchOverview>("/api/workbench",CancellationToken.None);
+        Assert.Equal(2,FinanceRules.Read<WorkbenchLayout>(upgraded!.Record!.Data).Version);
+        var forged = migrate with {OperationId=Guid.NewGuid(),ExpectedVersion=2,Data=JsonSerializer.SerializeToElement(standard with {Widgets=[card,search,shortcut with {Width=2}]},FinanceRules.Json)};
+        Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsJsonAsync("/api/sync",new SyncRequest([forged]),CancellationToken.None)).StatusCode);
+        var removeCard = desk with { OperationId = Guid.NewGuid(), ExpectedVersion = 2, Data = JsonSerializer.SerializeToElement(new WorkbenchLayout(2,12,6,null,[]), FinanceRules.Json) };
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/sync", new SyncRequest([removeCard]), CancellationToken.None)).StatusCode);
         var all = await client.GetFromJsonAsync<Snapshot>("/api/finance", CancellationToken.None);
         Assert.Single(all!.Records, r => r.Id == note.Id && !r.Deleted);
@@ -68,7 +77,7 @@ public sealed class WorkbenchTests
     {
         var cases = new (string Type, WorkbenchWidgetOptions Options)[]
         {
-            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")),
+            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")), ("search", new()), ("shortcut", new(Page: "notes")),
             ("pet", new(PetStyle: "cat")), ("pet", new(PetStyle: "dog")), ("plainCalendar", new(Calendar: "persian")),
             ("link", new(Url: "https://example.com/path", Description: "A useful site")),
             ("calculator", new()), ("keyGenerator", new()),
@@ -95,7 +104,7 @@ public sealed class WorkbenchTests
             ("image", new(ImageData: "data:image/png;base64,iVBORw0K Ggo=")),
             ("image", new(ImageData: "data:image/png;base64," + new string('A', 120000))),
             ("clock", new(ClockStyle: "unknown")), ("clock", new(TimeZone: "not-a-zone")),
-            ("pet", new(PetStyle: "unknown")), ("notes", new(Url: "https://example.com")),
+            ("shortcut", new(Page: "javascript:alert(1)")), ("clock", new(Page: "notes")), ("pet", new(PetStyle: "unknown")), ("notes", new(Url: "https://example.com")),
             ("notes", new()), ("clock", new() { AdditionalProperties = new() { ["unexpected"] = JsonSerializer.SerializeToElement("value") } })
         };
         foreach (var (type, options) in invalid)
@@ -103,6 +112,22 @@ public sealed class WorkbenchTests
         var photos = Enumerable.Range(0, 5).Select(x => Card() with { Type = "image", Id = Guid.NewGuid(), X = x, Width = 1, Height = 1 }).ToArray();
         WorkbenchRules.Validate(Layout(photos[..4]));
         Assert.Throws<FinanceException>(() => WorkbenchRules.Validate(Layout(photos)));
+    }
+
+    [Fact]
+    public void StandardLayoutsLockComponentDimensionsWhileOlderLayoutsRemainReadable()
+    {
+        var shortcut = Card() with { Type="shortcut",Width=1,Height=1,Options=new(Page:"notes") };
+        var layout = new WorkbenchLayout(2,12,6,null,[shortcut]);
+        WorkbenchRules.Validate(layout);
+        Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Widgets=[shortcut with {Width=2}]}));
+        var search = shortcut with {Type="search",Width=8,Options=null};
+        WorkbenchRules.Validate(layout with {Widgets=[search]});
+        Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Widgets=[search with {Height=2}]}));
+        var older = new WorkbenchLayout(1,12,6,null,[Card() with {Width=2,Height=1}]);
+        WorkbenchRules.Validate(older);
+        WorkbenchRules.Validate(layout with {Rows=12,Widgets=[shortcut with {Y=11}]});
+        Assert.Throws<FinanceException>(()=>WorkbenchRules.Validate(layout with {Rows=73}));
     }
 
     private static WorkbenchWidget Card() => new(Guid.NewGuid(), "notes", 0, 0, 4, 2);

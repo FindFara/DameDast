@@ -82,7 +82,7 @@ test("default layouts are independent copies with stable IDs; custom colors rema
   validateWorkbench(a);
   assert.deepEqual(a, b);
   a.widgets[0].width = 1;
-  assert.equal(b.widgets[0].width, 4);
+  assert.equal(b.widgets[0].width, 8);
   assert.equal(deskContrast("#ffffff"), "#18392e");
   assert.equal(deskContrast("#000000"), "#f2f6f3");
   assert.equal(deskContrast(null), null);
@@ -115,7 +115,7 @@ test("all components render live financial records, references and safe user tex
     });
     assert.ok(html.includes('id="desk-board"'));
     assert.ok(!html.includes("<img src=x"));
-    if (spec.type !== "pet") assert.ok(html.includes("&lt;img"));
+    assert.doesNotMatch(html, /desk-card-head|data-desk-resize/);
     assert.equal((html.match(/<div class="desk-grid"/g) || []).length, 0);
   }
   assert.deepEqual(records, before);
