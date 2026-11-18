@@ -55,6 +55,10 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Walks around your workbench": "در میز کار قدم می‌زند",
+  "Pause walking": "توقف گردش",
+  "Resume walking": "ادامهٔ گردش",
+  "Resting": "در حال استراحت",
   "Transactions by category": "تراکنش‌ها بر اساس دسته‌بندی",
   "Pin menu": "پین کردن منو",
   "Unpin menu": "برداشتن پین",

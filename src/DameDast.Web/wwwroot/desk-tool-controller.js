@@ -1,10 +1,11 @@
 import { calculate, randomKey } from "./desk-tools.js";
+import { DeskPetController } from "./desk-pet.js";
 import { plainCalendarMarkup } from "./desk-tool-ui.js";
 import { t, getLanguage, localizedNumber } from "./i18n.js";
 
 export class DeskToolController {
   constructor(callbacks) {
-    this.callbacks = callbacks;
+    this.callbacks = callbacks; this.pets = new DeskPetController();
     this.offsets = new Map(); this.visible = new Set(); this.formatters = new Map();
     this.drafts = new Map();
     document.addEventListener("visibilitychange", () => this.schedule());
@@ -30,6 +31,7 @@ export class DeskToolController {
   attach() {
     clearInterval(this.timer); this.timer = null; this.observer.disconnect(); this.visible.clear();
     this.root = document.querySelector(".workbench-page");
+    this.pets.attach(this.root, this.callbacks.context().space);
     if (!this.root) return;
     const scope = this.callbacks.context().space;
     if (this.scope !== scope) { this.offsets.clear(); this.drafts.clear(); this.scope = scope; }
@@ -41,7 +43,7 @@ export class DeskToolController {
         if (element) element.matches("input, select") ? element.value = value : element.textContent = value;
       }
     }
-    this.root.querySelectorAll(".desk-card:has(.desk-clock, .desk-pet)").forEach(card => this.observer.observe(card));
+    this.root.querySelectorAll(".desk-card:has(.desk-clock)").forEach(card => this.observer.observe(card));
     for (const [id, offset] of this.offsets) {
       const card = this.root.querySelector(`[data-desk-id="${id}"]`);
       if (card?.querySelector(".desk-calendar")) this.calendar(card, offset);
@@ -117,8 +119,6 @@ export class DeskToolController {
       if (!input.value) return;
       try { await navigator.clipboard.writeText(input.value); output.textContent = t("Copied."); }
       catch { input.select(); output.textContent = t("Select and copy the key."); }
-    } else if (action === "pet") {
-      button.classList.remove("pet-playing"); void button.offsetWidth; button.classList.add("pet-playing");
     }
   }
 }

@@ -1,6 +1,6 @@
 # DameDast · دمِ دست
 
-Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The redesigned workbench has central web search, quick shortcuts, grouped components, an Edit switch beside its title and a natural cat companion. See [Workbench guide](docs/WORKBENCH-fa.md).
+Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The redesigned workbench has central web search, quick shortcuts, grouped components, an Edit switch beside its title and a roaming 3D voxel companion. See [Workbench guide](docs/WORKBENCH-fa.md).
 
 Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use compact category lists in three desktop columns, two tablet columns and one mobile column. Settings groups start collapsed; mobile financial and workbench cards fit their content. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
 

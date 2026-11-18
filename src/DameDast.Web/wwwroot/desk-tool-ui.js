@@ -2,6 +2,7 @@ import { t, getLanguage, localizedNumber } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
 import { monthOf, monthLabel, shiftMonth, dateInMonth, daysInMonth } from "./calendar.js";
 import { safeLink } from "./desk-tools.js";
+import { petPreviewMarkup } from "./desk-pet-ui.js";
 
 const button = (action, label, text = label, attrs = "") => `<button type="button" class="secondary" data-tool-action="${action}" aria-label="${esc(t(label))}" ${attrs}>${esc(t(text))}</button>`;
 const select = (name, label, choices, value) => `<label class="field">${t(label)}<select name="${name}">${choices.map(([key, title]) => `<option value="${key}" ${key === value ? "selected" : ""}>${t(title)}</option>`).join("")}</select></label>`;
@@ -42,11 +43,6 @@ export function plainCalendarMarkup(options = {}, offset = 0, now = new Date()) 
     return `<time datetime="${day}" ${day === iso ? 'aria-current="date" class="is-today"' : ""}>${localizedNumber(index + 1)}</time>`;
   }).join("")}</div></div>`;
 }
-function petMarkup(style, id) {
-  const robot = `<svg class="pet-robot" viewBox="0 0 160 180" aria-hidden="true"><defs><linearGradient id="pet-shell-${id}" x2="1" y2="1"><stop stop-color="#fcfeff"/><stop offset=".55" stop-color="#dbe8ed"/><stop offset="1" stop-color="#9cb4bf"/></linearGradient></defs><ellipse cx="80" cy="165" rx="42" ry="8" fill="#30495718"/><g class="pet-body"><path d="M80 30V16" stroke="#8aabb8" stroke-width="5"/><circle cx="80" cy="13" r="7" fill="#79caba"/><path d="M43 111q-23 3-22 26m96-26q23 3 22 26" fill="none" stroke="#a5bec8" stroke-width="12" stroke-linecap="round"/><rect x="44" y="92" width="72" height="64" rx="24" fill="url(#pet-shell-${id})"/><rect x="33" y="32" width="94" height="75" rx="28" fill="url(#pet-shell-${id})"/><rect x="43" y="46" width="74" height="48" rx="18" fill="#244954"/><g class="pet-eyes" fill="#b0f8e9"><ellipse cx="62" cy="66" rx="6" ry="9"/><ellipse cx="98" cy="66" rx="6" ry="9"/></g><path d="M68 83q12 7 24 0" fill="none" stroke="#b0f8e9" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="125" r="8" fill="#79caba"/><path d="M60 151v9m40-9v9" stroke="#95adb7" stroke-width="12" stroke-linecap="round"/></g></svg>`;
-  const cat = `<span class="pet-portrait"><img class="pet-fur" src="/assets/pets/tabby-cat.webp" width="512" height="512" alt="" loading="lazy" decoding="async" draggable="false"><span class="pet-heart" aria-hidden="true">♥</span></span>`;
-  return `<button type="button" class="desk-pet pet-natural" data-tool-action="pet" aria-label="${t("Play with pet")}">${style === "robot" ? robot : cat}<span class="pet-presence"><i aria-hidden="true"></i>${t("A little company")}</span></button>`;
-}
 export function toolMarkup(c, widget) {
   const o = widget.options || {};
   if (widget.type === "image") return o.imageData ? `<figure class="desk-photo"><img src="${esc(o.imageData)}" alt="${esc(o.description || widget.title || t("Photo"))}" loading="lazy" decoding="async">${o.description ? `<figcaption dir="auto">${esc(o.description)}</figcaption>` : ""}</figure>` : `<p class="desk-empty">${t("Choose a photo in card settings.")}</p>`;
@@ -59,6 +55,6 @@ export function toolMarkup(c, widget) {
   if (widget.type === "calculator") return `<form class="desk-calculator" data-desk-calculator><label class="sr-only" for="calc-${widget.id}">${t("Calculation")}</label><input id="calc-${widget.id}" data-calculation maxlength="160" placeholder="(12 + 3) × 4" dir="ltr" autocomplete="off" inputmode="decimal"><output data-tool-output aria-live="polite" dir="ltr">0</output><div class="desk-calculator-keys">${["C", "(", ")", "⌫", "7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "-", "0", ".", "%", "+"].map(key => button("calculate-key", key, key, `data-key="${esc(key)}"`)).join("")}</div><button type="submit" class="primary">=</button></form>`;
   if (widget.type === "keyGenerator") return `<div class="desk-key-generator"><label>${t("Length")}<input data-key-length type="number" min="16" max="128" value="32" dir="ltr"></label><label>${t("Format")}<select data-key-format><option value="base64url">Base64url</option><option value="hex">Hex</option></select></label><input data-key-result readonly aria-label="${t("Generated key")}" dir="ltr"><div>${button("generate-key", "Generate")}${button("copy-key", "Copy")}</div><small>${t("Generated keys are not saved or synced.")}</small><output data-tool-output role="status"></output></div>`;
   if (widget.type === "clock") return `<div class="desk-clock" data-clock-style="${o.clockStyle || "digital"}" data-time-zone="${o.timeZone || "local"}">${o.clockStyle === "analog" ? `<svg class="desk-clock-face" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/>${Array.from({ length: 12 }, (_, index) => `<path d="M50 8v5" style="transform:rotate(${index * 30}deg)"/>`).join("")}<path class="clock-hour" d="M50 50V27"/><path class="clock-minute" d="M50 50V17"/><path class="clock-second" d="M50 55V13"/><circle cx="50" cy="50" r="2"/></svg>` : ""}<time class="desk-clock-time" dir="ltr"></time><span class="desk-clock-date"></span><small>${t(o.timeZone === "UTC" ? "UTC" : o.timeZone === "Asia/Tehran" ? "Tehran" : "Device time")}</small></div>`;
-  if (widget.type === "pet") return petMarkup(o.petStyle, widget.id);
+  if (widget.type === "pet") return petPreviewMarkup(o.petStyle);
   return "";
 }

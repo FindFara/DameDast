@@ -1,5 +1,9 @@
-const CACHE = "damedast-shell-v48";
+const CACHE = "damedast-shell-v49";
 const SHELL = [
+  "/desk-pet.js",
+  "/desk-pet-renderer.js",
+  "/desk-pet-ui.js",
+  "/desk-pet.css",
   "/notebook.js",
   "/desk-home-ui.js",
   "/desk-home.css",
@@ -118,7 +122,7 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  if (!SHELL.includes(url.pathname) && !url.pathname.startsWith("/whiteboard/") && !url.pathname.startsWith("/assets/pets/")) return;
+  if (!SHELL.includes(url.pathname) && !url.pathname.startsWith("/whiteboard/")) return;
   event.respondWith((async () => {
     const cached = await caches.match(event.request, { ignoreSearch: true });
     if (cached) return cached;

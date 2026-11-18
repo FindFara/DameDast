@@ -1,0 +1,20 @@
+.desk-pet-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-block: -8px 16px; }
+.desk-pet-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border: 1px solid color-mix(in srgb, var(--desk-wallpaper-ink) 12%, transparent); border-radius: 20px; background: transparent; color: var(--desk-wallpaper-ink); font: inherit; font-size: 10px; cursor: pointer; }
+.desk-pet-toggle [data-pet-toggle-label] { opacity: .65; }
+.desk-pet-toggle svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; }
+.desk-pet-toggle .pet-play-icon, .desk-pet-toggle[aria-pressed="true"] .pet-pause-icon { display: none; }
+.desk-pet-toggle[aria-pressed="true"] .pet-play-icon { display: block; }
+.desk-pet-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.desk-pet-toggle:disabled { cursor: default; opacity: .65; }
+.desk-pet-layer { position: absolute; inset: 0; min-height: 180px; overflow: hidden; pointer-events: none; z-index: 4; direction: ltr; contain: layout paint; }
+.desk-roaming-pet { position: absolute; top: 0; left: 0; width: 112px; height: 112px; pointer-events: none; user-select: none; will-change: transform; }
+.desk-roaming-pet canvas { display: block; width: 112px; height: 112px; image-rendering: pixelated; }
+.roaming-pet-name { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; line-height: 1.6; padding: 1px 6px; border-radius: 8px; color: var(--ink); background: color-mix(in srgb, var(--surface-raised) 85%, transparent); }
+.desk-pet-preview { display: grid; place-items: center; gap: 7px; text-align: center; }
+.desk-pet-preview canvas { width: 140px; height: 150px; max-width: 100%; image-rendering: pixelated; }
+.desk-pet-preview span { font-size: 11px; color: var(--muted); }
+@media (max-width: 599px) {
+  .desk-roaming-pet, .desk-roaming-pet canvas { width: 88px; height: 88px; }
+  .roaming-pet-name { top: 75px; max-width: 86px; font-size: 8px; }
+  .desk-pet-controls { margin-block: -6px 12px; }
+}
