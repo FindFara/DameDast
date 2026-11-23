@@ -50,6 +50,8 @@ dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment
 
 ## اتصال گوگل
 
+اگر Push با خطای `GH013` و شناسایی اطلاعات گوگل مسدود شد، [راهنمای اصلاح کامیت‌های ارسال‌نشده](docs/GOOGLE-PUSH-REPAIR-fa.md) را اجرا کن.
+
 در Google Cloud Console یک OAuth Client از نوع Web application بساز. آدرس بازگشت را `https://YOUR-DOMAIN/signin-google` قرار بده. برای تست محلی هم `http://localhost:5000/signin-google` را اضافه کن. سپس Client ID و Client Secret را با user-secrets یا متغیرهای محیطی روی سرور تنظیم کن. دستورهای دقیق در README.md هستند.
 
 گوگل فقط هویت کاربر را مشخص می‌کند؛ دادهٔ مالی روی سرور خود برنامه ذخیره می‌شود. برای همگام‌سازی، همهٔ دستگاه‌ها باید به همان دامنه و همان حساب گوگل وصل شوند. بدون کلیدهای گوگل، حالت محلی قابل استفاده است و ورود و سینک واقعی فعال نیست.
