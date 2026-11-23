@@ -1257,6 +1257,9 @@ Object.assign(fa, {
 
 Object.assign(fa, {
  'Back to notes': 'بازگشت به یادداشت‌ها', 'Photo': 'عکس', 'Simple calendar': 'تقویم ساده',
+ 'Google services': 'سرویس‌های گوگل', 'Gmail': 'جیمیل', 'Google Drive': 'درایو',
+ 'Google Calendar': 'تقویم گوگل', 'Google Meet': 'گوگل میت', 'Google Docs': 'اسناد',
+ 'Google Sheets': 'کاربرگ‌ها', 'Google Translate': 'مترجم', 'Calendar navigation': 'جابه‌جایی در تقویم',
  'Website link': 'لینک سایت', 'Calculator': 'ماشین‌حساب', 'Random key': 'کلید تصادفی',
  'Clock and date': 'ساعت و تاریخ', 'Desk pet': 'پت میز کار', 'Website address': 'آدرس سایت',
  'Clock style': 'نمای ساعت', 'Digital': 'دیجیتال', 'Analog': 'آنالوگ', 'Time zone': 'منطقهٔ زمانی',

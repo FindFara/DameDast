@@ -4,6 +4,8 @@
 .env
 .git
 .openai
+.local
+src/DameDast.Web/appsettings.Development.json
 tests
 node_modules
 outputs

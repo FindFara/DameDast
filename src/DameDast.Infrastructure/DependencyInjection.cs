@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using DameDast.Infrastructure.Persistence;
 using DameDast.Application.Interfaces.Whiteboards;
+using DameDast.Application.Interfaces.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -23,8 +24,10 @@ public static class DependencyInjection
     {
         Directory.CreateDirectory(Path.Combine(configuration["Storage:DataDirectory"] ?? "data", "keys"));
         services.TryAddSingleton(TimeProvider.System);
-        services.AddDbContextFactory<FinanceDb>(options => options.UseSqlite(configuration.GetConnectionString("Finance")));
+        services.AddDbContextFactory<FinanceDb>(options =>
+            options.UseNpgsql(PostgreSqlConfiguration.ReadConnectionString(configuration)));
         services.AddScoped<IFinanceRepository, FinanceRepository>();
+        services.AddScoped<IDatabaseHealth, PostgreSqlHealth>();
         services.AddScoped<IWhiteboardRepository, WhiteboardRepository>();
         services.AddSingleton<IMarketSampleRepository, MarketSampleRepository>();
         services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
@@ -44,7 +47,6 @@ public static class DependencyInjection
 
     public static async Task InitializeInfrastructureAsync(this IServiceProvider services, CancellationToken cancellationToken)
     {
-        await LegacyDatabaseMigration.MigrateAsync(services.GetRequiredService<IConfiguration>(), cancellationToken);
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<FinanceDb>();
         await db.Database.MigrateAsync(cancellationToken);

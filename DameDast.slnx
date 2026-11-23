@@ -9,4 +9,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/DameDast.Tests/DameDast.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/DameDast.DatabaseMigration/DameDast.DatabaseMigration.csproj" />
+  </Folder>
 </Solution>

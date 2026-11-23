@@ -1,0 +1,20 @@
+# Local development and integration tests. Production uses compose.yaml.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: damedast
+      POSTGRES_USER: damedast
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-damedast-local}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_development:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U damedast -d damedast"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+volumes:
+  postgres_development:

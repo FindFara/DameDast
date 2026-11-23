@@ -14,22 +14,13 @@ public sealed class PushSubscriptionRepository(IDbContextFactory<FinanceDb> fact
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var id = EndpointId(registration.Endpoint);
-        var row = await db.Subscriptions.FindAsync([id], cancellationToken);
-        if (row is null)
-        {
-            row = new DeviceSubscription
-            {
-                Id = id
-            };
-            db.Subscriptions.Add(row);
-        }
-
-        row.UserId = userId;
-        row.Endpoint = registration.Endpoint;
-        row.Auth = registration.Keys.Auth;
-        row.P256dh = registration.Keys.P256dh;
-        row.Language = registration.Language;
-        await db.SaveChangesAsync(cancellationToken);
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "Subscriptions" ("Id", "UserId", "Endpoint", "Auth", "P256dh", "Language")
+            VALUES ({id}, {userId}, {registration.Endpoint}, {registration.Keys.Auth}, {registration.Keys.P256dh}, {registration.Language})
+            ON CONFLICT ("Id") DO UPDATE SET
+                "UserId" = EXCLUDED."UserId", "Endpoint" = EXCLUDED."Endpoint",
+                "Auth" = EXCLUDED."Auth", "P256dh" = EXCLUDED."P256dh", "Language" = EXCLUDED."Language"
+            """, cancellationToken);
     }
 
     public async Task RemoveAsync(string userId, string endpoint, CancellationToken cancellationToken)

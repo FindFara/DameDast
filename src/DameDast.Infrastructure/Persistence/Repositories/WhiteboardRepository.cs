@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Data.Sqlite;
+using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using DameDast.Application.Interfaces.Whiteboards;
 using DameDast.Common;
@@ -19,17 +19,8 @@ public sealed class WhiteboardRepository(IDbContextFactory<FinanceDb> factory, T
         return new(ReadState(row), role, row is not null);
     }
 
-    public async Task<WhiteboardState> ApplyAsync(Guid id, string? userId, string? token, WhiteboardPatch patch, CancellationToken cancellationToken)
-    {
-        for (var attempt = 0; ; attempt++)
-        {
-            try { return await ApplyOnceAsync(id, userId, token, patch, cancellationToken); }
-            catch (DbUpdateConcurrencyException) when (attempt < 4) { }
-            catch (DbUpdateException e) when (attempt < 4 && e.InnerException is SqliteException { SqliteErrorCode: 5 or 6 or 19 }) { }
-            catch (SqliteException e) when (attempt < 4 && e.SqliteErrorCode is 5 or 6) { }
-            await Task.Delay(TimeSpan.FromMilliseconds(40 * (attempt + 1)), cancellationToken);
-        }
-    }
+    public Task<WhiteboardState> ApplyAsync(Guid id, string? userId, string? token, WhiteboardPatch patch, CancellationToken cancellationToken) =>
+        DatabaseWriteRetry.ExecuteAsync(() => ApplyOnceAsync(id, userId, token, patch, cancellationToken), cancellationToken);
 
     private async Task<WhiteboardState> ApplyOnceAsync(Guid id, string? userId, string? token, WhiteboardPatch patch, CancellationToken cancellationToken)
     {
@@ -98,7 +89,10 @@ public sealed class WhiteboardRepository(IDbContextFactory<FinanceDb> factory, T
         if (expected.GetInt64() != (row?.Revision ?? 0)) throw new FinanceException("The component library changed on another device.");
         if (row is null) { row = new() { UserId = userId, Items = "[]" }; db.WhiteboardLibraries.Add(row); }
         row.Items = items.GetRawText(); row.Revision++;
-        await db.SaveChangesAsync(cancellationToken);
+        try { await db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException) { throw new FinanceException("The component library changed on another device."); }
+        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        { throw new FinanceException("The component library changed on another device."); }
     }
 
     private async Task<string> AuthorizeAsync(FinanceDb db, Guid id, WhiteboardRow? row, string? userId, string? token, CancellationToken cancellationToken)

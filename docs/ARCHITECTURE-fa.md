@@ -1,6 +1,6 @@
 # معماری بک‌اند دمِ دست
 
-بک‌اند .NET با Controllerهای ASP.NET Core و MediatR بازآرایی شده است. مسیرهای API، شکل JSON، نام کوکی، کلیدهای IndexedDB، قالب رکوردها و شناسه Migrationهای قبلی حفظ شده‌اند. این تغییر مربوط به نسخه کامل .NET است؛ نسخه میزبانی‌شده خصوصی همچنان Worker جداگانه خود را دارد.
+بک‌اند .NET با Controllerهای ASP.NET Core و MediatR بازآرایی شده است. مسیرهای API، شکل JSON، نام کوکی، کلیدهای IndexedDB و قالب رکوردها حفظ شده‌اند. زنجیرهٔ migrationها اکنون مخصوص PostgreSQL است و دادهٔ SQLite قبلی با ابزار انتقال وارد می‌شود. این تغییر مربوط به نسخه کامل .NET است؛ نسخه میزبانی‌شده خصوصی همچنان Worker جداگانه خود را دارد.
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,7 @@ flowchart LR
 | Web | Controllerها، احراز هویت Google/Cookie، استخراج هویت کاربر، CSRF، مدیریت پاسخ خطا، فایل‌های PWA |
 | Application | Use caseها، Command/Query/Handler، قرارداد سرویس‌ها و Repositoryها، Pipeline Behavior و منطق هماهنگی یادآوری |
 | Domain | مدل‌ها، قواعد مالی، نسخه و اعتبار رکوردها ، چک‌لیست و قواعد تکرار یادآور/سررسید اقساط |
-| Infrastructure | پیاده‌سازی Repository با EF Core/SQLite، سرویس قیمت، Web Push، فایل کلیدها و Background Worker |
+| Infrastructure | پیاده‌سازی Repository با EF Core/PostgreSQL، سرویس قیمت، Web Push، فایل کلیدها و Background Worker |
 | Common | ابزارهای زمان TimeProvider، زمان تهران و تقویم شمسی |
 
 ## پوشه‌بندی
@@ -48,11 +48,11 @@ Controllerها منطق مالی، EF و SQL ندارند. Application به Infr
 
 ## دیتابیس، تراکنش و Worker
 
-نام جدول‌ها، EF entityها و Migrationهای قبلی تغییر نکرده‌اند. فایل SQLite و کلیدهای نصب قبلی قابل استفاده‌اند و این بازآرایی Migration جدید ندارد. پیاده‌سازی `FinanceRepository` همان تراکنش batch، Revision، رسید OperationId و retry محدود SQLite را نگه می‌دارد. در تعارض 409 برمی‌گردد و تغییرات قبلی batch نیمه‌کاره ثبت نمی‌شوند.
+جدول `FinanceRecords` رکوردهای مستقل را با کلید مرکب کاربر/رکورد نگه می‌دارد و `Ledgers` فقط نسخه و زمان تغییر دفتر است. migrationها و snapshot مخصوص PostgreSQL هستند. داده‌های SQLite قبلی با ابزار جداگانه منتقل می‌شوند و کلیدهای نصب قبلی حفظ می‌شوند. تنظیمات جدول‌ها، نگاشت رکورد و سیاست retry مسئولیت‌های مستقل دارند. `FinanceRepository` تراکنش batch، Revision و رسید OperationId را حفظ می‌کند. در تعارض 409 برمی‌گردد و تغییرات قبلی batch نیمه‌کاره ثبت نمی‌شوند.
 
 ReminderWorker در Infrastructure هر دقیقه فقط زمان‌بندی را انجام می‌دهد و برای هر دور یک scope جدید می‌سازد. سرویس scoped یادآوری با Repositoryها کار می‌کند و ارسال واقعی پشت IPushGateway است. دریافت HTTP یا ارسال Push داخل تراکنش دفتر مالی نگه داشته نمی‌شود. بازه روزانه اقساط تهران، پیام عمومی بدون مبلغ/نام وام، رسید روزانه اقساط هر دستگاه و حذف اشتراک منقضی حفظ شده‌اند. یادآور شخصی در ساعت‌های انتخابی تهران و با رسید مستقل هر نوبت اجرا می‌شود. برای توضیح رفتار و ذخیره‌سازی برنامه‌ریز و بازار [این راهنما](ORGANIZER-MARKETS-fa.md) را ببین.
 
-مسیر پیش‌فرض SQLite `data/damedast.db` و کلیدها `data/keys` است. مقدار اختیاری `Storage:DataDirectory` ریشه مسیر کلیدها را مشخص می‌کند؛ مسیر SQLite جدا از ConnectionStrings:Finance تنظیم می‌شود. در Docker همچنان volume پوشه data را نگه دار. تست‌های HTTP مسیر کلید جداگانه دارند تا روی کلیدهای نصب واقعی یا تست هم‌زمان اثر نگذارند.
+اتصال PostgreSQL از `ConnectionStrings:Finance` یا `ConnectionStrings__Finance` و کلیدها از `data/keys` خوانده می‌شوند. مقدار اختیاری `Storage:DataDirectory` ریشه مسیر کلیدها را مشخص می‌کند. دیتابیس در Docker volume جدا دارد؛ volume پوشه data نیز برای کلیدها حفظ می‌شود. تست‌های HTTP دیتابیس PostgreSQL و مسیر کلید مستقل دارند. [راه‌اندازی و انتقال](POSTGRESQL-fa.md).
 
 ## بسته‌ها و اجرا
 
@@ -61,7 +61,7 @@ ReminderWorker در Infrastructure هر دقیقه فقط زمان‌بندی ر
 ```bash
 dotnet restore
 dotnet test tests/DameDast.Tests/DameDast.Tests.csproj
-dotnet run --project src/DameDast.Web --environment Development
+dotnet run --project src/DameDast.Web --environment ASPNETCORE_ENVIRONMENT=Development
 ```
 
 تست‌ها مرز وابستگی لایه‌ها، اجرای Controller از مسیر MediatR، جلوگیری از دور زدن احراز هویت در Application، اعتبار batch پیش از نوشتن، انتقال CancellationToken، مسیر قیمت‌ها بدون شبکه واقعی، CSRF و جداسازی مالک اشتراک اعلان، عدم نیاز به Migration و رفتار قبلی تراکنش/تعارض/همگام‌سازی را بررسی می‌کنند. ورود واقعی Google و تحویل واقعی Push در محیط شخصی نیازمند تنظیم و بررسی همان نصب هستند.

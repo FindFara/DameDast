@@ -52,7 +52,7 @@
 
 ## ذخیره‌سازی و معماری
 
-رویدادها با `kind=calendarEvent` در همان دفتر JSON نسخه‌دار SQLite ذخیره می‌شوند. تودوهای یادداشت دو فیلد اختیاری `dueDate` و `dueTime` دارند؛ داده قدیمی معتبر می‌ماند. نمایش گوشی/تبلت در `workbench.widgets[].devices` است. جدول یا Migration جدیدی لازم نیست. نوشتن از Controller موجود، `SyncFinanceCommand` در MediatR، سرویس Application و Repository Infrastructure می‌گذرد و CancellationToken مسیر سرور حفظ شده است. اعتبارسنجی در Domain است؛ پوسته برنامه در مرورگر با IndexedDB و صف عملیات کار می‌کند.
+رویدادها با `kind=calendarEvent` در همان دفتر JSON نسخه‌دار PostgreSQL ذخیره می‌شوند. تودوهای یادداشت دو فیلد اختیاری `dueDate` و `dueTime` دارند؛ داده قدیمی معتبر می‌ماند. نمایش گوشی/تبلت در `workbench.widgets[].devices` است. جدول یا Migration جدیدی لازم نیست. نوشتن از Controller موجود، `SyncFinanceCommand` در MediatR، سرویس Application و Repository Infrastructure می‌گذرد و CancellationToken مسیر سرور حفظ شده است. اعتبارسنجی در Domain است؛ پوسته برنامه در مرورگر با IndexedDB و صف عملیات کار می‌کند.
 
 اسناد بوم در IndexedDB اختصاصی وایت‌بورد و روی سرور در مسیر ذخیره‌سازی قبلی وایت‌بورد نگهداری می‌شوند. بکاپ از ماژول مشترک مدل و ذخیره‌سازی همان ویرایشگر استفاده می‌کند. نسخه خصوصی میزبانی‌شده، رکوردها را در D1 و سند بوم را در R2 نگه می‌دارد. همکاری زنده همچنان به سرور .NET/SignalR نیاز دارد.
 

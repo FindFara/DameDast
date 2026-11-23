@@ -105,8 +105,8 @@ export class DeskToolController {
     const button = event.target.closest("[data-tool-action]");
     if (!button || !this.root?.contains(button)) return;
     const card = button.closest(".desk-card"), action = button.dataset.toolAction, output = card.querySelector("[data-tool-output]");
-    if (action === "calendar-previous" || action === "calendar-next") {
-      const offset = Math.max(-120, Math.min(120, (this.offsets.get(card.dataset.deskId) || 0) + (action === "calendar-next" ? 1 : -1)));
+    if (["calendar-previous", "calendar-next", "calendar-today"].includes(action)) {
+      const offset = action === "calendar-today" ? 0 : Math.max(-120, Math.min(120, (this.offsets.get(card.dataset.deskId) || 0) + (action === "calendar-next" ? 1 : -1)));
       this.offsets.set(card.dataset.deskId, offset); this.calendar(card, offset);
     } else if (action === "calculate-key") {
       const input = card.querySelector("[data-calculation]"), key = button.dataset.key;

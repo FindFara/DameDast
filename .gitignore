@@ -5,4 +5,6 @@ TestResults/
 .env
 .openai/
 node_modules/
+.local/
+src/DameDast.Web/appsettings.Development.json
 *.zip

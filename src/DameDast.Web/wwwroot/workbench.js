@@ -4,6 +4,7 @@ export const MAX_DESK_ROWS = 864;
 export const WORKBENCH_ID = "dc7da320-bd12-4e87-a4fb-06b79f2b9f40";
 export const widgetCatalog = [
   { type: "search", title: "Google search", glyph: "search" },
+  { type: "googleServices", title: "Google services", glyph: "apps" },
   { type: "shortcut", title: "App shortcut", glyph: "link" },
   { type: "image", title: "Photo", glyph: "photo" },
   { type: "plainCalendar", title: "Simple calendar", glyph: "calendar" },
@@ -189,10 +190,11 @@ export function resizeWorkbenchWidget(layout, id, width, height) {
   return validateWorkbench({ ...base, widgets, rows:Math.max(DESK_ROWS,...widgets.map(widget=>widget.y+widget.height)) });
 }
 export function defaultWorkbench() {
-  return standardWorkbench({version:3, columns:DESK_COLUMNS, rows:DESK_ROWS, background:null, widgets:packStandardWidgets([
+  const widgets = packStandardWidgets([
     defaultCard(101,"search"), ...["notes","tasks","calendar","canvas"].map((page,index)=>defaultCard(102+index,"shortcut",{page})),
-    defaultCard(1,"clock"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(2,"plainCalendar"),defaultCard(5,"notes"),defaultCard(6,"tasks")
-  ])});
+    defaultCard(1,"clock"),defaultCard(2,"plainCalendar"),defaultCard(107,"googleServices"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(5,"notes"),defaultCard(6,"tasks")
+  ]);
+  return standardWorkbench({version:3, columns:DESK_COLUMNS, rows:Math.max(DESK_ROWS,...widgets.map(widget=>widget.y+widget.height)), background:null, widgets});
 }
 export function firstFreeSpace(layout, width, height) {
   for (let y = 0; y <= layout.rows - height; y++)

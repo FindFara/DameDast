@@ -1,10 +1,12 @@
 # DameDast · دمِ دست
 
+The workbench uses wider card gutters, rounded surfaces, a monthly calendar with today/holiday states, and a Google services launcher with bundled color icons. Existing saved desks can add the launcher through **+ → Everyday tools → Google services**. See [PostgreSQL schema and setup](docs/POSTGRESQL-fa.md) for the new database configuration.
+
 Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The fullscreen workbench contains only titleless components: movable Google search, separate icon shortcuts, tools resized only while editing and a black-and-tan pixel dog with happy/sad/angry expressions and its kennel inside one component. The Edit button sits beside the floating +. See [Workbench guide](docs/WORKBENCH-fa.md).
 
 Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use one compact list across every month and category, with group, type, amount and date filters; desktop shows three columns, tablet two and mobile one. Settings groups start collapsed; mobile financial cards are compact and the workbench uses a compact grid with comfortable cell spacing. Components start at default sizes and can be resized in their edit dialog. Each section has its own unframed colored shortcut icon, components offer five named colors, and every page shares the app background chosen in Appearance. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
 
-Upgrade: legacy browser ledgers are copied without replacing newer data. A legacy server database is backed up into `damedast.db` on first startup; the original stays available. Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
+Upgrade: legacy browser ledgers are copied without replacing newer data. Import legacy SQLite server databases into PostgreSQL using the separate migration tool; the original stays available. See [PostgreSQL setup and migration](docs/POSTGRESQL-fa.md). Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing keys/data volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
 
 Future lunar holiday dates are estimates. Calendar datasets are bundled locally; there is no calendar-source link in the interface. Internal data provenance: https://github.com/alirezadesh/jalali_calendar
 
@@ -34,11 +36,13 @@ A bilingual English/Persian, mobile-first personal finance PWA with an ASP.NET C
 
 ## Run locally
 
-Install the .NET 10 SDK, then run:
+Install the .NET 10 SDK and start Docker, then run:
 
 ```bash
+docker compose -f compose.postgres.yaml up -d --wait
+export ConnectionStrings__Finance='Host=localhost;Port=5432;Database=damedast;Username=damedast;Password=damedast-local;Timeout=10;Command Timeout=30'
 dotnet restore DameDast.slnx
-dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
+dotnet run --project src/DameDast.Web --environment ASPNETCORE_ENVIRONMENT=Development -- --urls http://localhost:5000
 ```
 
 Open `http://localhost:5000`. Click the person icon at the bottom of the main menu to open **Sign in with Google**. A verified session opens that user's own records; anonymous use has a separate local workspace. OAuth configuration instructions are kept in the deployment documentation, not in the settings screen.
@@ -75,10 +79,10 @@ Sample data is disabled by default. Set `Features:DemoData` to `true` in `src/Da
 | --- | --- | --- |
 | DameDast.Domain | Financial types, validation, record versions, recurrence, transfer and deletion rules | Common |
 | DameDast.Application | MediatR use cases, entity interfaces, application services and repository contracts | Domain, Common |
-| DameDast.Infrastructure | EF Core SQLite, migration, optimistic concurrency, operation receipts | Application, Common |
+| DameDast.Infrastructure | EF Core PostgreSQL, migration, optimistic concurrency, operation receipts | Application, Common |
 | DameDast.Common | Shared TimeProvider-based time utilities | None |
 | DameDast.Web | controller-based API, cookie/OAuth authentication, CSRF and PWA assets | Infrastructure |
-| DameDast.Tests | Domain, SQLite concurrency, API authorization and CSRF checks | Web |
+| DameDast.Tests | Domain, PostgreSQL concurrency, API authorization and CSRF checks | Web |
 
 The frontend uses browser-native ES modules and CSS so the installed app can run without a server connection. Business validation and the synchronization use case remain on the .NET side. This is a PWA plus an optional Manifest V3 browser extension, not a native .NET MAUI APK. No MAUI project or APK is included.
 
@@ -110,7 +114,7 @@ Official setup reference: https://learn.microsoft.com/aspnet/core/security/authe
 - Requests carry the account that created them. If the cookie changes in another tab, stale requests are rejected and the app reloads the current session; pending changes stay under their original account. Guest records are imported only by explicit user action.
 - A client-generated operation UUID makes a network retry idempotent. A reused UUID with changed content is rejected. Receipts and ledger writes commit in the same database transaction.
 - Each record has a version. A stale edit returns HTTP 409. The UI asks whether to keep the server record or explicitly apply the local changes. Deleted server records cannot be silently resurrected.
-- SQLite optimistic concurrency and bounded retries protect writes from concurrent processes. A whole batch is atomic; unrelated records can be applied after a retry, while edits to the same record require review.
+- PostgreSQL optimistic concurrency and bounded retries protect writes from concurrent processes. A whole batch is atomic; unrelated records can be applied after a retry, while edits to the same record require review.
 - Tombstones are retained so a delayed device cannot recreate a deleted record. Operation receipts are retained for durable retry deduplication.
 - Sync runs after changes, on reconnect, on page activation and every 30 seconds while visible. There is no promise of background sync while the PWA is closed.
 - Offline authentication is not a fresh Google login. The browser can display its previously cached account; the server still checks the session before allowing sync.
@@ -122,11 +126,11 @@ Requirements: Docker Engine with Compose, a domain pointing to the server, and p
 
 ```bash
 cp .env.example .env
-# Edit .env: DOMAIN, GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+# Edit .env: DOMAIN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and POSTGRES_PASSWORD
 docker compose up -d --build
 ```
 
-Open `https://YOUR-DOMAIN`. Caddy terminates HTTPS and proxies the single ASP.NET app. The API is not published directly. A named volume retains SQLite data and ASP.NET Data Protection keys across container replacement.
+Open `https://YOUR-DOMAIN`. Caddy terminates HTTPS and proxies the single ASP.NET app. The API is not published directly. Separate named volumes retain PostgreSQL data and ASP.NET Data Protection/VAPID keys across container replacement. The app waits for PostgreSQL's health check. PostgreSQL is private to the Compose network.
 
 The Compose network uses `172.29.10.0/24`. If that overlaps a server network, change its subnet, both static addresses and `ReverseProxy__KnownProxy` together. If deploying with a different proxy or IIS, set the domain in `AllowedHosts`, trust only the actual reverse proxy, forward HTTPS correctly and keep the `data` directory persistent. Do not trust arbitrary forwarded headers.
 
@@ -136,23 +140,26 @@ On Android Chrome, choose **Install app** or **Add to Home screen**. On iPhone S
 
 Settings exports `damdast-v3` JSON backups for notes, finances, or the whole workspace. Notes backups include drawings and preserve historical checklists and local attachment bytes; full backups also include preferences. Import validates the file and creates an isolated local workspace. Use the workspace selector to return to the original ledger. Personal component libraries, server secrets and unrelated/unlinked canvases are excluded. Legacy v1/v2 backups remain readable; financial-only legacy exports cannot recreate missing image bytes. See [calendar and backup details](docs/CALENDAR-SETTINGS-BACKUP-fa.md).
 
-The server keeps one versioned JSON ledger per user in SQLite, plus a table of operation receipts. This design is intentionally compact for personal finance; each read returns a full snapshot. For very large ledgers or many users, evolve toward relational tables, delta sync and PostgreSQL. Run one app replica with the local persistent SQLite volume; do not put SQLite on a shared network filesystem.
+The server stores all application data in PostgreSQL through Npgsql/EF Core 10. `Ledgers` holds per-user revision metadata; `FinanceRecords` holds individual records with tenant-scoped keys, kind, version, tombstone, order and JSONB payload. Foreign keys, check constraints and indexes protect records, receipts and whiteboard relationships. Whiteboards/libraries also use JSONB; exact operation receipts remain text. Each API ledger read still returns a full snapshot; larger deployments may need delta sync. Browser IndexedDB remains the offline cache and operation queue. See [schema, setup, migration from SQLite and backups](docs/POSTGRESQL-fa.md).
 
-Schema migrations run on startup. The included initial migration and model snapshot are tracked. For future releases, back up first and run reviewed migrations as a single deployment step before multiple instances start. SQLite backup must include a consistent database image: stop the app before copying its data volume, or use SQLite's online backup API. Back up Data Protection keys too, restrict access to the volume and protect backups. JSON export is useful for data access but is not a substitute for a server restore strategy.
+Schema migrations run on startup. The PostgreSQL migrations and model snapshot are tracked. For future releases, back up first and run reviewed migrations as a single deployment step before multiple instances start. Use `pg_dump` for consistent database backups and verify restores with `pg_restore`. Back up Data Protection/VAPID keys too, restrict access to the volumes and protect backups. JSON export is useful for data access but is not a substitute for a server restore strategy.
 
 Signing out clears the cached copy of the Google workspace from the current browser. Sign-out is blocked while changes remain unsynced; export a copy if the connection is unavailable. Guest and demo data remain separate.
 
 ## Validation
 
 ```bash
+docker compose -f compose.postgres.yaml up -d --wait
 dotnet test DameDast.slnx -m:1
 node --test tests/*.test.mjs
 dotnet publish src/DameDast.Web -c Release -o outputs/publish
 ```
 
+Integration tests create isolated PostgreSQL databases and require a test account with CREATEDB. Override the default local connection with `DAMEDAST_TEST_POSTGRES`.
+
 Node is only needed for the small client test suite and the optional internal preview command, not for the app at runtime.
 
-Tested here: domain money/transfer/deletion rules, idempotent retries, user isolation, atomic failed batches, competing SQLite writers, API authorization/CSRF/conflicts and client balance/projection calculations. Real Google OAuth cannot be tested end to end without your credentials and redirect domain. Docker deployment must be verified on your target server.
+Validation covers domain money/transfer/deletion rules, idempotent retries, user isolation, atomic failed batches, competing PostgreSQL writers, API authorization/CSRF/conflicts and client balance/projection calculations. Real Google OAuth cannot be tested end to end without your credentials and redirect domain. Docker deployment must be verified on your target server.
 
 ## Hosted UI preview
 
@@ -186,9 +193,9 @@ The built-in server adapter reads TGJU's public quote feed (`https://call1.tgju.
 | 999 silver | silver_999 | toman per gram (source IRR ÷ 10) |
 | Bitcoin | crypto-bitcoin | USD per BTC |
 
-Each tile includes the source timestamp, and stale/delayed quotes are labelled. Quotes older than two hours are treated as stale, including market closures. Daily charts use real observations collected after deployment; with fewer than two observations the app explains that history is still accumulating. Weekly/monthly charts use available daily closes and observed points without inventing missing prices. The hosted preview uses a matching Worker adapter for real quotes. Demo mode only supplies sample financial records; it does not substitute made-up market quotes. The preview's intraday observations are best effort and may reset when a Worker restarts; the .NET app persists its observations in SQLite.
+Each tile includes the source timestamp, and stale/delayed quotes are labelled. Quotes older than two hours are treated as stale, including market closures. Daily charts use real observations collected after deployment; with fewer than two observations the app explains that history is still accumulating. Weekly/monthly charts use available daily closes and observed points without inventing missing prices. The hosted preview uses a matching Worker adapter for real quotes. Demo mode only supplies sample financial records; it does not substitute made-up market quotes. The preview's intraday observations are best effort and may reset when a Worker restarts; the .NET app persists its observations in PostgreSQL.
 
-Market sample storage grows as observations accumulate. Monitor the personal SQLite database, and add a retention policy when operating it for a long period. The pure parsers have tests for rial-to-toman conversion, Bitcoin units, timezone offsets and daily-close selection.
+Market sample storage grows as observations accumulate. Monitor the PostgreSQL database, and add a retention policy when operating it for a long period. The pure parsers have tests for rial-to-toman conversion, Bitcoin units, timezone offsets and daily-close selection.
 
 
 ## Language, theme and accessibility
@@ -197,7 +204,7 @@ Use the **EN / Fa** control in the top bar, or **Settings → Language**, to swi
 
 Choose light, dark or system appearance in Settings; the top-bar sun/moon button quickly toggles light/dark. Font files are bundled locally: Vazir for Persian, Manrope for English. Financial numbers are isolated from surrounding text to preserve signs, separators and direction. Chronological charts keep left-to-right time order in both languages. Reduced-motion preferences are respected.
 
-The application name and PWA manifest now show **دمِ دست**. Internal .NET project names, cookie keys, database path and IndexedDB identifiers retain their original DameDast names so existing records and sessions remain compatible. The added schema migration preserves old push subscriptions and defaults their language to English; choosing Persian updates an existing signed-in device registration without requesting notification permission again.
+The application name and PWA manifest now show **دمِ دست**. Internal .NET project names, cookie keys and IndexedDB identifiers retain their original DameDast names so existing records and sessions remain compatible. The added schema migration preserves old push subscriptions and defaults their language to English; choosing Persian updates an existing signed-in device registration without requesting notification permission again.
 
 The service worker cache version is bumped with shell changes. Close old tabs and reopen if the browser is still serving the previous version. No financial database is cleared by a UI/theme/language update.
 
@@ -207,4 +214,4 @@ Use **Connected portfolio** in the PWA. The extension source is `src/DameDast.We
 
 `/api/portfolio/session`, `/api/portfolio` and `/api/portfolio/sync` isolate imported snapshots and use the existing Google identity, CSRF protection, ledger transaction and operation receipts on the .NET server. Imported installments with an explicit unpaid status and date participate in .NET Web Push reminders.
 
-The hosted Site preserves its owner-private ChatGPT gate and the previous D1 portfolio store. With configured Google OAuth, the full notebook/finance ledger syncs to a Google-identified D1 ledger. Previous ChatGPT captures can be imported explicitly. Personal background push jobs still require .NET. D1 and self-hosted SQLite remain separate deployments.
+The hosted Site preserves its owner-private ChatGPT gate and the previous D1 portfolio store. With configured Google OAuth, the full notebook/finance ledger syncs to a Google-identified D1 ledger. Previous ChatGPT captures can be imported explicitly. Personal background push jobs still require .NET. D1 and self-hosted PostgreSQL remain separate deployments.

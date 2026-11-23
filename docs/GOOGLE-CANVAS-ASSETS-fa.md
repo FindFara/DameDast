@@ -25,7 +25,7 @@
 اسکریپت Client ID را می‌گیرد و Client Secret را به شکل مخفی می‌پرسد. تنظیمات را از stdin به `dotnet user-secrets` می‌دهد تا Secret در آرگومان خط فرمان نباشد. User Secrets ابزار توسعه محلی است و فایل آن رمزگذاری اختصاصی ندارد. برنامه را در Development دوباره اجرا کن:
 
 ```powershell
-dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment Development
+dotnet run --project src/DameDast.Web --environment ASPNETCORE_ENVIRONMENT=Development -- --urls http://localhost:5000
 ```
 
 ### عیب‌یابی localhost:5000
@@ -85,4 +85,4 @@ dotnet run --project src/DameDast.Web --urls http://localhost:5000 --environment
 
 بخش صحیح ورودی‌های مالی/مقدار، سه‌رقمی جدا می‌شود؛ علامت، مکان نشانگر، اعشار و صفرهای اعشاری حفظ می‌شوند. ارقام فارسی/عربی و جداکننده‌های `,`، `٬` و `٫` در ورود پذیرفته می‌شوند و قبل از ذخیره به عدد استاندارد تبدیل می‌شوند. مقدار رمزارز تا ۱۸ رقم اعشار به‌صورت رشته نگه داشته می‌شود؛ پول محاسباتی در کلاینت با BigInt در مقیاس صدم تومان است. تاریخ‌ها و شناسه‌ها جداکنندهٔ مبلغ نمی‌گیرند.
 
-مدل‌های Drawing و Assets در Domain، قرارداد IAssetPerformanceService در Application/Interfaces/Assets، سرویس در Application/Services و Query/Controller اختصاصی در Features/Assets و Web/Controllers قرار دارند. مسیر `/api/assets/{id}/performance` خلاصه سود از ارزش‌گذاری‌های دستی ثبت‌شده را برمی‌گرداند؛ ارزش‌گذاری خودکار و نمودار PWA از API قیمت‌های بازار استفاده می‌کنند. نسخه .NET همچنان EF Core/SQLite با همان مدل دفتر JSON است؛ افزودن Drawing و assetPosition به Migration دیتابیس .NET نیاز ندارد.
+مدل‌های Drawing و Assets در Domain، قرارداد IAssetPerformanceService در Application/Interfaces/Assets، سرویس در Application/Services و Query/Controller اختصاصی در Features/Assets و Web/Controllers قرار دارند. مسیر `/api/assets/{id}/performance` خلاصه سود از ارزش‌گذاری‌های دستی ثبت‌شده را برمی‌گرداند؛ ارزش‌گذاری خودکار و نمودار PWA از API قیمت‌های بازار استفاده می‌کنند. نسخه .NET همچنان EF Core/PostgreSQL با همان مدل دفتر JSON است؛ افزودن Drawing و assetPosition به Migration دیتابیس .NET نیاز ندارد.

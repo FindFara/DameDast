@@ -8,7 +8,7 @@
 
 ```bash
 dotnet restore tests/DameDast.Tests/DameDast.Tests.csproj
-dotnet run --project src/DameDast.Web --environment Development --urls http://localhost:5000
+dotnet run --project src/DameDast.Web --environment ASPNETCORE_ENVIRONMENT=Development -- --urls http://localhost:5000
 ```
 
 برای تغییر کد ویرایشگر، Node 22.12+ یا 24 و این دستورها لازم‌اند:
@@ -16,7 +16,7 @@ dotnet run --project src/DameDast.Web --environment Development --urls http://lo
 ```bash
 npm ci --prefix whiteboard
 npm run build:whiteboard
-dotnet run --project src/DameDast.Web --environment Development --urls http://localhost:5000
+dotnet run --project src/DameDast.Web --environment ASPNETCORE_ENVIRONMENT=Development -- --urls http://localhost:5000
 ```
 
 نسخه‌ها دقیق در package.json و package-lock قفل شده‌اند: Excalidraw 0.18.1، React/ReactDOM 19.3.1، Vite 8.3.8، TypeScript 7.0.2 و SignalR JS 10.0.11. وابستگی تست SignalR .NET نسخه 10.0.15 است. وابستگی‌های frontend را با `npm ci` نصب کن.
@@ -30,7 +30,7 @@ dotnet run --project src/DameDast.Web --environment Development --urls http://lo
 | زوم و محل نمایش | بخش ui در همان IndexedDB؛ از سند و درخواست‌های تغییر جداست |
 | کتابخانه شخصی اجزا | بخش library در IndexedDB، مجزا برای هر فضای کار |
 | عنوان، شناسه بوم و پیش‌نمایش PNG در فهرست یادداشت‌ها | رکورد note دفتر اصلی؛ تصویر کوچک حداکثر حدود ۱۱۰ کیلوبایت |
-| نسخه سروری در برنامه .NET | SQLite در data/damedast.db، جدول Whiteboards با JSON کامل سند و revision |
+| نسخه سروری در برنامه .NET | PostgreSQL در data/damedast.db، جدول Whiteboards با JSON کامل سند و revision |
 | رسید عملیات تکراری و مجوز لینک | WhiteboardOperations و WhiteboardShares؛ فقط هش توکن لینک ذخیره می‌شود |
 
 ذخیره محلی با تأخیر کوتاه و صف ترتیبی انجام می‌شود. ذخیره قدیمی نمی‌تواند بعد از ذخیره جدید جای آن را بگیرد. هر تب نسخه پیش‌نویس مستقل دارد. خطای ظرفیت/ذخیره پیام و «تلاش دوباره» دارد؛ فایل خراب بی‌خبر جای سند موجود نمی‌نشیند. بکاپ کامل در تنظیمات اکنون سند و بایت تصاویر همه بوم‌های متصل به یادداشت‌ها را هم شامل می‌شود. خروجی مستقل قابل ویرایش نیز در ویرایشگر موجود است. پاک کردن داده‌های مرورگر، نسخه‌های صرفاً محلی را پاک می‌کند.
@@ -44,7 +44,7 @@ dotnet run --project src/DameDast.Web --environment Development --urls http://lo
 - `Domain/Whiteboards`: مدل سند، محدودیت‌ها و بررسی تعارض نسخه هر عنصر.
 - `Application/Interfaces/Whiteboards` و `Services/WhiteboardService`: قرارداد Repository و سرویس کاربردی مستقل از EF.
 - `Application/Features/Whiteboards`: Command و Queryهای MediatR؛ endpointها آن‌ها را با CancellationToken فراخوانی می‌کنند.
-- `Infrastructure/Persistence/Repositories/WhiteboardRepository`: تراکنش، CAS، idempotency، مجوز مالک/لینک و SQLite.
+- `Infrastructure/Persistence/Repositories/WhiteboardRepository`: تراکنش، CAS، idempotency، مجوز مالک/لینک و PostgreSQL.
 - `Web/Whiteboards`: Minimal API برای سند/لینک/کتابخانه و SignalR برای حضور/اشاره‌گر/اطلاع از نسخه جدید. کنترلرهای مالی موجود حفظ شده‌اند.
 - `whiteboard/src/main.tsx`: رابط و فرمان‌های کاربر؛ موتور رسم همان کامپوننت رسمی است.
 - `model.mjs`، `storage.mjs` و `sync.mjs`: فرمت سند، ذخیره محلی و هماهنگ‌کننده همگام‌سازی مستقل و قابل تست.

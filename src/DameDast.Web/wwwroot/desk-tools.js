@@ -1,6 +1,6 @@
 export const MAX_DESK_IMAGES = 4;
 export const MAX_IMAGE_DATA = 120000;
-export const toolTypes = ["search", "shortcut", "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
+export const toolTypes = ["search", "googleServices", "shortcut", "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
 
 export function safeLink(value) {
   if (typeof value !== "string" || value.length > 2000 || /[\s\u0000-\u001f\u007f]/.test(value)) throw Error("Enter a valid http or https link.");
@@ -22,7 +22,7 @@ export function validImageData(value) {
   } catch { return false; }
 }
 const optionKeys = {
-  search: [], shortcut: ["page"], image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
+  search: [], googleServices: [], shortcut: ["page"], image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
   clock: ["clockStyle", "timeZone"], pet: ["petStyle"], calculator: [], keyGenerator: [],
 };
 export function validateToolOptions(type, options) {

@@ -1,9 +1,6 @@
 using System.Text.Json;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using DameDast.Application.Interfaces.FinanceRecords;
-using DameDast.Application.Interfaces.Market;
-using DameDast.Application.Interfaces.Reminders;
 using DameDast.Application.Features.FinanceRecords.Models;
 using DameDast.Common;
 using DameDast.Domain;
@@ -15,47 +12,33 @@ public sealed class FinanceRepository(IDbContextFactory<FinanceDb> factory, Time
     public async Task<Snapshot> ReadAsync(string userId, CancellationToken cancellationToken)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        var row = await db.Ledgers.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+        var row = await db.Ledgers.AsNoTracking().Include(x => x.Records).AsSingleQuery()
+            .SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
         return ToSnapshot(row);
     }
 
-    public async Task<Snapshot> ApplyAsync(string userId, IReadOnlyList<Mutation> changes, CancellationToken cancellationToken)
-    {
-        for (var attempt = 0; ; attempt++)
-        {
-            try
-            {
-                return await ApplyOnceAsync(userId, changes, cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException) when (attempt < 4)
-            {
-            }
-            catch (DbUpdateException ex) when (attempt < 4 && ex.InnerException is SqliteException { SqliteErrorCode: 5 or 6 or 19 })
-            {
-            }
-            catch (SqliteException ex) when (attempt < 4 && ex.SqliteErrorCode is 5 or 6)
-            {
-            }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(40 * (attempt + 1)), cancellationToken);
-        }
-    }
+    public Task<Snapshot> ApplyAsync(string userId, IReadOnlyList<Mutation> changes, CancellationToken cancellationToken) =>
+        DatabaseWriteRetry.ExecuteAsync(() => ApplyOnceAsync(userId, changes, cancellationToken), cancellationToken);
 
     private async Task<Snapshot> ApplyOnceAsync(string userId, IReadOnlyList<Mutation> changes, CancellationToken cancellationToken)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var row = await db.Ledgers.SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+        var row = await db.Ledgers.Include(x => x.Records).AsSingleQuery()
+            .SingleOrDefaultAsync(x => x.UserId == userId, cancellationToken);
         if (row is null)
         {
             row = new LedgerRow
             {
-                UserId = userId
+                UserId = userId,
+                UpdatedAt = clock.UtcNow()
             };
             db.Ledgers.Add(row);
         }
 
         var records = ToSnapshot(row).Records.ToList();
+        var storedRecords = row.Records.ToDictionary(x => x.Id);
+        var nextOrder = row.Records.Count == 0 ? 0 : row.Records.Max(x => x.SortOrder) + 1;
         var ids = changes.Select(x => x.OperationId).ToArray();
         var receipts = await db.Receipts.Where(x => x.UserId == userId && ids.Contains(x.OperationId)).ToDictionaryAsync(x => x.OperationId, cancellationToken);
         var applied = false;
@@ -72,14 +55,22 @@ public sealed class FinanceRepository(IDbContextFactory<FinanceDb> factory, Time
             var updated = FinanceRules.Apply(records, change);
             records.RemoveAll(x => x.Id == change.Id);
             records.Add(updated);
-            db.Receipts.Add(new Receipt { UserId = userId, OperationId = change.OperationId, Payload = payload });
+            if (!storedRecords.TryGetValue(updated.Id, out var stored))
+            {
+                stored = new FinanceRecordRow { UserId = userId, Id = updated.Id };
+                row.Records.Add(stored);
+                storedRecords.Add(updated.Id, stored);
+            }
+            stored.UpdateFrom(updated, nextOrder++);
+            receipt = new Receipt { UserId = userId, OperationId = change.OperationId, Payload = payload };
+            db.Receipts.Add(receipt);
+            receipts.Add(receipt.OperationId, receipt);
             applied = true;
         }
 
         if (applied)
         {
             row.Revision++;
-            row.State = JsonSerializer.Serialize(records, FinanceRules.Json);
             row.UpdatedAt = clock.UtcNow();
         }
 
@@ -88,5 +79,6 @@ public sealed class FinanceRepository(IDbContextFactory<FinanceDb> factory, Time
         return new Snapshot(row.Revision, records);
     }
 
-    private static Snapshot ToSnapshot(LedgerRow? row) => row is null ? new Snapshot(0, []) : new Snapshot(row.Revision, JsonSerializer.Deserialize<List<FinanceRecord>>(row.State, FinanceRules.Json) ?? []);
+    private static Snapshot ToSnapshot(LedgerRow? row) => row is null ? new Snapshot(0, []) :
+        new(row.Revision, row.Records.OrderBy(x => x.SortOrder).Select(x => x.ToDomain()).ToList());
 }

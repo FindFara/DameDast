@@ -15,7 +15,7 @@ public static class WorkbenchRules
     public const int Rows = 6;
     public static readonly string[] WidgetTypes =
         ["summary", "accounts", "installments", "notes", "canvas", "tasks", "goals", "markets", "allocation", "assets", "receivables", "reminders",
-         "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet", "search", "shortcut"];
+         "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet", "search", "googleServices", "shortcut"];
 
     public static (int Width, int Height) StandardSize(string type) => type switch {
         "shortcut" => (1,1), "search" => (8,1),

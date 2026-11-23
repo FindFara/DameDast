@@ -4,12 +4,14 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using DameDast.Application.Features.FinanceRecords.Models;
@@ -18,6 +20,7 @@ using DameDast.Infrastructure;
 using DameDast.Infrastructure.Persistence.Repositories;
 using DameDast.Infrastructure.Services.Market;
 using DameDast.Infrastructure.Services.Benchmarks;
+using DameDast.Web.Configuration;
 using Xunit;
 
 namespace DameDast.Tests;
@@ -26,7 +29,6 @@ public sealed class FinanceTests
 {
     private static Mutation Upsert(string kind, object data, Guid? id = null, long version = 0) => new(Guid.NewGuid(), id ?? Guid.NewGuid(), kind, version, false, JsonSerializer.SerializeToElement(data, FinanceRules.Json));
     private static Mutation Account(string name = "account") => Upsert("account", new Wallet(name, 10000, "teal"));
-    private static FinanceDb CreateDb(string path) => new(new DbContextOptionsBuilder<FinanceDb>().UseSqlite($"Data Source={path}").Options);
     [Fact]
     public void TransferRequiresDifferentExistingAccounts()
     {
@@ -69,11 +71,10 @@ public sealed class FinanceTests
     [Fact]
     public async Task RetriedOperationIsAppliedOnceAndUsersAreIsolated()
     {
-        var path = Path.GetTempFileName();
-        try
+        await using var database = new PostgreSqlTestDatabase();
         {
-            var factory = new TestFactory(path);
-            await using (var db = CreateDb(path))
+            var factory = database;
+            await using (var db = database.CreateDbContext())
                 await db.Database.MigrateAsync();
             var store = new FinanceRepository(factory, TimeProvider.System);
             var change = Account();
@@ -84,20 +85,15 @@ public sealed class FinanceTests
             Assert.Empty((await store.ReadAsync("bob", CancellationToken.None)).Records);
             await Assert.ThrowsAsync<FinanceException>(() => store.ApplyAsync("alice", [change with { Data = JsonSerializer.SerializeToElement(new Wallet("different", 10, "blue"), FinanceRules.Json) }], CancellationToken.None));
         }
-        finally
-        {
-            File.Delete(path);
-        }
     }
 
     [Fact]
     public async Task StaleVersionIsRejectedAndBatchIsAtomic()
     {
-        var path = Path.GetTempFileName();
-        try
+        await using var database = new PostgreSqlTestDatabase();
         {
-            var factory = new TestFactory(path);
-            await using (var db = CreateDb(path))
+            var factory = database;
+            await using (var db = database.CreateDbContext())
                 await db.Database.MigrateAsync();
             var store = new FinanceRepository(factory, TimeProvider.System);
             var original = Account();
@@ -109,20 +105,15 @@ public sealed class FinanceTests
             Assert.Single(state.Records);
             Assert.Equal(2, state.Records[0].Version);
         }
-        finally
-        {
-            File.Delete(path);
-        }
     }
 
     [Fact]
     public async Task ConcurrentWritersCannotSilentlyOverwriteSameRecord()
     {
-        var path = Path.GetTempFileName();
-        try
+        await using var database = new PostgreSqlTestDatabase();
         {
-            var factory = new TestFactory(path);
-            await using (var db = CreateDb(path))
+            var factory = database;
+            await using (var db = database.CreateDbContext())
                 await db.Database.MigrateAsync();
             var store = new FinanceRepository(factory, TimeProvider.System);
             var original = Account();
@@ -143,10 +134,6 @@ public sealed class FinanceTests
             var results = await Task.WhenAll(Task.Run(() => Edit("device1")), Task.Run(() => Edit("device2")));
             Assert.Single(results, x => x);
             Assert.Equal(2, (await store.ReadAsync("alice", CancellationToken.None)).Records[0].Version);
-        }
-        finally
-        {
-            File.Delete(path);
         }
     }
 
@@ -172,21 +159,21 @@ public sealed class FinanceTests
         Assert.Empty(data!.Records);
     }
 
-    private sealed class TestFactory(string path) : IDbContextFactory<FinanceDb>
-    {
-        public FinanceDb CreateDbContext() => CreateDb(path);
-    }
-
     internal sealed class TestApp(Action<IServiceCollection>? configure = null) : WebApplicationFactory<Program>
     {
-        private readonly string path = Path.GetTempFileName();
+        private readonly PostgreSqlTestDatabase database = new();
         private readonly string dataDirectory = Path.Combine(Path.GetTempPath(), "damdast-tests-" + Guid.NewGuid().ToString("N"));
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?> { { "ConnectionStrings:Finance", $"Data Source={path}" }, { "Storage:DataDirectory", dataDirectory } }));
+            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?> { { "ConnectionStrings:Finance", database.ConnectionString }, { "Storage:DataDirectory", dataDirectory } }));
             builder.ConfigureServices(services =>
             {
+                // Isolate fixtures from developer OAuth credentials and authentication schemes.
+                services.RemoveAll<IConfigureOptions<AuthenticationOptions>>();
+                services.RemoveAll<GoogleAuthenticationSettings>();
+                services.AddSingleton(GoogleAuthenticationSettings.Read(new ConfigurationBuilder().Build()).Settings);
+                services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
                 var keys = new DirectoryInfo(Path.Combine(dataDirectory, "keys"));
                 keys.Create();
                 services.AddDataProtection().PersistKeysToFileSystem(keys).SetApplicationName("DameDast");
@@ -204,7 +191,7 @@ public sealed class FinanceTests
         public override async ValueTask DisposeAsync()
         {
             await base.DisposeAsync();
-            File.Delete(path);
+            await database.DisposeAsync();
             if (Directory.Exists(dataDirectory))
                 Directory.Delete(dataDirectory, true);
         }

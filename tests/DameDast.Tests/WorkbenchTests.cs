@@ -84,7 +84,7 @@ public sealed class WorkbenchTests
     {
         var cases = new (string Type, WorkbenchWidgetOptions Options)[]
         {
-            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")), ("search", new()), ("shortcut", new(Page: "notes")),
+            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")), ("search", new()), ("googleServices", new()), ("shortcut", new(Page: "notes")),
             ("pet", new(PetStyle: "cat")), ("pet", new(PetStyle: "dog")), ("plainCalendar", new(Calendar: "persian")),
             ("link", new(Url: "https://example.com/path", Description: "A useful site")),
             ("calculator", new()), ("keyGenerator", new()),

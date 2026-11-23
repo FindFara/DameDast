@@ -17,7 +17,7 @@ public static class WorkbenchOptionRules
     public static void Validate(string type, WorkbenchWidgetOptions? options)
     {
         if (options is null) return;
-        if (type is not ("image" or "plainCalendar" or "link" or "calculator" or "keyGenerator" or "clock" or "pet" or "search" or "shortcut") ||
+        if (type is not ("image" or "plainCalendar" or "link" or "calculator" or "keyGenerator" or "clock" or "pet" or "search" or "googleServices" or "shortcut") ||
             options.AdditionalProperties?.Any(entry => entry.Value.ValueKind != JsonValueKind.Null) == true ||
             (options.ImageData is not null && type != "image") ||
             (options.Url is not null && type != "link") ||

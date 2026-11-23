@@ -4,15 +4,48 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DameDast.Infrastructure.Migrations;
 
 [DbContext(typeof(FinanceDb))]
-[Migration("202611160004_Whiteboards")]
+[Migration("20261116000400_Whiteboards")]
 public sealed class Whiteboards : Migration
 {
-    protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
-        CREATE TABLE Whiteboards (Id TEXT NOT NULL PRIMARY KEY, OwnerId TEXT NOT NULL, Revision INTEGER NOT NULL, State TEXT NOT NULL, UpdatedAt INTEGER NOT NULL);
-        CREATE TABLE WhiteboardOperations (DocumentId TEXT NOT NULL, OperationId TEXT NOT NULL, Digest TEXT NOT NULL, PRIMARY KEY(DocumentId,OperationId));
-        CREATE TABLE WhiteboardShares (Id TEXT NOT NULL PRIMARY KEY, DocumentId TEXT NOT NULL, TokenHash TEXT NOT NULL, Role TEXT NOT NULL, ExpiresAt INTEGER NOT NULL, Revoked INTEGER NOT NULL);
-        CREATE UNIQUE INDEX IX_WhiteboardShares_TokenHash ON WhiteboardShares(TokenHash);
-        CREATE TABLE WhiteboardLibraries (UserId TEXT NOT NULL PRIMARY KEY, Revision INTEGER NOT NULL, Items TEXT NOT NULL);
-        """);
-    protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("DROP TABLE WhiteboardLibraries; DROP TABLE WhiteboardShares; DROP TABLE WhiteboardOperations; DROP TABLE Whiteboards;");
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.CreateTable("Whiteboards", columns: table => new
+        {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            OwnerId = table.Column<string>(type: "text", nullable: false),
+            Revision = table.Column<long>(type: "bigint", nullable: false),
+            State = table.Column<string>(type: "text", nullable: false),
+            UpdatedAt = table.Column<long>(type: "bigint", nullable: false)
+        }, constraints: table => table.PrimaryKey("PK_Whiteboards", x => x.Id));
+        migrationBuilder.CreateTable("WhiteboardOperations", columns: table => new
+        {
+            DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+            OperationId = table.Column<Guid>(type: "uuid", nullable: false),
+            Digest = table.Column<string>(type: "text", nullable: false)
+        }, constraints: table => table.PrimaryKey("PK_WhiteboardOperations", x => new { x.DocumentId, x.OperationId }));
+        migrationBuilder.CreateTable("WhiteboardShares", columns: table => new
+        {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+            TokenHash = table.Column<string>(type: "text", nullable: false),
+            Role = table.Column<string>(type: "text", nullable: false),
+            ExpiresAt = table.Column<long>(type: "bigint", nullable: false),
+            Revoked = table.Column<bool>(type: "boolean", nullable: false)
+        }, constraints: table => table.PrimaryKey("PK_WhiteboardShares", x => x.Id));
+        migrationBuilder.CreateIndex("IX_WhiteboardShares_TokenHash", "WhiteboardShares", "TokenHash", unique: true);
+        migrationBuilder.CreateTable("WhiteboardLibraries", columns: table => new
+        {
+            UserId = table.Column<string>(type: "text", nullable: false),
+            Revision = table.Column<long>(type: "bigint", nullable: false),
+            Items = table.Column<string>(type: "text", nullable: false)
+        }, constraints: table => table.PrimaryKey("PK_WhiteboardLibraries", x => x.UserId));
+    }
+
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable("WhiteboardLibraries");
+        migrationBuilder.DropTable("WhiteboardShares");
+        migrationBuilder.DropTable("WhiteboardOperations");
+        migrationBuilder.DropTable("Whiteboards");
+    }
 }

@@ -14,11 +14,13 @@ public sealed class MarketSampleRepository(IDbContextFactory<FinanceDb> factory)
         foreach (var quote in quotes)
         {
             var stamp = quote.AsOf.ToUnixTimeSeconds();
-            if (!await db.MarketSamples.AnyAsync(x => x.Symbol == quote.Symbol && x.Timestamp == stamp, cancellationToken))
-                db.MarketSamples.Add(new MarketSample { Symbol = quote.Symbol, Timestamp = stamp, Price = quote.Price });
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO "MarketSamples" ("Symbol", "Timestamp", "Price")
+                VALUES ({quote.Symbol}, {stamp}, {quote.Price})
+                ON CONFLICT ("Symbol", "Timestamp") DO NOTHING
+                """, cancellationToken);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<PricePoint>> ReadAsync(string symbol, long since, CancellationToken cancellationToken)

@@ -16,7 +16,9 @@ public sealed class ReminderReceiptRepository(IDbContextFactory<FinanceDb> facto
     public async Task RecordAsync(string key, DateTimeOffset sentAt, CancellationToken cancellationToken)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        db.ReminderReceipts.Add(new ReminderReceipt { Key = key, SentAt = sentAt });
-        await db.SaveChangesAsync(cancellationToken);
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "ReminderReceipts" ("Key", "SentAt") VALUES ({key}, {sentAt.ToUniversalTime()})
+            ON CONFLICT ("Key") DO NOTHING
+            """, cancellationToken);
     }
 }

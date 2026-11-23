@@ -4,6 +4,9 @@ import { monthOf, monthLabel, shiftMonth, dateInMonth, daysInMonth } from "./cal
 import { safeLink } from "./desk-tools.js";
 import { shortcutPages } from "./workbench.js";
 import { petSceneMarkup } from "./desk-pet-ui.js";
+import { googleServicesMarkup } from "./google-services.js";
+import { dayHoliday } from "./holidays.js";
+import { preferences } from "./preferences.js";
 
 const button = (action, label, text = label, attrs = "") => `<button type="button" class="secondary" data-tool-action="${action}" aria-label="${esc(t(label))}" ${attrs}>${esc(t(text))}</button>`;
 const select = (name, label, choices, value) => `<label class="field">${t(label)}<select name="${name}">${choices.map(([key, title]) => `<option value="${key}" ${key === value ? "selected" : ""}>${t(title)}</option>`).join("")}</select></label>`;
@@ -27,6 +30,7 @@ export function optionsFromForm(type, values, previous = {}, imageData) {
 }
 
 export function plainCalendarMarkup(options = {}, offset = 0, now = new Date()) {
+  options ??= {};
   const iso = new Date(now).toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" }),
     date = new Date(`${iso}T12:00:00Z`), persian = options.calendar !== "gregory";
   let start, count, caption;
@@ -40,14 +44,23 @@ export function plainCalendarMarkup(options = {}, offset = 0, now = new Date()) 
     caption = new Intl.DateTimeFormat(getLanguage() === "fa" ? "fa-IR-u-ca-gregory" : "en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
   }
   const weekStart = persian ? 6 : 1, first = new Date(`${start}T12:00:00Z`), blanks = (first.getUTCDay() - weekStart + 7) % 7;
-  const weekdays = Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(getLanguage() === "fa" ? "fa-IR" : "en-US", { weekday: "narrow", timeZone: "UTC" }).format(new Date(Date.UTC(2026, 10, 1 + (weekStart + index) % 7))));
-  return `<div class="desk-calendar"><header>${button("calendar-previous", "Previous month", "‹")}<strong>${esc(caption)}</strong>${button("calendar-next", "Next month", "›")}</header><div class="desk-calendar-grid">${weekdays.map(day => `<span class="desk-calendar-weekday">${esc(day)}</span>`).join("")}${"<span aria-hidden=\"true\"></span>".repeat(blanks)}${Array.from({ length: count }, (_, index) => {
+  const locale = getLanguage() === "fa" ? "fa-IR" : "en-US", prefs = preferences();
+  const weekdays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(Date.UTC(2026, 10, 1 + (weekStart + index) % 7));
+    return { short: new Intl.DateTimeFormat(locale, { weekday: "narrow", timeZone: "UTC" }).format(date),
+      full: new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(date) };
+  });
+  const todayCaption = new Intl.DateTimeFormat(persian ? `${locale}-u-ca-persian` : `${locale}-u-ca-gregory`,
+    { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Tehran" }).format(new Date(now));
+  return `<div class="desk-calendar" data-calendar-system="${persian ? "persian" : "gregory"}" dir="${persian ? "rtl" : "ltr"}"><header><div class="desk-calendar-caption"><small>${t(persian ? "Solar Hijri" : "Gregorian")}</small><strong>${esc(caption)}</strong></div><nav class="desk-calendar-navigation" aria-label="${t("Calendar navigation")}">${button("calendar-previous", "Previous month", "‹")}${button("calendar-today", "Today")}${button("calendar-next", "Next month", "›")}</nav></header><div class="desk-calendar-grid">${weekdays.map(day => `<abbr class="desk-calendar-weekday" title="${esc(day.full)}">${esc(day.short)}</abbr>`).join("")}${"<span aria-hidden=\"true\"></span>".repeat(blanks)}${Array.from({ length: count }, (_, index) => {
     const day = new Date(first.getTime() + index * 86400000).toISOString().slice(0, 10);
-    return `<time datetime="${day}" ${day === iso ? 'aria-current="date" class="is-today"' : ""}>${localizedNumber(index + 1)}</time>`;
-  }).join("")}</div></div>`;
+    const holiday = dayHoliday(day, prefs), classes = [day === iso ? "is-today" : "", holiday.weekend || holiday.events.length ? "is-holiday" : ""].filter(Boolean).join(" ");
+    return `<time datetime="${day}" class="${classes}" ${day === iso ? 'aria-current="date"' : ""}>${localizedNumber(index + 1)}</time>`;
+  }).join("")}</div><footer class="desk-calendar-today"><span class="desk-calendar-today-dot" aria-hidden="true"></span><span>${t("Today")}</span><time datetime="${iso}">${esc(todayCaption)}</time></footer></div>`;
 }
 export function toolMarkup(c, widget) {
   const o = widget.options || {};
+  if (widget.type === "googleServices") return googleServicesMarkup();
   if (widget.type === "image") return o.imageData ? `<figure class="desk-photo"><img src="${esc(o.imageData)}" alt="${esc(o.description || widget.title || t("Photo"))}" loading="lazy" decoding="async">${o.description ? `<figcaption dir="auto">${esc(o.description)}</figcaption>` : ""}</figure>` : `<p class="desk-empty">${t("Choose a photo in card settings.")}</p>`;
   if (widget.type === "link") {
     if (!o.url) return `<p class="desk-empty">${t("Add a website address in card settings.")}</p>`;

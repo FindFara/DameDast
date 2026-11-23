@@ -4,6 +4,16 @@ COPY Directory.Build.props global.json ./
 COPY src/ ./src/
 RUN dotnet publish src/DameDast.Web/DameDast.Web.csproj -c Release -o /out
 
+FROM build AS migration-build
+COPY tools/DameDast.DatabaseMigration/ ./tools/DameDast.DatabaseMigration/
+RUN dotnet publish tools/DameDast.DatabaseMigration/DameDast.DatabaseMigration.csproj -c Release -o /migration
+
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS migration
+WORKDIR /app
+COPY --from=migration-build /migration .
+USER app
+ENTRYPOINT ["dotnet", "DameDast.DatabaseMigration.dll"]
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /out .

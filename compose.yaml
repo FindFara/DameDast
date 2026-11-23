@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Finance: Host=postgres;Port=5432;Database=${POSTGRES_DB:-damedast};Username=${POSTGRES_USER:-damedast};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env};Timeout=10;Command Timeout=30
       AllowedHosts: ${DOMAIN:-localhost}
       Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
@@ -11,9 +12,43 @@ services:
       Push__Subject: ${PUSH_SUBJECT:-}
     volumes:
       - damedast_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       damedast:
         ipv4_address: 172.29.10.3
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-damedast}
+      POSTGRES_USER: ${POSTGRES_USER:-damedast}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - damedast
+  migrate:
+    profiles: ["migration"]
+    build:
+      context: .
+      target: migration
+    environment:
+      ConnectionStrings__Finance: Host=postgres;Port=5432;Database=${POSTGRES_DB:-damedast};Username=${POSTGRES_USER:-damedast};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env};Timeout=10;Command Timeout=30
+    volumes:
+      - damedast_data:/legacy:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - damedast
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -40,3 +75,4 @@ volumes:
     name: ${DAMEDAST_DATA_VOLUME:-${COMPOSE_PROJECT_NAME:-damedast}_poolo_data}
   caddy_data:
   caddy_config:
+  postgres_data:

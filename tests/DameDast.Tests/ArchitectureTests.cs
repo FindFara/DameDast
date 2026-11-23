@@ -169,7 +169,7 @@ public sealed class ArchitectureTests
     }
 
     [Fact]
-    public async Task RefactoringDoesNotRequireAnEfSchemaMigration()
+    public async Task PostgreSqlMigrationsMatchTheCurrentModel()
     {
         await using var app = new FinanceTests.TestApp();
         using var client = app.CreateClient();
