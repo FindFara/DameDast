@@ -2,9 +2,9 @@ import 'fake-indexeddb/auto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadSpace,saveSpace} from '../src/DameDast.Web/wwwroot/store.js';
-import {database,loadDocument,saveDocument,read,write} from '../whiteboard/src/storage.mjs';
-import {emptyDocument} from '../whiteboard/src/model.mjs';
-import {normalizeSavedRecord,canvasUi} from '../whiteboard/src/recovery.mjs';
+import {database,loadDocument,saveDocument,read,write} from '../src/DameDast.Web/wwwroot/whiteboard/storage.mjs';
+import {emptyDocument} from '../src/DameDast.Web/wwwroot/whiteboard/model.mjs';
+import {normalizeSavedRecord,canvasUi} from '../src/DameDast.Web/wwwroot/whiteboard/recovery.mjs';
 
 const memory=new Map();
 globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)};

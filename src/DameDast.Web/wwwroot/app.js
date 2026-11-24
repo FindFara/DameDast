@@ -1,3 +1,6 @@
+import { validateProductivity, projectKinds, habitLogId } from "./productivity.js";
+import { projectField, searchResults, recordLabel } from "./productivity-ui.js";
+import { extensionClips, acknowledgeClip } from "./clip-inbox.js";
 import { accountSpace, setAccountScope, scopedStorageKey, accountHeaders, initialSpace, canOpenSpace } from "./account-scope.js";
 import { ProfileMenu } from "./profile-menu.js";
 import { filterTransactions, normalizeTransactionFilters } from "./transaction-board.js";
@@ -21,7 +24,6 @@ import { WorkbenchController } from "./workbench-controller.js";
 import { CreateMenuController, createLauncher } from "./create-menu.js";
 import { deskFloatingActions } from "./desk-home-ui.js";
 import { WORKBENCH_ID, validateWorkbench } from "./workbench.js";
-import { DrawingStudio } from "./drawing-studio.js";
 import { validateDrawing } from "./drawing.js";
 import {
   assetEntries,
@@ -52,6 +54,7 @@ import {
   notificationsMarkup,
 } from "./organizer-ui.js";
 import {
+  dateControl,
   monthOf,
   inMonth,
   validMonth,
@@ -118,7 +121,8 @@ let assetKey = "",
   assetCurves = {},
   assetHistoryLoading = false,
   assetGeneration = 0;
-let drawingDraftId = null;
+let projectId = null;
+let clipInbox = [];
 const connected = new ConnectedStore(() => {
   if (ready && ["connected", "workbench"].includes(page)) render();
 });
@@ -194,6 +198,7 @@ const numInput = (value) =>
     .replace(/[,٬\s]/g, "")
     .replace(/٫/g, ".");
 const context = () => ({
+  projectId,
   amountsVisible: dashboardAmountsVisible,
   workbenchSettingsOpen,
   settingsGroupsOpen,
@@ -412,6 +417,7 @@ function renderChrome() {
     "aria-busy",
     String(!!syncPromise || marketLoading),
   );
+  $("#workspace-search-button").setAttribute("aria-label", t("Search everywhere"));
   updateNotificationBell();
   $("#sync-button").setAttribute(
     "aria-label",
@@ -463,7 +469,11 @@ function render() {
     void loadBenchmarks();
 }
 function openEditor(kind, id = null, type = null, preset = null) {
-  if (kind === "note") { if (id && isDrawingNote(records().find(record => record.id === id))) void openCanvas(id); else notePage.open(id, preset); return; }
+  if (kind === "note") { notePage.open(id, preset); return; }
+  if (kind === "transaction" && id) {
+    const linked = records().find(r => r.id === id)?.data.installmentId;
+    if (linked) { openEditor("installment", linked); return; }
+  }
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -476,7 +486,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
   if (kind === "transaction")
     movementType = type || editing?.data.type || "expense";
   $("#dialog-title").textContent = editing
-    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
+    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", project: "Project", habit: "Habits", bookmark: "Saved links", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
     : addLabel(kind);
   $("#form-error").textContent = "";
   $("#dialog-fields").innerHTML = editorFields(
@@ -491,6 +501,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
     selectedMonth,
     categoryOptions(),
   );
+  if (projectKinds.includes(kind)) $("#dialog-fields").insertAdjacentHTML("beforeend", projectField(records(), editing?.data.projectId || preset?.projectId));
   formatNumericFields($("#editor"));
   updateAssetPreview();
   updatePlanTotal();
@@ -513,7 +524,11 @@ function applyMovementType() {
     );
 }
 function validateData(kind, data, id) {
+  validateProductivity(kind, data, records(), id);
   if (kind === "calendarEvent") validateCalendarEntry(data);
+  if (kind === "installment" && data.payment) {
+    if (!data.paid || !validIso(data.payment.date) || !ofKind("account").some(r => r.id === data.payment.accountId) || !categoryOptions().some(([value]) => value === data.payment.category)) throw Error("Choose an account and payment date.");
+  }
   if (kind === "workbench") {
     validateWorkbench(data);
     if (ofKind("workbench").some((r) => r.id !== id))
@@ -692,6 +707,11 @@ async function commit(
     const current = materialize(state).find((r) => r.id === id);
     if (expectedVersion !== null && (current?.version || 0) !== expectedVersion)
       throw Error("This record changed. Reopen the form.");
+    if (current?.deleted) throw Error("This record changed. Reopen the form.");
+    const live = materialize(state).filter(r => !r.deleted);
+    if (kind === "transaction" && (current?.data.installmentId || data?.installmentId)) throw Error("Edit or reverse this payment from its installment.");
+    if (remove && kind === "project" && live.some(r => r.data.projectId === id)) throw Error("Move records out of this project before deleting it.");
+    if (remove && kind === "installment" && current?.data.payment) throw Error("Reverse this payment before deleting the installment.");
     if (!remove) validateData(kind, data, id);
     state.pending.push({
       operationId: crypto.randomUUID(),
@@ -748,8 +768,12 @@ async function submitEditor(event) {
       "count",
       "total",
       "day",
+      "weeklyTarget",
     ])
       if (name in data) data[name] = Number(numInput(data[name]));
+    if (projectKinds.includes(editorKind)) data.projectId = data.projectId || null;
+    if (["project", "habit"].includes(editorKind)) data.name = data.name.trim();
+    if (editorKind === "bookmark") { data.tags = [...new Set((data.tagsText || "").split(/[,،]/).map(x => x.trim()).filter(Boolean))]; delete data.tagsText; }
     if (editorKind === "transaction") {
       data.type = movementType;
       data.destinationId =
@@ -809,6 +833,7 @@ async function submitEditor(event) {
     if (editorKind === "locked") data.releaseDate = data.releaseDate || null;
     if (editorKind === "installment") {
       data.paid = editing?.data.paid || false;
+      data.payment = editing?.data.payment || null;
       const count = data.count ?? 1;
       delete data.count;
       if (!editing && count > 1) {
@@ -821,10 +846,11 @@ async function submitEditor(event) {
     await commit(
       editorKind,
       data,
-      editing?.id,
+      editing?.id || (editorKind === "bookmark" ? editorPreset?.clipId : undefined),
       false,
       editing?.version ?? null,
     );
+    if (editorKind === "bookmark" && editorPreset?.clipId) void acknowledgeClip(editorPreset.clipId);
     if (
       ["allocationPlan", "budget"].includes(editorKind) &&
       data.calendar !== "gregory"
@@ -1225,7 +1251,7 @@ async function migrateGuest() {
             const existing = new Set(materialize(state).map((r) => r.id));
             for (const r of [
               ...source.filter(
-                (r) => r.kind === "account" || r.kind === "category",
+                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit",
               ),
               ...source.filter((r) => r.kind === "monthlyExpense"),
               ...source.filter(
@@ -1235,10 +1261,13 @@ async function migrateGuest() {
                     "category",
                     "monthlyExpense",
                     "notificationRead",
+                    "project",
+                    "habit",
                   ].includes(r.kind),
               ),
               ...source.filter((r) => r.kind === "notificationRead"),
             ]) {
+              if (r.kind === "transaction" && r.data.installmentId) continue;
               const id = mapping[r.id];
               if (existing.has(id)) continue;
               if (
@@ -1249,6 +1278,9 @@ async function migrateGuest() {
               )
                 continue;
               const data = structuredClone(r.data);
+              if (data.projectId) data.projectId = mapping[data.projectId] || null;
+              if (r.kind === "habitLog") data.habitId = mapping[data.habitId];
+              if (r.kind === "installment" && data.payment) data.payment = { ...data.payment, transactionId: mapping[data.payment.transactionId] || crypto.randomUUID(), accountId: mapping[data.payment.accountId], category: data.payment.category.startsWith("custom:") ? "custom:" + mapping[data.payment.category.slice(7)] : data.payment.category };
               if (r.kind === "workbench")
                 data.widgets = data.widgets.map((w) => ({
                   ...w,
@@ -1409,6 +1441,7 @@ async function changeLanguage(value) {
       selectedMonth,
       categoryOptions(),
     );
+    if (projectKinds.includes(editorKind)) $("#dialog-fields").insertAdjacentHTML("beforeend", projectField(records(), values.projectId));
     $("#dialog-title").textContent = editing ? t("Edit") : addLabel(editorKind);
     applyMovementType();
     updatePlanTotal();
@@ -1464,6 +1497,51 @@ async function onAction(event) {
     return;
   }
   const { action, id, kind } = element.dataset;
+  if (action === "workspace-search") { openWorkspaceSearch(); return; }
+  if (action === "workspace-open") {
+    $("#workspace-search-dialog").close();
+    if (element.dataset.page) { location.hash = element.dataset.page; return; }
+    const record = records().find(r => r.id === id);
+    if (!record) return;
+    if (record.kind === "project") { projectId = id; location.hash = "projects"; render(); }
+    else if (record.kind === "habit") { location.hash = "habits"; }
+    else if (record.kind === "calendarEvent") planner.dialog(record);
+    else openEditor(record.kind, id);
+    return;
+  }
+  if (action === "project-open" || action === "projects-back") { projectId = action === "project-open" ? id : null; render(); return; }
+  if (action === "project-create") {
+    if (kind === "task") planner.dialog(null, { kind: "task", startDate: today(), projectId: id });
+    else openEditor(kind, null, kind === "transaction" ? "expense" : null, { projectId: id });
+    return;
+  }
+  if (action === "project-detach") { await moveToProject(id, null); return; }
+  if (action === "attention-budget") {
+    openEditor("budget", id || null, null, { category: element.dataset.category, month: element.dataset.month, calendar: "persian" });
+    return;
+  }
+  if (action === "habit-toggle") {
+    const habit = ofKind("habit").find(r => r.id === id), date = element.dataset.date;
+    if (!habit || date > today() || date < habit.data.startDate) return;
+    const log = ofKind("habitLog").find(r => r.data.habitId === id && r.data.date === date);
+    await commit("habitLog", { habitId: id, date, done: log ? log.data.done === false : true }, log?.id || await habitLogId(id, date), false, log?.version ?? 0);
+    return;
+  }
+  if (action === "clip-inbox") {
+    const targetSpace = space, clips = await extensionClips();
+    if (space !== targetSpace) return;
+    clipInbox = clips;
+    notify("Review saved clips", clips.length ? clips.map(clip => `<article class="workspace-row"><div><strong dir="auto">${esc(clip.title)}</strong><p dir="auto">${esc(clip.excerpt.slice(0, 250))}</p></div><button class="primary" data-action="clip-review" data-id="${clip.id}">${t("Review and save")}</button></article>`).join("") : t("No saved clips."));
+    return;
+  }
+  if (action === "clip-review") {
+    const clip = clipInbox.find(clip => clip.id === id); if (!clip) return;
+    $("#notice").close();
+    const existing = records().find(r => r.id === clip.id);
+    if (existing) { void acknowledgeClip(clip.id); openEditor(existing.kind, existing.id); }
+    else openEditor("bookmark", null, null, { ...clip, clipId: clip.id });
+    return;
+  }
   if (action === "nav-pin") {
     if (!pinnablePages.includes(element.dataset.page)) return;
     try {
@@ -1601,7 +1679,8 @@ async function onAction(event) {
   if (action === "recurring-pay") {
     const r = ofKind("monthlyExpense").find((r) => r.id === id);
     if (!r) return;
-    const due = recurringForMonth(records(), selectedMonth).find(
+    const paymentMonth = element.dataset.month || selectedMonth;
+    const due = recurringForMonth(records(), paymentMonth).find(
       (x) => x.id === id,
     );
     if (due?.payment) {
@@ -1613,9 +1692,9 @@ async function onAction(event) {
       category: r.data.category,
       accountId: r.data.accountId || ofKind("account")[0]?.id,
       note: r.data.title,
-      date: inMonth(today(), selectedMonth) ? today() : due.dueDate,
+      date: inMonth(today(), paymentMonth) ? today() : due.dueDate,
       recurringExpenseId: id,
-      recurringMonth: selectedMonth,
+      recurringMonth: paymentMonth,
     });
     return;
   }
@@ -1698,14 +1777,6 @@ async function onAction(event) {
     );
     return;
   }
-  if (action === "canvas-add") {
-    await openCanvas();
-    return;
-  }
-  if (action === "canvas-open") {
-    await openCanvas(id);
-    return;
-  }
   if (action === "asset-add") {
     openEditor("assetPosition");
     return;
@@ -1746,8 +1817,7 @@ async function onAction(event) {
     return;
   }
   if (action === "add") {
-    if (page === "canvas") await openCanvas();
-    else openEditor(kind);
+    openEditor(kind);
   }
   if (action === "edit") {
     const record = records().find((r) => r.id === id);
@@ -1780,7 +1850,7 @@ async function onAction(event) {
       toast("This account has transactions.");
       return;
     }
-    notify("Delete this record?", t("Deletion syncs to your other devices."), [
+    notify("Delete this record?", t(record.kind === "habit" ? "This also deletes the habit history." : "Deletion syncs to your other devices."), [
       {
         label: "Delete",
         className: "danger",
@@ -1792,19 +1862,7 @@ async function onAction(event) {
     ]);
   }
   if (action === "transfer") openEditor("transaction", null, "transfer");
-  if (action === "paid") {
-    const record = records().find((r) => r.id === id);
-    if (record) {
-      await commit(
-        record.kind,
-        { ...record.data, paid: !record.data.paid },
-        id,
-        false,
-        record.version,
-      );
-      toast("Paid status updated.");
-    }
-  }
+  if (action === "paid") { await installmentPayment(id); return; }
   if (action === "release") {
     const record = records().find((r) => r.id === id);
     if (record)
@@ -2153,7 +2211,7 @@ function reloadAccount() {
   if (accountReloading) return;
   accountReloading = true; ready = false;
   document.querySelectorAll("dialog[open]").forEach(dialog => dialog.close());
-  $("#view").replaceChildren(); $("#drawing-studio").hidden = true;
+  $("#view").replaceChildren();
   profileMenu.toggle(false);
   location.reload();
 }
@@ -2478,55 +2536,6 @@ function parseAssetValuations(text) {
       return { date, valueToman: normalizeDecimal(amount.join(","), 2) };
     });
 }
-const studio = new DrawingStudio({
-  context: () => ({
-    space,
-    session: space.startsWith("google:")
-      ? session
-      : { ...session, authenticated: false },
-  }),
-  getRecord: (id) => records().find((r) => r.id === id),
-  save: async (record, data) => {
-    data.updatedOn = today();
-    await commit(
-      "note",
-      data,
-      record?.id || crypto.randomUUID(),
-      false,
-      record?.version ?? null,
-    );
-    await saveSpace(
-      "canvas-draft:" + space + ":" + (record?.id || drawingDraftId),
-      { discarded: true },
-    );
-    toast("Saved.");
-  },
-  draft: async (record, data) => {
-    await saveSpace(
-      "canvas-draft:" + space + ":" + (record?.id || drawingDraftId),
-      { baseVersion: record?.version || 0, data },
-    );
-  },
-  exportFile: download,
-  error: showError,
-});
-window.addEventListener("damdast:navigate", (event) => {
-  studio.close(() => {
-    location.hash = event.detail.hash;
-  });
-});
-async function openCanvas(id = null) {
-  const record = id
-    ? records().find((r) => r.id === id && r.kind === "note")
-    : null;
-  drawingDraftId = id || "new";
-  const draft = await loadSpace("canvas-draft:" + space + ":" + drawingDraftId);
-  if (!id) drawingDraftId = "new";
-  await studio.open(
-    record,
-    draft?.data && draft.baseVersion === (record?.version || 0) ? draft : null,
-  );
-}
 async function loadAssetHistory() {
   const entries = assetEntries(
     records(),
@@ -2702,3 +2711,54 @@ document.addEventListener("toggle", (event) => {
   if (event.target.id === "workbench-settings" && event.target.isConnected)
     workbenchSettingsOpen = event.target.open;
 }, true);
+
+function workspacePages() { return Object.entries(sections).map(([id, [label]]) => ({ id, title: t(label) })); }
+function refreshWorkspaceSearch() {
+  $("#workspace-search-results").innerHTML = searchResults(context(), $("#workspace-search-input").value, workspacePages());
+}
+function openWorkspaceSearch() {
+  $("#workspace-search-label").textContent = t("Search everywhere");
+  $("#workspace-search-input").placeholder = t("For example: rent");
+  $("#workspace-search-input").value = "";
+  refreshWorkspaceSearch();
+  $("#workspace-search-dialog").showModal();
+  $("#workspace-search-input").focus();
+}
+$("#workspace-search-input").addEventListener("input", refreshWorkspaceSearch);
+document.addEventListener("keydown", event => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); if (!$("#workspace-search-dialog").open) openWorkspaceSearch(); }
+  if (event.key === "ArrowDown" && event.target.id === "workspace-search-input") { event.preventDefault(); $("#workspace-search-results button")?.focus(); }
+});
+async function moveToProject(id, nextProject) {
+  let r = records().find(r => r.id === id);
+  if (r?.data.installmentId) r = records().find(item => item.id === r.data.installmentId);
+  if (r && projectKinds.includes(r.kind)) await commit(r.kind, { ...r.data, projectId: nextProject }, r.id, false, r.version);
+}
+document.addEventListener("submit", event => {
+  if (event.target.id !== "project-attach-form") return;
+  event.preventDefault();
+  const form = event.target;
+  void moveToProject(form.elements.recordId.value, form.dataset.projectId).catch(showError);
+});
+async function installmentPayment(id) {
+  const record = ofKind("installment").find(r => r.id === id); if (!record) return;
+  if (record.data.paid) {
+    notify("Reverse payment?", t(record.data.payment ? "The linked expense will be removed and the account balance restored." : "This historical paid flag has no linked transaction."), [{ label: "Mark unpaid", className: "primary", run: () => commit("installment", { ...record.data, paid: false, payment: null }, id, false, record.version) }]);
+    return;
+  }
+  const accounts = ofKind("account"); if (!accounts.length) { toast("Create an account first."); openEditor("account"); return; }
+  const scope = space, dialog = $("#payment-dialog");
+  dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t("Record payment")}</h2><button type="button" class="icon-button" data-payment-close aria-label="${t("Close")}">×</button></div><p dir="auto">${esc(record.data.title)} · ${money(record.data.amount)} ${t("toman")}</p><label class="field">${t("Account")}<select name="accountId" required><option value="">${t("Choose account")}</option>${accounts.map(r => `<option value="${r.id}">${esc(r.data.name)}</option>`).join("")}</select></label><label class="field">${t("Category")}<select name="category">${categoryOptions().map(([value, label]) => `<option value="${esc(value)}" ${value === "Other" ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label>${dateControl("Payment date", "paymentDate", today(), true)}<p class="small-note">${t("This settles the installment and records one account expense.")}</p><p class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" data-payment-close>${t("Cancel")}</button><button type="submit" class="primary">${t("Mark paid")}</button></div></form>`;
+  dialog.querySelectorAll("[data-payment-close]").forEach(button => button.onclick = () => dialog.close());
+  const transactionId = crypto.randomUUID();
+  dialog.querySelector("form").onsubmit = async event => {
+    event.preventDefault(); const form = event.target, button = form.querySelector('[type="submit"]'); button.disabled = true;
+    try {
+      if (scope !== space) throw Error("This record changed. Reopen the form.");
+      const values = Object.fromEntries(new FormData(form));
+      await commit("installment", { ...record.data, paid: true, payment: { transactionId, accountId: values.accountId, category: values.category, date: values.paymentDate } }, id, false, record.version);
+      dialog.close(); toast("Saved.");
+    } catch (error) { form.querySelector(".form-error").textContent = t(error.message); button.disabled = false; }
+  };
+  dialog.showModal();
+}

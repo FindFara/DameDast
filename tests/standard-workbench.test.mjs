@@ -7,7 +7,7 @@ const id=()=>crypto.randomUUID();
 test('default search and independent icon shortcuts live in the board with no desk or component headings',()=>{
   const layout=defaultWorkbench();validateWorkbench(layout);assert.equal(layout.version,3);
   assert.equal(layout.widgets.filter(w=>w.type==='search').length,1);
-  const shortcuts=layout.widgets.filter(w=>w.type==='shortcut');assert.deepEqual(shortcuts.map(w=>w.options.page),['notes','tasks','calendar','canvas']);
+  const shortcuts=layout.widgets.filter(w=>w.type==='shortcut');assert.deepEqual(shortcuts.map(w=>w.options.page),['notes','tasks','calendar','projects']);
   assert.ok(shortcuts.every(w=>w.width===1&&w.height===1));
   const context={records:[{kind:'workbench',data:layout}],space:'guest',now:'2026-11-18T12:00:00Z',connectedSnapshots:[]};
   const html=workbenchPage(context,icon);

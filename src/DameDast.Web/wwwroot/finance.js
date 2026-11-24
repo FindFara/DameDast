@@ -1,4 +1,5 @@
 import { locale } from "./i18n.js";
+import { paymentEffect } from "./installment-payment.js";
 import {
   addSolarMonths,
   solarText,
@@ -76,6 +77,10 @@ export function materialize(state) {
     state.snapshot.records.map((r) => [r.id, structuredClone(r)]),
   );
   for (const change of state.pending) {
+    if (change.kind === "habit" && change.delete) for (const r of records.values())
+      if (!r.deleted && r.kind === "habitLog" && r.data.habitId === change.id) records.set(r.id, { ...r, version: r.version + 1, deleted: true });
+    const effect = paymentEffect([...records.values()], change);
+    if (effect) records.set(effect.id, effect);
     const current = records.get(change.id);
     records.set(change.id, {
       id: change.id,

@@ -1,3 +1,4 @@
+import { projectField } from "./productivity-ui.js";
 import { calendarEditorFields } from "./calendar-editor-ui.js";
 import { preferences, savePreferences } from "./preferences.js";
 import { t, getLanguage } from "./i18n.js";
@@ -134,6 +135,7 @@ export class PlannerController {
         repeatUntil: null,
         repeatCalendar: p.calendar,
         completedDates: [],
+        projectId: preset.projectId || null,
         ...source,
       };
     d.startTime ||= "09:00";
@@ -147,7 +149,7 @@ export class PlannerController {
       ...d,
       completedForEditor: d.repeat === "none" ? d.done : d.completedDates?.includes(preset.occurrence),
     }, dateField, !!task);
-    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">×</button></div><div class="calendar-fields">${fields}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
+    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">×</button></div><div class="calendar-fields">${fields}${!jump && !task ? projectField(this.callbacks.context().records, d.projectId) : ""}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
     const form = dialog.querySelector("form"),
       toggle = () => {
         if (jump) return;
@@ -209,6 +211,7 @@ export class PlannerController {
         } else {
           const next = {
             ...d,
+            projectId: values.projectId || null,
             title: values.title.trim(),
             description: values.description || "",
             startDate: values.startDate,

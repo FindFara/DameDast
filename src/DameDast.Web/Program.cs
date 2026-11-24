@@ -1,5 +1,4 @@
 using DameDast.Application;
-using DameDast.Web.Whiteboards;
 using DameDast.Infrastructure;
 using DameDast.Web;
 using DameDast.Web.Middleware;
@@ -32,7 +31,11 @@ app.UseAuthentication();
 app.UseMiddleware<AccountScopeMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
-app.MapWhiteboards();
+// Private, read-only access keeps historical linked documents exportable after canvas retirement.
+app.MapGet("/api/legacy/whiteboards/{id:guid}", async (Guid id, DameDast.Application.Interfaces.Sessions.ICurrentUser user, MediatR.ISender sender, CancellationToken ct) =>
+    Results.Ok(await sender.Send(new DameDast.Application.Features.Whiteboards.GetWhiteboardQuery(id, user.RequireId(), null), ct)));
+app.MapMethods("/api/whiteboards/{**path}", ["GET", "POST", "PUT", "DELETE"], () => Results.StatusCode(StatusCodes.Status410Gone));
+app.MapMethods("/hubs/whiteboard/{**path}", ["GET", "POST", "DELETE"], () => Results.StatusCode(StatusCodes.Status410Gone));
 app.MapFallbackToFile("index.html");
 await app.Services.InitializeInfrastructureAsync(app.Lifetime.ApplicationStopping);
 await app.RunAsync();

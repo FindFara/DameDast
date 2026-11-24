@@ -14,8 +14,6 @@ public static class DependencyInjection
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
-        services.AddSignalR(options => { options.MaximumReceiveMessageSize = 9_000_000; options.EnableDetailedErrors = false; });
-        services.AddSingleton<DameDast.Web.Whiteboards.WhiteboardPresenceRegistry>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<CsrfValidationFilter>();
         services.AddControllers(options => options.Filters.AddService<CsrfValidationFilter>()).ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = _ => new BadRequestObjectResult(new { error = "Invalid request. Check the submitted fields." }));

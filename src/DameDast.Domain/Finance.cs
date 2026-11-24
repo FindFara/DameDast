@@ -14,7 +14,15 @@ public static class FinanceRules
 {
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     public static readonly string[] Categories = ["Food & drinks", "Shopping", "Transport", "Home", "Health", "Leisure", "Learning", "Salary", "Other income", "Other"];
-    public static FinanceRecord Apply(IReadOnlyList<FinanceRecord> records, Mutation change)
+    public static IReadOnlyList<FinanceRecord> ApplyWithEffects(IReadOnlyList<FinanceRecord> records, Mutation change)
+    {
+        var updated = InstallmentPaymentRules.Apply(records, change).ToList();
+        if (change.Kind == "habit" && change.Delete)
+            foreach (var log in records.Where(r => !r.Deleted && r.Kind == "habitLog" && Read<HabitLog>(r.Data).HabitId == change.Id))
+                updated.Add(Apply(records, new Mutation(change.OperationId, log.Id, log.Kind, log.Version, true, default)));
+        return updated;
+    }
+    public static FinanceRecord Apply(IReadOnlyList<FinanceRecord> records, Mutation change, bool paymentEffect = false)
     {
         if (change.Id == Guid.Empty || change.OperationId == Guid.Empty || change.ExpectedVersion < 0)
             throw new FinanceException("Invalid change identifier or version.");
@@ -23,10 +31,13 @@ public static class FinanceRules
             throw new ConflictException(change.Id);
         if (current is not null && current.Kind != change.Kind)
             throw new FinanceException("A record cannot change its type.");
+        if (!paymentEffect) InstallmentPaymentRules.CheckChange(records, change);
         if (change.Delete)
         {
             if (current is null || current.Deleted)
                 throw new FinanceException("Record not found.");
+            if (change.Kind == "project" && records.Any(r => !r.Deleted && r.Data.TryGetProperty("projectId", out var project) && project.ValueKind == JsonValueKind.String && project.TryGetGuid(out var referencedProject) && referencedProject == change.Id))
+                throw new FinanceException("Move records out of this project before deleting it.");
             if (change.Kind == "category" && records.Any(r => PlanningRules.ReferencesCategory(r, "custom:" + change.Id)))
                 throw new FinanceException("Move records using this category before deleting it.");
             if (change.Kind == "account" && records.Where(x => x.Kind == "transaction" && !x.Deleted).Select(x => Read<Movement>(x.Data)).Any(x => x.AccountId == change.Id || x.DestinationId == change.Id))
@@ -57,6 +68,8 @@ public static class FinanceRules
 
     private static void Validate(IReadOnlyList<FinanceRecord> records, Mutation change)
     {
+        ProductivityRules.ValidateProject(records, change);
+        if (ProductivityRules.TryValidate(records, change)) return;
         if (OrganizerRules.TryValidate(records, change))
             return;
         if (PlanningRules.TryValidate(records, change))
@@ -144,6 +157,7 @@ public static class FinanceRules
                 break;
             case "installment":
                 var installment = Read<Installment>(change.Data);
+                InstallmentPaymentRules.Validate(records, installment, change.Id);
                 Text(installment.Title, 80, "Installment title");
                 Money(installment.Amount);
                 ValidDate(installment.DueDate);

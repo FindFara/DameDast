@@ -12,6 +12,7 @@ import { read, write, saveDocument } from "./whiteboard/storage.mjs";
 import { validateWorkbench } from "./workbench.js";
 import { validateCalendarEntry } from "./planner.js";
 import { validateDrawing } from "./drawing.js";
+import { validateProductivity } from "./productivity.js";
 export const BACKUP_LIMIT = 128_000_000;
 const guid = (v) =>
   typeof v === "string" &&
@@ -37,12 +38,13 @@ const kinds = new Set([
   "assetPosition",
   "workbench",
   "calendarEvent",
+  "project", "bookmark", "habit", "habitLog",
 ]);
 export const backupSections = ["all", "notes", "finance"];
-const writingKinds = new Set(["note", "reminder", "calendarEvent", "notificationRead"]);
+const writingKinds = new Set(["note", "reminder", "calendarEvent", "notificationRead", "bookmark", "habit", "habitLog"]);
 export function selectBackupRecords(records, section = "all") {
   if (!backupSections.includes(section)) throw Error("Invalid backup section.");
-  return records.filter((r) => !r.deleted && (section === "all" || (section === "notes" ? writingKinds.has(r.kind) : !writingKinds.has(r.kind) && r.kind !== "workbench")));
+  return records.filter((r) => !r.deleted && (section === "all" || r.kind === "project" || (section === "notes" ? writingKinds.has(r.kind) : !writingKinds.has(r.kind) && r.kind !== "workbench")));
 }
 export async function latestCanvas(scope, id) {
   const key = await read("index", `${scope}:${id}`);
@@ -91,6 +93,7 @@ export function validateBackup(input) {
     if (r.kind === "workbench") validateWorkbench(r.data);
     if (r.kind === "calendarEvent") validateCalendarEntry(r.data);
     if (r.kind === "note" && r.data.drawing) validateDrawing(r.data.drawing);
+    if (["project", "bookmark", "habit", "habitLog"].includes(r.kind)) validateProductivity(r.kind, r.data, input.records, r.id);
   }
   if (input.preferences) validatePreferences(input.preferences);
   const pdfs = input.pdfs || [];
@@ -158,7 +161,7 @@ export async function createBackup({
       remote;
     if (scope.startsWith("google:")) {
       try {
-        const response = await request(`/api/whiteboards/${id}`);
+        const response = await request(`/api/legacy/whiteboards/${id}`);
         if (response.ok) remote = await response.json();
       } catch {}
     }

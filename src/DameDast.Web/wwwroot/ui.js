@@ -1,3 +1,4 @@
+import { attentionCard, projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
 import { transactionBoard, filterTransactions } from "./transaction-board.js";
 import { amountText, amountsHidden } from "./privacy.js";
 import {settingsPage} from "./settings-ui.js";
@@ -68,10 +69,9 @@ export const sections = {
     "Asset performance",
     '<path d="M3 20h18M5 16l4-5 4 3 6-10M15 4h4v4"/>',
   ],
-  canvas: [
-    "Drawings",
-    '<path d="m4 20 5-1L21 7l-5-5L4 14ZM3 22h18M6 15l3 3"/>',
-  ],
+  projects: ["Projects", '<rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 10h18M3 6V3h7l3 3"/>'],
+  habits: ["Habits", '<path d="m4 12 5 5L20 6"/><circle cx="12" cy="12" r="10"/>'],
+  bookmarks: ["Saved links", '<path d="M6 3h12v18l-6-4-6 4Z"/>'],
   organizer: ["Planner", '<path d="M5 3h14v18H5Zm4 5h6m-6 4h6m-6 4h4"/>'],
   tasks: [
     "Tasks",
@@ -213,6 +213,7 @@ const addNames = {
   allocationPlan: "Create plan",
   monthlyExpense: "New monthly expense",
   investmentStep: "New investment step",
+  project: "New project", habit: "New habit", bookmark: "Save link",
 };
 export const addLabel = (kind) => t(addNames[kind] || "Add");
 export const monthText = monthLabel;
@@ -232,7 +233,9 @@ export function renderPage(c) {
   const views = {
     workbench: (c) => workbenchPage(c, icon),
     assets: assetsPage,
-    canvas: (c) => organizerPage(c, () => goals(c, true)),
+    projects: projectsPage,
+    habits: habitsPage,
+    bookmarks: bookmarksPage,
     suggestions: suggestionsPage,
     monthlyPlan: monthlyPlanPage,
     notes: (c) => organizerPage(c, () => goals(c, true)),
@@ -366,7 +369,7 @@ function overview(c) {
       0,
     ),
     budget = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Overview", "transaction")}${dueBanner(c)}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
+  return `${pageHeading(c, "Overview", "transaction")}${attentionCard(c)}${dueBanner(c)}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
     "Budgets",
     budget.length
       ? budget
@@ -421,7 +424,7 @@ function installments(c) {
     ),
     unpaid = list.filter((r) => !r.data.paid),
     sum = (items) => items.reduce((s, r) => s + r.data.amount, 0);
-  return `${pageHeading(c, "Installments", "installment")}<div class="stats-grid">${amountCard("Total remaining", sum(unpaid), "featured")}${amountCard("Due this month", sum(unpaid.filter((r) => inMonth(r.data.dueDate, c.month))))}${amountCard("Overdue", sum(unpaid.filter((r) => dueDays(r.data.dueDate) < 0)))}</div><div class="toolbar">${actionButton("push", "Enable reminders", `aria-label="${t("Enable reminders")}"`)}</div>${panel("Payment calendar", list.length ? `<div class="installment-list">${list.map((r) => `<article class="installment-row ${r.data.paid ? "paid" : ""}"><span class="category-icon ${r.data.paid ? "income" : ""}">${icon(r.data.paid ? "check" : "installments")}</span><div class="installment-description"><strong dir="auto">${dataText(c, r.data.title)}</strong><small>${dateText(r.data.dueDate, true)} <span class="separator">·</span><span class="${!r.data.paid && dueDays(r.data.dueDate) < 0 ? "negative" : ""}">${r.data.paid ? t("Paid") : dueText(dueDays(r.data.dueDate))}</span></small></div><div class="movement-amount">${number(r.data.amount)}<small>${t("toman")}</small></div><div class="row-actions">${actionButton("paid", r.data.paid ? "Mark unpaid" : "Mark paid", `data-id="${r.id}"`, "small-button")}<button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></article>`).join("")}</div>` : empty("No installments", "installment"))}${totalsHelp()}`;
+  return `${pageHeading(c, "Installments", "installment")}<div class="stats-grid">${amountCard("Total remaining", sum(unpaid), "featured")}${amountCard("Due this month", sum(unpaid.filter((r) => inMonth(r.data.dueDate, c.month))))}${amountCard("Overdue", sum(unpaid.filter((r) => dueDays(r.data.dueDate) < 0)))}</div><div class="toolbar">${actionButton("push", "Enable reminders", `aria-label="${t("Enable reminders")}"`)}</div>${panel("Payment calendar", list.length ? `<div class="installment-list">${list.map((r) => `<article class="installment-row ${r.data.paid ? "paid" : ""}"><span class="category-icon ${r.data.paid ? "income" : ""}">${icon(r.data.paid ? "check" : "installments")}</span><div class="installment-description"><strong dir="auto">${dataText(c, r.data.title)}</strong><small>${dateText(r.data.dueDate, true)} <span class="separator">·</span><span class="${!r.data.paid && dueDays(r.data.dueDate) < 0 ? "negative" : ""}">${r.data.paid ? t("Paid") : dueText(dueDays(r.data.dueDate))}</span></small></div><div class="movement-amount">${number(r.data.amount)}<small>${t("toman")}</small></div><div class="row-actions">${actionButton("paid", r.data.paid ? "Mark unpaid" : "Mark paid", `data-id="${r.id}"`, "small-button")}<button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></article>`).join("")}</div>` : empty("No installments", "installment"))}<p class="small-note">${t("Recording a payment creates an expense in the selected account. Reversing it removes that expense.")}</p>`;
 }
 function receivables(c) {
   const list = kind(c, "receivable"),
@@ -624,6 +627,8 @@ export function editorFields(
     note = () =>
       field("Note (optional)", "note", d.note || "", "text", 'maxlength="200"'),
     dateAttrs = 'min="2000-01-01" max="2100-12-31"';
+  const productivityExtra = productivityFields(kindName, d);
+  if (productivityExtra !== null) return productivityExtra;
   if (kindName === "assetPosition") return assetEditorFields(d);
   const organizerExtra = organizerEditorFields(kindName, d);
   if (organizerExtra !== null) return organizerExtra;

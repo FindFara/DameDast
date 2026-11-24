@@ -7,7 +7,7 @@ export const navigationGroups = [
   {
     id: "planning",
     label: "Plan & remember",
-    items: ["notes", "canvas", "calendar", "tasks", "reminders", "goals"],
+    items: ["notes", "projects", "habits", "bookmarks", "calendar", "tasks", "reminders", "goals"],
   },
   {
     id: "investing",
@@ -23,7 +23,9 @@ export const navigationGroups = [
 export const plannerPages = [
   "organizer",
   "notes",
-  "canvas",
+  "projects",
+  "habits",
+  "bookmarks",
   "calendar",
   "tasks",
   "reminders",

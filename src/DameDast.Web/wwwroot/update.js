@@ -4,8 +4,7 @@
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (refreshing || !navigator.serviceWorker.controller) return;
     if (
-      document.querySelector("dialog[open]") ||
-      document.body.classList.contains("whiteboard-open")
+      document.querySelector("dialog[open]")
     )
       return;
     const version = document.querySelector(

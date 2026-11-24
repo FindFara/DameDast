@@ -20,12 +20,6 @@ export const widgetCatalog = [
     glyph: "wallet",
   },
   { type: "notes", title: "Notes", page: "notes", glyph: "notes" },
-  {
-    type: "canvas",
-    title: "Handwritten notes",
-    page: "canvas",
-    glyph: "canvas",
-  },
   { type: "accounts", title: "Accounts", page: "accounts", glyph: "accounts" },
   {
     type: "installments",
@@ -62,7 +56,7 @@ export const widgetCatalog = [
   },
 ];
 export const shortcutPages = {
-  overview:"Overview", notes:"Notes", tasks:"Tasks", calendar:"Calendar", canvas:"Drawings", accounts:"Accounts", transactions:"Transactions", budgets:"Budgets", goals:"Savings goals", reminders:"Reminders", assets:"Asset performance", market:"Market", installments:"Installments", monthlyPlan:"Monthly plan", monthlyExpenses:"Monthly expenses", receivables:"Money lent", connected:"Connected", suggestions:"Suggestions", locked:"Locked assets", reports:"Reports", settings:"Settings"
+  overview:"Overview", notes:"Notes", tasks:"Tasks", calendar:"Calendar", projects:"Projects", habits:"Habits", bookmarks:"Saved links", accounts:"Accounts", transactions:"Transactions", budgets:"Budgets", goals:"Savings goals", reminders:"Reminders", assets:"Asset performance", market:"Market", installments:"Installments", monthlyPlan:"Monthly plan", monthlyExpenses:"Monthly expenses", receivables:"Money lent", connected:"Connected", suggestions:"Suggestions", locked:"Locked assets", reports:"Reports", settings:"Settings"
 };
 export function legacyStandardSize(type) {
   if (type === "shortcut") return { width: 1, height: 1 };
@@ -77,7 +71,7 @@ export function standardSize(type) {
 export const deskColors = ["#4338ca", "#ffdf00", "#d93d3d", "#f4f3ef", "#202124"];
 export const deskColorNames = ["Indigo blue", "Canary yellow", "Red", "Matte white", "Matte black"];
 export const shortcutColors = {
-  overview:"#4f46e5", notes:"#d99b00", tasks:"#219f76", calendar:"#d95769", canvas:"#8b5cf6",
+  overview:"#4f46e5", notes:"#d99b00", tasks:"#219f76", calendar:"#d95769", projects:"#8b5cf6", habits:"#367c61", bookmarks:"#d99b00",
   accounts:"#3575e5", transactions:"#0f9488", budgets:"#ea8b26", goals:"#cf4f83", reminders:"#9b59b6",
   assets:"#5968d5", market:"#1f9ca3", installments:"#bf9b27", monthlyPlan:"#516be5", monthlyExpenses:"#cf7244",
   receivables:"#41a37a", connected:"#7887bd", suggestions:"#d59331", locked:"#768398", reports:"#6f82c7", settings:"#697686",
@@ -124,7 +118,7 @@ export function validateWorkbench(layout) {
       !w ||
       !validId(w.id) ||
       ids.has(w.id) ||
-      !widgetCatalog.some((c) => c.type === w.type) ||
+      (!widgetCatalog.some((c) => c.type === w.type) && w.type !== "canvas") ||
       !validDeskColor(w.background) ||
       (w.title != null &&
         (typeof w.title !== "string" ||
@@ -168,6 +162,7 @@ export function packStandardWidgets(widgets, columns = DESK_COLUMNS) {
 }
 export function standardWorkbench(layout, includeLegacyTools = true) {
   validateWorkbench(layout);
+  layout = { ...layout, widgets: layout.widgets.filter(widget => widget.type !== "canvas" && !(widget.type === "shortcut" && widget.options?.page === "canvas")) };
   const ordered = layout.version === 1 ? [...layout.widgets].sort((a,b)=>a.y-b.y||a.x-b.x) : layout.widgets;
   const widgets = ordered.map(widget => {
     if (layout.version === 3) return { ...widget };
@@ -175,7 +170,7 @@ export function standardWorkbench(layout, includeLegacyTools = true) {
     return { ...widget, width: widget.type === "shortcut" ? 1 : size.width * 2, height: widget.type === "shortcut" ? 1 : size.height * 2 };
   });
   if (layout.version === 1 && includeLegacyTools) {
-    const additions = [defaultCard(101,"search"), ...["notes","tasks","calendar","canvas"].map((page,index)=>defaultCard(102+index,"shortcut",{page}))];
+    const additions = [defaultCard(101,"search"), ...["notes","tasks","calendar","projects"].map((page,index)=>defaultCard(102+index,"shortcut",{page}))];
     widgets.unshift(...additions.filter(candidate => !widgets.some(widget=>widget.id===candidate.id)).slice(0,Math.max(0,72-widgets.length)));
   }
   const packed = packStandardWidgets(widgets);
@@ -191,7 +186,7 @@ export function resizeWorkbenchWidget(layout, id, width, height) {
 }
 export function defaultWorkbench() {
   const widgets = packStandardWidgets([
-    defaultCard(101,"search"), ...["notes","tasks","calendar","canvas"].map((page,index)=>defaultCard(102+index,"shortcut",{page})),
+    defaultCard(101,"search"), ...["notes","tasks","calendar","projects"].map((page,index)=>defaultCard(102+index,"shortcut",{page})),
     defaultCard(1,"clock"),defaultCard(2,"plainCalendar"),defaultCard(107,"googleServices"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(5,"notes"),defaultCard(6,"tasks")
   ]);
   return standardWorkbench({version:3, columns:DESK_COLUMNS, rows:Math.max(DESK_ROWS,...widgets.map(widget=>widget.y+widget.height)), background:null, widgets});

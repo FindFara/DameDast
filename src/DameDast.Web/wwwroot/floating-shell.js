@@ -25,20 +25,6 @@ document.addEventListener("keydown", (event) => {
     open(false);
   }
 });
-document.addEventListener(
-  "click",
-  (event) => {
-    const link = event.target.closest('a[href^="#"]');
-    if (!link || !document.body.classList.contains("whiteboard-open")) return;
-    event.preventDefault();
-    window.dispatchEvent(
-      new CustomEvent("damdast:navigate", {
-        detail: { hash: link.getAttribute("href") },
-      }),
-    );
-  },
-  true,
-);
 sidebar.addEventListener("keydown", (event) => {
   if (event.key !== "Tab") return;
   const items = [...sidebar.querySelectorAll("a,button,input,select")].filter(

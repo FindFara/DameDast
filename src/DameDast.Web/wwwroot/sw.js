@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v56";
+const CACHE = "damedast-shell-v57";
 const SHELL = [
   "/desk-dog.js",
   "/desk-pet.js",
@@ -6,6 +6,16 @@ const SHELL = [
   "/desk-pet-ui.js",
   "/desk-pet.css",
   "/notebook.js",
+  "/productivity.js",
+  "/productivity-ui.js",
+  "/productivity.css",
+  "/note-blocks.js",
+  "/installment-payment.js",
+  "/clip-inbox.js",
+  "/extension/shared/clips.js",
+  "/whiteboard/model.mjs",
+  "/whiteboard/storage.mjs",
+  "/whiteboard/recovery.mjs",
   "/desk-home-ui.js",
   "/google-services.js",
   "/desk-home.css",
@@ -26,7 +36,6 @@ const SHELL = [
   "/holiday-data.js",
   "/privacy.js",
   "/calendar-editor-ui.js",
-  "/canvas-policy.js",
   "/app.js",
   "/account-scope.js",
   "/profile-menu.js",
@@ -45,7 +54,6 @@ const SHELL = [
   "/workbench-ui.js",
   "/workbench-controller.js",
   "/drawing.js",
-  "/drawing-studio.js",
   "/floating-shell.css",
   "/floating-shell.js",
   "/planner.js",
@@ -88,10 +96,7 @@ const SHELL = [
 ];
 self.addEventListener("install", event => event.waitUntil((async () => {
   const cache = await caches.open(CACHE);
-  const response = await fetch('/whiteboard/asset-manifest.json', {cache:'no-store'});
-  if (!response.ok) throw Error('The canvas offline bundle is unavailable.');
-  const assets = await response.json();
-  await cache.addAll([...SHELL, '/whiteboard/asset-manifest.json', ...assets]);
+  await cache.addAll(SHELL);
   await self.skipWaiting();
 })()));
 self.addEventListener("activate", (event) =>
@@ -122,11 +127,11 @@ self.addEventListener("fetch", (event) => {
     return;
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(url.pathname.startsWith("/whiteboard/") ? "/whiteboard/index.html" : "/index.html")),
+      fetch(event.request).catch(() => caches.match("/index.html")),
     );
     return;
   }
-  if (!SHELL.includes(url.pathname) && !url.pathname.startsWith("/whiteboard/")) return;
+  if (!SHELL.includes(url.pathname)) return;
   event.respondWith((async () => {
     const cached = await caches.match(event.request, { ignoreSearch: true });
     if (cached) return cached;
