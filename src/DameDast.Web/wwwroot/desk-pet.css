@@ -1,10 +1,7 @@
-.desk-pet-scene { position: relative; height: 100%; min-height: 150px; overflow: hidden; background: radial-gradient(ellipse at 30% 10%, #f4db9d35, transparent 70%), #dce8dc; transition: background-color .3s; }
-.desk-pet-scene[data-pet-mood="sad"] { background-color: #d4e1e9; }
-.desk-pet-scene[data-pet-mood="angry"] { background-color: #edddd5; }
-:root[data-theme="dark"] .desk-pet-scene { background-color: #2b3e36; }
-:root[data-theme="dark"] .desk-pet-scene[data-pet-mood="sad"] { background-color: #2b3c4d; }
-:root[data-theme="dark"] .desk-pet-scene[data-pet-mood="angry"] { background-color: #493b38; }
-.desk-pet-ground { position: absolute; inset: 65% 0 0; background: #74a47c18; border-block-start: 1px solid #77a48320; }
+.desk-pet-scene { position: relative; height: 100%; min-height: 150px; overflow: hidden; background: var(--surface-soft); transition: background-color .3s; }
+.desk-pet-scene[data-pet-mood="sad"] { background-color: color-mix(in srgb, var(--surface-soft) 90%, #829bc9); }
+.desk-pet-scene[data-pet-mood="angry"] { background-color: color-mix(in srgb, var(--surface-soft) 90%, var(--negative)); }
+.desk-pet-ground { position: absolute; inset: 65% 0 0; background: color-mix(in srgb, var(--accent) 9%, transparent); border-block-start: 1px solid color-mix(in srgb, var(--accent) 13%, transparent); }
 .desk-pet-house { position: absolute; inset-inline-end: 20px; bottom: 23px; width: 80px; height: 80px; pointer-events: none; }
 .desk-pet-house svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 #193a3418); }
 .desk-pet-character { position: absolute; inset-inline-start: 20px; bottom: 8px; width: 132px; height: 144px; padding: 0; min-height: 0; min-width: 0; border: 0; background: transparent; cursor: pointer; }

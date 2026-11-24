@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <meta name="damdast-version" content="damedast-fara-productivity-31" />
+    <meta name="damdast-version" content="damedast-navigation-32" />
     <script src="/update.js?v=30" defer></script>
     <meta name="damdast-app" content="portfolio-v1" />
     <meta name="google" content="notranslate" />
@@ -42,7 +42,6 @@
   </head>
   <body>
     <div class="shell-tools" role="toolbar" aria-label="Quick actions">
-      <button type="button" class="icon-button" id="workspace-search-button" data-action="workspace-search" aria-label="Search everywhere" title="Ctrl+K"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></button>
     <button id="app-menu-button" aria-label="Menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
           <button
             id="sync-button"
@@ -78,7 +77,13 @@
       >
       <button id="app-menu-close" class="icon-button" aria-label="Close">×</button>
       </div>
+      <div class="menu-search-field">
+        <label class="sr-only" id="workspace-search-label" for="workspace-search-input">Search everywhere</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>
+        <input id="workspace-search-input" type="search" autocomplete="off" placeholder="Search everywhere" aria-controls="workspace-search-results">
+      </div>
       <div class="nav-label" id="workspace-label">Workspace</div>
+      <div id="workspace-search-results" class="menu-search-results" aria-live="polite" hidden></div>
       <nav id="navigation" aria-label="Menu"></nav>
       <div class="profile-area">
       <div class="profile-menu" id="profile-menu" aria-label="Account" hidden></div>
@@ -134,7 +139,6 @@
         </div>
       </form>
     </dialog>
-    <dialog id="workspace-search-dialog" class="workspace-search-dialog"><form method="dialog"><button class="icon-button" aria-label="Close">×</button></form><label for="workspace-search-input" id="workspace-search-label"></label><input id="workspace-search-input" type="search" autocomplete="off"><div id="workspace-search-results" aria-live="polite"></div></dialog>
     <dialog id="payment-dialog"></dialog>
     <dialog id="notice"><div id="notice-content"></div></dialog>
     <div id="toast" role="status"></div>

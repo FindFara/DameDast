@@ -14,6 +14,8 @@ function open(value) {
   else toggle.focus();
 }
 toggle.onclick = () => open(!document.body.classList.contains("nav-open"));
+window.addEventListener("damedast:menu-open", () => open(true));
+window.addEventListener("damedast:menu-close", () => open(false));
 backdrop.onclick = () => open(false);
 document.querySelector("#app-menu-close").onclick = () => open(false);
 sidebar.addEventListener("click", (event) => {

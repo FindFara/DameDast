@@ -1318,7 +1318,7 @@ Object.assign(fa, {
   'No payments next week.':'هفتهٔ بعد پرداختی نداری.', 'Search everywhere':'جست‌وجو در همه‌جا',
   'Search notes, tasks, transactions, reminders, links and pages.':'در یادداشت‌ها، تسک‌ها، تراکنش‌ها، یادآورها، لینک‌ها و صفحات بگرد.',
   'For example: rent':'مثلاً: اجاره', 'Page':'صفحه', 'No results.':'نتیجه‌ای پیدا نشد.',
-  'Second note':'یادداشت دوم', 'Single pane':'یک یادداشت', 'Note tabs':'تب‌های یادداشت',
+  'Note tabs':'تب‌های یادداشت',
   'Pin tab':'پین کردن تب', 'Unpin tab':'برداشتن پین تب', 'Close tab':'بستن تب', 'Write':'نوشتن', 'Preview':'پیش‌نمایش',
   'Type / to add a block':'برای افزودن بلوک / بزن', 'Heading':'تیتر', 'Checklist':'چک‌لیست', 'Code':'کد',
   'Quote':'نقل‌قول', 'Collapsible section':'بخش بازوبسته‌شونده',
@@ -1336,3 +1336,9 @@ Object.assign(fa, {
 });
 
 Object.assign(fa, {"Start date must include the existing habit history.":"تاریخ شروع باید سابقهٔ ثبت‌شدهٔ عادت را هم پوشش دهد.","This also deletes the habit history.":"سابقهٔ ثبت روزانهٔ این عادت هم حذف می‌شود."});
+
+Object.assign(fa, {
+  "items to review": "مورد نیاز به بررسی",
+  "Everything is up to date.": "همه چیز مرتب است.",
+  "Reschedule or complete your tasks": "موعد کارها را تغییر بده یا انجامشان بده",
+});

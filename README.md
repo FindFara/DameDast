@@ -1,6 +1,6 @@
 # DameDast · دمِ دست
 
-New: an actionable attention card, global search, account-linked installment payments, project workspaces, weekly habits, slash commands, split notes with pinnable tabs, and article clipping in the existing extension. Canvas has been retired, removing its 22 MB bundle and collaboration runtime. Historical canvas records remain exportable for backup compatibility. [Feature guide (Persian)](docs/PRODUCTIVITY-fa.md).
+New: an actionable attention card, global search, account-linked installment payments, project workspaces, weekly habits, slash commands, notes with pinnable tabs, and article clipping in the existing extension. Canvas has been retired, removing its 22 MB bundle and collaboration runtime. Historical canvas records remain exportable for backup compatibility. [Feature guide (Persian)](docs/PRODUCTIVITY-fa.md).
 
 Complete source: ASP.NET Core 10 backend, current web/PWA frontend, browser extension, tests and Docker deployment.
 

@@ -709,37 +709,14 @@ html[lang="fa"] .amount {
   margin-top: 13px;
 }
 .stat-card.featured {
-  color: #eff6e8;
-  border-color: #20543e;
-  background: linear-gradient(115deg, #205a45, #184433);
-}
-.featured:after {
-  content: "";
-  position: absolute;
-  inset-inline-end: -54px;
-  bottom: -90px;
-  width: 210px;
-  height: 210px;
-  border-radius: 50%;
-  border: 1px solid #ffffff0a;
-  box-shadow:
-    0 0 0 27px #ffffff03,
-    0 0 0 54px #ffffff02;
-  pointer-events: none;
+  color: var(--ink);
+  border-color: var(--border);
+  background: var(--surface-raised);
 }
 .featured .stat-top,
 .featured .unit,
-.featured .stat-foot {
-  color: #c4dbc9;
-}
-.featured .stat-icon {
-  background: #ffffff12;
-  color: #dfeddc;
-}
-[data-theme="dark"] .stat-card.featured {
-  background: linear-gradient(115deg, #294e3b, #203e30);
-  border-color: #3f6651;
-}
+.featured .stat-foot { color: var(--muted); }
+.featured .stat-icon { background: var(--accent-soft); color: var(--accent); }
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);

@@ -16,7 +16,7 @@ export class NotePageController {
   }
   storageKey(route) { return `damedast-note-draft:${this.scope}:${route}`; }
   tabsKey() { return `damedast-note-tabs:${this.scope}`; }
-  persistTabs() { try { localStorage.setItem(this.tabsKey(), JSON.stringify({ tabs: this.tabs, side: this.side })); } catch {} }
+  persistTabs() { try { localStorage.setItem(this.tabsKey(), JSON.stringify({ tabs: this.tabs })); } catch {} }
   capture() {
     for (const form of document.querySelectorAll("[data-note-form]")) {
       if (form.dataset.scope !== this.scope) continue;
@@ -53,7 +53,6 @@ export class NotePageController {
       this.scope = c.space; this.drafts.clear(); this.previews.clear();
       let stored; try { stored = JSON.parse(localStorage.getItem(this.tabsKey()) || "null"); } catch {}
       this.tabs = Array.isArray(stored?.tabs) ? stored.tabs.filter(tab => textNotes(c.records).some(r => r.id === tab.id) || this.hasDraft(tab.id)).map(tab => ({ id: tab.id, pinned: !!tab.pinned })) : [];
-      this.side = textNotes(c.records).some(r => r.id === stored?.side) ? stored.side : null;
     }
   }
   render(c) {
@@ -63,13 +62,12 @@ export class NotePageController {
     if (!d) return `<section class="panel empty"><h1>${t("This note is no longer available.")}</h1><a href="#notes">${t("Back to notes")}</a></section>`;
     if (!this.tabs.some(tab => tab.id === this.route)) this.tabs.push({ id: this.route, pinned: false });
     this.tabs = this.tabs.filter(tab => tab.id === "new" || this.drafts.has(tab.id) || textNotes(c.records).some(r => r.id === tab.id)); this.persistTabs();
-    const side = this.side && this.side !== this.route && this.draft(this.side, c.records);
     const tabs = [...this.tabs].sort((a, b) => Number(b.pinned) - Number(a.pinned));
-    return `<section class="note-workspace"><header class="note-workspace-toolbar"><a class="secondary" href="#notes">← ${t("Back to notes")}</a><label>${t("Second note")}<select data-note-side><option value="">${t("Single pane")}</option>${textNotes(c.records).filter(r => r.id !== this.route).map(r => `<option value="${r.id}" ${r.id === this.side ? "selected" : ""}>${esc(r.data.title)}</option>`).join("")}</select></label></header><nav class="note-tabs" aria-label="${t("Note tabs")}">${tabs.map(tab => `<div class="note-tab ${tab.id === this.route ? "active" : ""}"><button type="button" data-note-tab="${tab.id}" aria-current="${tab.id === this.route ? "page" : "false"}">${esc(this.drafts.get(tab.id)?.title || c.records.find(r => r.id === tab.id)?.data.title || t("New note"))}</button><button type="button" data-note-tab-pin="${tab.id}" aria-pressed="${tab.pinned}" aria-label="${t(tab.pinned ? "Unpin tab" : "Pin tab")}">${tab.pinned ? "●" : "○"}</button>${tab.pinned ? "" : `<button type="button" data-note-tab-close="${tab.id}" aria-label="${t("Close tab")}">×</button>`}</div>`).join("")}</nav><div class="note-panes ${side ? "is-split" : ""}">${this.pane(this.route, d, "main")}${side ? this.pane(this.side, side, "side") : ""}</div></section>`;
+    return `<section class="note-workspace"><header class="note-workspace-toolbar"><a class="secondary" href="#notes">← ${t("Back to notes")}</a></header><nav class="note-tabs" aria-label="${t("Note tabs")}">${tabs.map(tab => `<div class="note-tab ${tab.id === this.route ? "active" : ""}"><button type="button" data-note-tab="${tab.id}" aria-current="${tab.id === this.route ? "page" : "false"}">${esc(this.drafts.get(tab.id)?.title || c.records.find(r => r.id === tab.id)?.data.title || t("New note"))}</button><button type="button" data-note-tab-pin="${tab.id}" aria-pressed="${tab.pinned}" aria-label="${t(tab.pinned ? "Unpin tab" : "Pin tab")}">${tab.pinned ? "●" : "○"}</button>${tab.pinned ? "" : `<button type="button" data-note-tab-close="${tab.id}" aria-label="${t("Close tab")}">×</button>`}</div>`).join("")}</nav><div class="note-panes">${this.pane(this.route, d, "main")}</div></section>`;
   }
   pane(route, d, slot) {
     const preview = this.previews.has(route);
-    return `<section class="note-page" data-note-pane="${route}"><header class="note-page-heading"><span>${t(slot === "side" ? "Second note" : "Note")}</span><button type="button" class="text-button" data-note-preview="${route}">${t(preview ? "Write" : "Preview")}</button><button type="submit" form="note-${slot}-form" class="primary" ${this.busy.has(route) ? "disabled" : ""}>${t("Save")}</button></header><form id="note-${slot}-form" data-note-form data-route="${route}" data-scope="${esc(this.scope)}"><label class="sr-only" for="note-${slot}-title">${t("Title")}</label><input id="note-${slot}-title" name="title" class="note-page-title" placeholder="${t("Title")}" value="${esc(d.title)}" maxlength="80" required dir="auto">${projectField(this.c.records, d.projectId)}<label class="sr-only" for="note-${slot}-body">${t("Content")}</label><textarea id="note-${slot}-body" name="body" class="note-page-body" rows="14" maxlength="4000" placeholder="${t("Type / to add a block")}" dir="auto" ${preview ? "hidden" : ""}>${esc(d.body)}</textarea><div class="note-slash-menu" role="menu" hidden></div>${preview ? `<div class="note-rendered" dir="auto">${renderNoteBlocks(d.body)}</div>` : ""}<output role="status"></output><p class="note-page-error" role="alert"></p></form></section>`;
+    return `<section class="note-page" data-note-pane="${route}"><header class="note-page-heading"><span>${t("Note")}</span><button type="button" class="text-button" data-note-preview="${route}">${t(preview ? "Write" : "Preview")}</button><button type="submit" form="note-${slot}-form" class="primary" ${this.busy.has(route) ? "disabled" : ""}>${t("Save")}</button></header><form id="note-${slot}-form" data-note-form data-route="${route}" data-scope="${esc(this.scope)}"><label class="sr-only" for="note-${slot}-title">${t("Title")}</label><input id="note-${slot}-title" name="title" class="note-page-title" placeholder="${t("Title")}" value="${esc(d.title)}" maxlength="80" required dir="auto">${projectField(this.c.records, d.projectId)}<label class="sr-only" for="note-${slot}-body">${t("Content")}</label><textarea id="note-${slot}-body" name="body" class="note-page-body" rows="14" maxlength="4000" placeholder="${t("Type / to add a block")}" dir="auto" ${preview ? "hidden" : ""}>${esc(d.body)}</textarea><div class="note-slash-menu" role="menu" hidden></div>${preview ? `<div class="note-rendered" dir="auto">${renderNoteBlocks(d.body)}</div>` : ""}<output role="status"></output><p class="note-page-error" role="alert"></p></form></section>`;
   }
   attach() {}
   error(error, form) { const target = form?.querySelector(".note-page-error"); if (target?.isConnected) target.textContent = t(error.message); else this.callbacks.error(error); }
@@ -108,7 +106,6 @@ export class NotePageController {
     this.callbacks.refresh();
   }
   change(e) {
-    if (e.target.matches("[data-note-side]")) { this.capture(); this.side = e.target.value || null; this.persistTabs(); this.callbacks.refresh(); }
     if (e.target.matches("[data-note-line]")) {
       const form = e.target.closest("[data-note-form]"), body = form.elements.body, lines = body.value.split("\n"), index = Number(e.target.dataset.noteLine);
       lines[index] = lines[index].replace(/^- \[[ xX]\]/, e.target.checked ? "- [x]" : "- [ ]"); body.value = lines.join("\n"); this.capture();

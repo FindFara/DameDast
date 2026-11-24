@@ -1,4 +1,5 @@
 import { attentionCard, projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
+import { tehranParts } from "./organizer.js";
 import { transactionBoard, filterTransactions } from "./transaction-board.js";
 import { amountText, amountsHidden } from "./privacy.js";
 import {settingsPage} from "./settings-ui.js";
@@ -221,7 +222,11 @@ const monthPicker = (month) => monthControl(month, "month", true);
 const empty = (text, kind) =>
   `<div class="empty"><span class="empty-mark">${icon(kind === "installment" ? "installments" : kind === "locked" ? "locked" : "wallet")}</span><p>${t(text)}</p>${kind ? actionButton("add", addNames[kind], `data-kind="${kind}"`) : ""}</div>`;
 function pageHeading(c, title, kind = null) {
-  return `<div class="page-heading"><h1>${t(title)}</h1><div class="heading-actions">${c.page === "overview" ? `<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>` : ""}${["overview", "budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : ""}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
+  const overview = c.page === "overview", date = overview ? tehranParts(c.now).date : null;
+  const controls = overview
+    ? `<div class="dashboard-controls">${monthPicker(c.month)}<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button><time class="dashboard-date" datetime="${date}" aria-label="${t("Today")}">${icon("calendar")}<span>${solarText(date, false)}</span></time></div>`
+    : ["budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : "";
+  return `<div class="page-heading${overview ? " overview-heading" : ""}"><h1>${t(title)}</h1><div class="heading-actions">${controls}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
 }
 function panel(title, content, link = "") {
   return `<section class="panel"><div class="panel-head"><h2>${t(title)}</h2>${link}</div>${content}</section>`;

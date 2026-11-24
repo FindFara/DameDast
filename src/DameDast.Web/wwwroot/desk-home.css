@@ -51,7 +51,8 @@ body.workbench-fullscreen main { padding: 0 !important; min-height: 100dvh; }
 body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-width: none; min-height: 100dvh; margin: 0; border-radius: 0; padding: 82px clamp(12px,1.5vw,24px) 30px; }
 .desk-home #desk-board { --desk-cell-gap: 12px; display: grid; gap: var(--desk-cell-gap); grid-template-columns: repeat(var(--desk-columns,24),minmax(0,1fr)); grid-template-rows: repeat(var(--desk-rows,12),clamp(48px,calc((100dvh - 160px - 132px)/12),64px)); min-width: 0; background: transparent; }
 .desk-home .desk-scroll { overflow: visible; }
-.desk-home .desk-card { border: 1px solid color-mix(in srgb,var(--border) 65%,transparent); border-radius: 24px; box-shadow: 0 4px 18px #16355606; background: var(--desk-card-bg,var(--surface-raised)); }
+.desk-home.workbench-editing .desk-scroll { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
+.desk-home .desk-card { border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--desk-card-bg,var(--surface)); }
 .desk-home .desk-card-body { padding: 20px; height: 100%; flex: 1; min-height: 0; }
 .desk-home .desk-widget-search .desk-card-body { display: flex; align-items: center; padding: 12px 18px; }
 .desk-home .desk-widget-shortcut .desk-card-body, .desk-home .desk-widget-pet .desk-card-body { padding: 0; }

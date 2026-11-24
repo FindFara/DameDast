@@ -71,7 +71,7 @@ export function standardSize(type) {
 export const deskColors = ["#4338ca", "#ffdf00", "#d93d3d", "#f4f3ef", "#202124"];
 export const deskColorNames = ["Indigo blue", "Canary yellow", "Red", "Matte white", "Matte black"];
 export const shortcutColors = {
-  overview:"#4f46e5", notes:"#d99b00", tasks:"#219f76", calendar:"#d95769", projects:"#8b5cf6", habits:"#367c61", bookmarks:"#d99b00",
+  overview:"#4f46e5", notes:"#d99b00", tasks:"#219f76", calendar:"#d95769", projects:"#8b5cf6", habits:"#367c61", bookmarks:"#b66c3d",
   accounts:"#3575e5", transactions:"#0f9488", budgets:"#ea8b26", goals:"#cf4f83", reminders:"#9b59b6",
   assets:"#5968d5", market:"#1f9ca3", installments:"#bf9b27", monthlyPlan:"#516be5", monthlyExpenses:"#cf7244",
   receivables:"#41a37a", connected:"#7887bd", suggestions:"#d59331", locked:"#768398", reports:"#6f82c7", settings:"#697686",

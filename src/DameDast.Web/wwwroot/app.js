@@ -23,7 +23,7 @@ import {
 import { WorkbenchController } from "./workbench-controller.js";
 import { CreateMenuController, createLauncher } from "./create-menu.js";
 import { deskFloatingActions } from "./desk-home-ui.js";
-import { WORKBENCH_ID, validateWorkbench } from "./workbench.js";
+import { WORKBENCH_ID, validateWorkbench, shortcutColors } from "./workbench.js";
 import { validateDrawing } from "./drawing.js";
 import {
   assetEntries,
@@ -116,6 +116,7 @@ const $ = (selector) => document.querySelector(selector);
 const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
 let dashboardAmountsVisible = false;
+let attentionOpen = false;
 let assetKey = "",
   assetPeriod = 30,
   assetCurves = {},
@@ -199,6 +200,7 @@ const numInput = (value) =>
     .replace(/٫/g, ".");
 const context = () => ({
   projectId,
+  attentionOpen,
   amountsVisible: dashboardAmountsVisible,
   workbenchSettingsOpen,
   settingsGroupsOpen,
@@ -370,7 +372,7 @@ function renderChrome() {
   $("#navigation").setAttribute("aria-label", t("Menu"));
   const activePage = page === "organizer" ? "notes" : page;
   const navLink = (key, pinnable = false) =>
-    `<div class="nav-link-row"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
+    `<div class="nav-link-row" style="--nav-color:${shortcutColors[key] || "#687f91"}"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
   $("#navigation").innerHTML =
     (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
     navLink("overview") + navLink("workbench") +
@@ -417,7 +419,9 @@ function renderChrome() {
     "aria-busy",
     String(!!syncPromise || marketLoading),
   );
-  $("#workspace-search-button").setAttribute("aria-label", t("Search everywhere"));
+  $("#workspace-search-label").textContent = t("Search everywhere");
+  $("#workspace-search-input").placeholder = t("Search everywhere");
+  refreshWorkspaceSearch();
   updateNotificationBell();
   $("#sync-button").setAttribute(
     "aria-label",
@@ -1499,7 +1503,9 @@ async function onAction(event) {
   const { action, id, kind } = element.dataset;
   if (action === "workspace-search") { openWorkspaceSearch(); return; }
   if (action === "workspace-open") {
-    $("#workspace-search-dialog").close();
+    $("#workspace-search-input").value = "";
+    refreshWorkspaceSearch();
+    window.dispatchEvent(new Event("damedast:menu-close"));
     if (element.dataset.page) { location.hash = element.dataset.page; return; }
     const record = records().find(r => r.id === id);
     if (!record) return;
@@ -2107,6 +2113,7 @@ document.addEventListener(
   "toggle",
   (event) => {
     const group = event.target;
+    if (group.matches?.("[data-attention-card]") && group.isConnected) attentionOpen = group.open;
     if (group.matches?.("[data-nav-group]") && group.isConnected) {
       navGroupsOpen[group.dataset.navGroup] = group.open;
 
@@ -2714,20 +2721,24 @@ document.addEventListener("toggle", (event) => {
 
 function workspacePages() { return Object.entries(sections).map(([id, [label]]) => ({ id, title: t(label) })); }
 function refreshWorkspaceSearch() {
-  $("#workspace-search-results").innerHTML = searchResults(context(), $("#workspace-search-input").value, workspacePages());
+  if (!state) return;
+  const query = $("#workspace-search-input").value;
+  const searching = !!query.trim();
+  $("#workspace-search-results").hidden = !searching;
+  $("#navigation").hidden = searching;
+  $("#workspace-label").hidden = searching;
+  $("#workspace-search-results").innerHTML = searching ? searchResults(context(), query, workspacePages()) : "";
 }
 function openWorkspaceSearch() {
-  $("#workspace-search-label").textContent = t("Search everywhere");
-  $("#workspace-search-input").placeholder = t("For example: rent");
-  $("#workspace-search-input").value = "";
+  window.dispatchEvent(new Event("damedast:menu-open"));
   refreshWorkspaceSearch();
-  $("#workspace-search-dialog").showModal();
   $("#workspace-search-input").focus();
 }
 $("#workspace-search-input").addEventListener("input", refreshWorkspaceSearch);
 document.addEventListener("keydown", event => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); if (!$("#workspace-search-dialog").open) openWorkspaceSearch(); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openWorkspaceSearch(); }
   if (event.key === "ArrowDown" && event.target.id === "workspace-search-input") { event.preventDefault(); $("#workspace-search-results button")?.focus(); }
+  if (event.key === "Enter" && event.target.id === "workspace-search-input") { event.preventDefault(); $("#workspace-search-results button")?.click(); }
 });
 async function moveToProject(id, nextProject) {
   let r = records().find(r => r.id === id);

@@ -24,14 +24,14 @@ try {
   await saveSpace('guest',{snapshot:{revision:0,records:[account,note,second,loan,task,reminder,before,after]},pending:[]});
   return {account:account.id,note:note.id,second:second.id,loan:loan.id};
  });
- await p.reload();await p.locator('.attention-card').waitFor();
+ await p.reload();await p.locator('.attention-card').waitFor();await click('.attention-summary');
  assert.match(await p.locator('.attention-card').innerText(),/تسک اجاره/);
  await click('[data-action="attention-budget"]');await p.fill('#editor [name=limit]','3000');await click('#save-button');
  assert.equal((await state()).find(r=>r.kind==='budget').data.category,'Home');
  assert.equal(await p.locator('#notifications-button.has-unread').count(),1);
- await click('[data-action="workspace-search"]');await p.fill('#workspace-search-input','اجاره');
+ await click('#app-menu-button');await p.fill('#workspace-search-input','اجاره');
  await p.waitForTimeout(120);assert.ok(await p.locator('.workspace-search-result').count()>=5);
- await p.locator('#workspace-search-dialog form button').click();
+ await p.locator('#app-menu-close').click();
  await go('installments');await click(`[data-action="paid"][data-id="${ids.loan}"]`);
  await p.locator('#payment-dialog select[name=accountId]').selectOption(ids.account,{force:true});
  await p.locator('#payment-dialog [type=submit]').click();await p.waitForTimeout(250);
@@ -59,12 +59,9 @@ try {
  await click('.note-page-heading [type=submit]');await p.waitForTimeout(200);
  rows=await state();const projectNote=rows.find(r=>r.data.title==='لیست چمدون');assert.equal(projectNote.data.projectId,project.id);
  await click('[data-note-preview]');assert.equal(await p.locator('.note-rendered pre').count(),1);
- await p.locator('[data-note-side]').selectOption(ids.second,{force:true});await p.waitForTimeout(150);
- assert.equal(await p.locator('.note-panes.is-split [data-note-form]').count(),2);
- await p.fill('#note-side-form [name=body]','متن دوم ویرایش شد');
- await p.locator('[data-note-pane] .note-page-heading [form="note-side-form"]').click();await p.waitForTimeout(200);
- assert.equal((await state()).find(r=>r.id===ids.second).data.body,'متن دوم ویرایش شد');
- await click(`[data-note-tab-pin="${projectNote.id}"]`);await p.reload();await p.locator('.note-panes.is-split').waitFor();
+ assert.equal(await p.locator('[data-note-form]').count(),1);
+ assert.equal(await p.locator('[data-note-side]').count(),0);
+ await click(`[data-note-tab-pin="${projectNote.id}"]`);await p.reload();await p.locator('[data-note-form]').waitFor();
  assert.equal(await p.locator(`[data-note-tab-pin="${projectNote.id}"][aria-pressed=true]`).count(),1);
  await go('habits');await click('[data-action=add][data-kind=habit]');await p.fill('#editor [name=name]','زبان');await p.fill('#editor [name=weeklyTarget]','3');await click('#save-button');
  await click('.habit-card .card-foot [data-action=habit-toggle]');assert.match(await p.locator('.habit-card').innerText(),/۳۳/);assert.equal(await p.locator('.habit-day.logged').count(),1);
@@ -76,5 +73,5 @@ try {
  for (const route of ['overview','projects','habits','bookmarks',`note/${projectNote.id}`]) { await go(route);assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`No mobile overflow: ${route}`); }
  await go('overview');
  await p.evaluate(()=>navigator.serviceWorker.ready);await context.setOffline(true);await p.reload();await p.locator('.attention-card').waitFor();await go('habits');await p.locator('.habit-day.logged').waitFor();await context.setOffline(false);
- assert.deepEqual(errors,[]);console.log('E2E passed: search, attention, payment/reversal, project note, slash command, split editing, pinned tabs, habits, bookmarks, mobile layout.');
+ assert.deepEqual(errors,[]);console.log('E2E passed: search, attention, payment/reversal, project note, slash command, single-pane notes, pinned tabs, habits, bookmarks, mobile layout.');
 }finally{await browser.close();}
