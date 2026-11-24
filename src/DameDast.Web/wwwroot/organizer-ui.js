@@ -1,6 +1,5 @@
 import { amountText } from "./privacy.js";
 import { isDrawingNote, textNotes, taskEntries } from "./notebook.js";
-import { drawingSvg } from "./drawing.js";
 import { t, getLanguage, localizedNumber } from "./i18n.js";
 import { escapeHtml as esc, money, today } from "./finance.js";
 import { solarText, dateControl } from "./calendar.js";
@@ -39,17 +38,12 @@ function noteCard(c, r) {
   const d = r.data;
   return `<article class="note-card ${d.pinned ? "pinned" : ""}" data-note-open="${r.id}"><button type="button" class="icon-button note-pin ${d.pinned ? "is-pinned" : ""}" data-action="organizer-pin" data-id="${r.id}" aria-pressed="${!!d.pinned}" aria-label="${t(d.pinned ? "Unpin" : "Pin")}" title="${t(d.pinned ? "Unpin" : "Pin")}">${noteIcon("pin")}</button><button type="button" class="note-open" data-action="edit" data-id="${r.id}" aria-label="${esc(t("Edit") + ": " + (c.space === "demo" ? t(d.title) : d.title))}"><span class="note-title" role="heading" aria-level="3" dir="auto">${title(c, d.title)}</span>${d.body ? `<span class="note-body" dir="auto">${title(c, d.body)}</span>` : ""}</button><footer class="note-footer"><small>${solarText(d.updatedOn)}</small><div class="row-actions">${noteAction("edit", "Edit", "edit", `data-id="${r.id}"`)}${noteAction("delete", "Delete", "trash", `data-id="${r.id}"`)}</div></footer></article>`;
 }
-function drawingCard(c, record) {
-  const d = record.data;
-  return `<article class="drawing-card"><button type="button" class="note-drawing-preview" data-action="canvas-open" data-id="${record.id}" aria-label="${t("Open canvas")}">${d.whiteboardId ? d.whiteboardPreview ? `<img src="${esc(d.whiteboardPreview)}" alt="" loading="lazy">` : `<span class="whiteboard-placeholder">${t("Open canvas")} ↗</span>` : drawingSvg(d.drawing, true)}</button><h2 dir="auto">${title(c, d.title)}</h2>${d.body ? `<p dir="auto">${title(c, d.body)}</p>` : ""}<footer><small>${solarText(d.updatedOn)}</small>${noteAction("canvas-open", "Open canvas", "edit", `data-id="${record.id}"`)}${noteAction("delete", "Delete", "trash", `data-id="${record.id}"`)}</footer></article>`;
-}
 function noteCards(c) {
-  const drawings = c.page === "canvas";
-  const notes = (drawings ? c.records.filter(r => !r.deleted && isDrawingNote(r)) : textNotes(c.records))
+  const notes = textNotes(c.records)
     .filter(r => !c.filter || `${r.data.title} ${r.data.body}`.toLowerCase().includes(c.filter.toLowerCase()))
     .sort((a, b) => Number(!!b.data.pinned) - Number(!!a.data.pinned) || b.data.updatedOn.localeCompare(a.data.updatedOn));
-  if (!notes.length) return `<section class="panel empty">${t(c.filter ? "No matching notes." : drawings ? "No handwritten notes yet." : "No notes yet.")}</section>`;
-  if (drawings) return `<div class="drawing-grid">${notes.map(record => drawingCard(c, record)).join("")}</div>`;
+  if (!notes.length) return `<section class="panel empty">${t(c.filter ? "No matching notes." : "No notes yet.")}</section>`;
+
   const pinned = notes.filter(r => r.data.pinned), others = notes.filter(r => !r.data.pinned);
   const group = (label, items) => items.length ? `<section class="notes-section" aria-label="${t(label)}">${pinned.length ? `<h2 class="notes-section-title">${t(label)}</h2>` : ""}<div class="notes-grid ${c.notesView === "list" ? "notes-list" : ""}">${items.map(r => noteCard(c, r)).join("")}</div></section>` : "";
   return group("Pinned", pinned) + group("Other notes", others);
@@ -78,9 +72,7 @@ function reminderCards(c) {
   }</div><p class="small-note">${t("Reminder times use Tehran time. Push reminders need your .NET server and notification permission.")}</p>`;
 }
 export function organizerTab(page) {
-  return page === "canvas"
-    ? "canvas"
-    : page === "goals"
+  return page === "goals"
       ? "goals"
       : page === "reminders"
         ? "reminders"
@@ -89,15 +81,14 @@ export function organizerTab(page) {
           : "notes";
 }
 export function organizerPage(c, renderGoals) {
-  const tab = organizerTab(c.page), headings = {notes:"Notes", canvas:"Drawings", tasks:"Tasks", reminders:"Reminders", goals:"Savings goals"};
+  const tab = organizerTab(c.page), headings = {notes:"Notes", tasks:"Tasks", reminders:"Reminders", goals:"Savings goals"};
   let content;
-  if (tab === "notes" || tab === "canvas") {
-    const drawings = tab === "canvas";
-    content = `<div class="notes-toolbar"><input id="search" type="search" value="${esc(c.filter)}" placeholder="${t(drawings ? "Search drawings" : "Search notes")}" aria-label="${t(drawings ? "Search drawings" : "Search notes")}">${drawings ? "" : noteAction("notes-view", c.notesView === "list" ? "Grid view" : "List view", c.notesView === "list" ? "grid" : "list", `aria-pressed="${c.notesView === "list"}"`)}</div>${drawings ? "" : `<div class="note-composer"><button type="button" class="note-compose-start" data-action="add" data-kind="note">${t("Take a note…")}</button><span class="note-composer-glyph" aria-hidden="true">${noteIcon("edit")}</span></div>`}` + noteCards(c);
+  if (tab === "notes") {
+    content = `<div class="notes-toolbar"><input id="search" type="search" value="${esc(c.filter)}" placeholder="${t("Search notes")}" aria-label="${t("Search notes")}">${noteAction("notes-view", c.notesView === "list" ? "Grid view" : "List view", c.notesView === "list" ? "grid" : "list", `aria-pressed="${c.notesView === "list"}"`)}</div><div class="note-composer"><button type="button" class="note-compose-start" data-action="add" data-kind="note">${t("Take a note…")}</button><span class="note-composer-glyph" aria-hidden="true">${noteIcon("edit")}</span></div>` + noteCards(c);
   } else if (tab === "tasks") content = tasksPage(c);
   else if (tab === "reminders") content = reminderCards(c);
   else content = renderGoals();
-  const add = tab === "notes" ? "" : tab === "canvas" ? button("canvas-add", "New canvas", "", "primary") : tab === "tasks" ? button("task-add", "New task", "", "primary") : button("add", tab === "goals" ? "New goal" : "New reminder", `data-kind="${tab === "goals" ? "goal" : "reminder"}"`, "primary");
+  const add = tab === "notes" ? "" : tab === "tasks" ? button("task-add", "New task", "", "primary") : button("add", tab === "goals" ? "New goal" : "New reminder", `data-kind="${tab === "goals" ? "goal" : "reminder"}"`, "primary");
   return `<section class="independent-section section-${tab}"><div class="page-heading"><h1>${t(headings[tab])}</h1>${add}</div>${content}</section>`;
 }
 export function pinnedPanel(c) {

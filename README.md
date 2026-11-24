@@ -1,32 +1,18 @@
 # DameDast · دمِ دست
 
-The workbench uses wider card gutters, rounded surfaces, a monthly calendar with today/holiday states, and a Google services launcher with bundled color icons. Existing saved desks can add the launcher through **+ → Everyday tools → Google services**. See [PostgreSQL schema and setup](docs/POSTGRESQL-fa.md) for the new database configuration.
+New: an actionable attention card, global search, account-linked installment payments, project workspaces, weekly habits, slash commands, split notes with pinnable tabs, and article clipping in the existing extension. Canvas has been retired, removing its 22 MB bundle and collaboration runtime. Historical canvas records remain exportable for backup compatibility. [Feature guide (Persian)](docs/PRODUCTIVITY-fa.md).
 
-Notes, Drawings and Tasks have independent pages. A note contains only a title and text; its pin icon lives on the list card. PDF upload and viewing have been removed. The fullscreen workbench contains only titleless components: movable Google search, separate icon shortcuts, tools resized only while editing and a black-and-tan pixel dog with happy/sad/angry expressions and its kennel inside one component. The Edit button sits beside the floating +. See [Workbench guide](docs/WORKBENCH-fa.md).
-
-Current source uses DameDast project and namespace names. Navigation shortcuts inside categories can be pinned without a count limit. Transactions use one compact list across every month and category, with group, type, amount and date filters; desktop shows three columns, tablet two and mobile one. Settings groups start collapsed; mobile financial cards are compact and the workbench uses a compact grid with comfortable cell spacing. Components start at default sizes and can be resized in their edit dialog. Each section has its own unframed colored shortcut icon, components offer five named colors, and every page shares the app background chosen in Appearance. Notes use a Keep-style masonry grid or saved list view, separate pinned notes and quick creation. Tasks are created independently; old checklist items remain available in Tasks. Dashboard privacy uses asterisks. Local holiday data is available through 1410.
-
-Upgrade: legacy browser ledgers are copied without replacing newer data. Import legacy SQLite server databases into PostgreSQL using the separate migration tool; the original stays available. See [PostgreSQL setup and migration](docs/POSTGRESQL-fa.md). Authentication uses the new app identity, so sign in again if needed. Docker keeps the existing keys/data volume name via the `DAMEDAST_DATA_VOLUME` override; set this to your current volume when your Compose project name differs.
-
-Future lunar holiday dates are estimates. Calendar datasets are bundled locally; there is no calendar-source link in the interface. Internal data provenance: https://github.com/alirezadesh/jalali_calendar
-
-> UI update: dashboard amounts start hidden with an eye toggle, simpler task forms, aligned date controls, matte themes, and no canvas Libraries entry.
-
-# DameDast · دمِ دست
-
-Complete source: ASP.NET Core 10 backend, current web/PWA frontend, React/TypeScript whiteboard, browser extension, tests and Docker deployment.
+Complete source: ASP.NET Core 10 backend, current web/PWA frontend, browser extension, tests and Docker deployment.
 
 [راهنمای فارسی](README-fa.md)
 
-Latest frontend: independent writing and planning sections, a redesigned workbench with explicit device visibility settings, compact radial + menu and separate notes/finance/full backups. Historical attachment bytes remain preserved in backup compatibility; there is no attachment interface.
-
-> **Fullscreen canvas / بوم تمام‌صفحه:** [Setup, storage, features and collaboration](docs/WHITEBOARD-fa.md) · [Verification](docs/WHITEBOARD-VERIFICATION.md)
+Latest frontend: project workspaces and independent writing and planning sections, a redesigned workbench with explicit device visibility settings, compact radial + menu and separate notes/finance/full backups. Historical attachment bytes remain preserved in backup compatibility; there is no attachment interface.
 
 > **تقویم، تنظیمات و بکاپ کامل:** [راهنمای نسخه جدید](docs/CALENDAR-SETTINGS-BACKUP-fa.md)
 
 > **Workbench / میز کار:** [راهنمای شبکهٔ ۱۲×۶، کارت‌ها، رنگ و ذخیره‌سازی](docs/WORKBENCH-fa.md)
 
-New: [Google sign-in, handwriting canvas, asset P/L and grouped numbers](docs/GOOGLE-CANVAS-ASSETS-fa.md). Real Google OAuth client keys still need to be configured.
+[Google sign-in, asset P/L and grouped numbers](docs/GOOGLE-CANVAS-ASSETS-fa.md). Real Google OAuth client keys still need to be configured.
 
 Architecture update: ASP.NET Core controllers dispatch through MediatR handlers, entity-organized interfaces, application services and repository contracts. See [Architecture guide](docs/ARCHITECTURE-fa.md). The self-hosted .NET backend and the separately hosted Worker remain distinct deployments.
 
@@ -61,7 +47,7 @@ Sample data is disabled by default. Set `Features:DemoData` to `true` in `src/Da
 - 39 categorized instruments: 12 cryptocurrencies, 5 metals, 7 currencies, 5 funds and 10 stocks, with search, dated quotes and daily/weekly/monthly charts. Official unavailable NAV remains unavailable.
 - Daily, weekly and monthly cash-flow grouping.
 - Opt-in Web Push installment and personal recurring reminders while the app is closed (self-hosted .NET, supported browsers).
-- Independent Notes, Drawings and Tasks, plus repeating reminders and savings goals; pinned dashboard cards and an unread notification bell.
+- Independent Notes and Tasks, projects, habit tracking and saved links, plus repeating reminders and savings goals; pinned dashboard cards and an unread notification bell.
 - Google sign-in, user-isolated server persistence, offline IndexedDB queue and automatic sync while open.
 - Explicit conflict resolution when two devices edit the same record.
 - JSON data export, guest-to-Google data transfer, mobile navigation and PWA installation.
@@ -71,7 +57,7 @@ Sample data is disabled by default. Set `Features:DemoData` to `true` in `src/Da
 - Per-contribution historical investment comparisons against gold, Yaghoot Agah, Bitcoin and USD; a constrained hindsight allocation. See [Planning and insights](docs/PLANNING.md).
 - Live gold, USD, silver and Bitcoin quotes directly on the overview dashboard.
 
-**Important distinctions:** account balances include all recorded transactions, including future-dated ones. Transfers do not count as income/expense. Explicitly categorized transfers count once in the monthly allocation view; ordinary Other transfers are excluded. Goal savings, installment paid flags, money-lent repayments and locked-asset releases are tracking records; they do not create account transactions. Record the relevant account movements separately. CSV exports cover the selected month. JSON backups can be exported and restored from Settings.
+**Important distinctions:** account balances include all recorded transactions, including future-dated ones. Transfers do not count as income/expense. Explicitly categorized transfers count once in the monthly allocation view; ordinary Other transfers are excluded. Installment payments create a linked expense in the selected account; editing or reversing the payment updates or removes that expense atomically. Historical paid flags without account metadata stay unchanged. Goal savings, money-lent repayments and locked-asset releases remain tracking records; they do not create account transactions. Record the relevant account movements separately. CSV exports cover the selected month. JSON backups can be exported and restored from Settings.
 
 ## Architecture
 
@@ -138,7 +124,7 @@ On Android Chrome, choose **Install app** or **Add to Home screen**. On iPhone S
 
 ## Data and backups
 
-Settings exports `damdast-v3` JSON backups for notes, finances, or the whole workspace. Notes backups include drawings and preserve historical checklists and local attachment bytes; full backups also include preferences. Import validates the file and creates an isolated local workspace. Use the workspace selector to return to the original ledger. Personal component libraries, server secrets and unrelated/unlinked canvases are excluded. Legacy v1/v2 backups remain readable; financial-only legacy exports cannot recreate missing image bytes. See [calendar and backup details](docs/CALENDAR-SETTINGS-BACKUP-fa.md).
+Settings exports `damdast-v3` JSON backups for notes, finances, or the whole workspace. Notes backups include projects, habits, saved links, and preserved historical drawings, checklists and local attachment bytes; full backups also include preferences. Import validates the file and creates an isolated local workspace. Use the workspace selector to return to the original ledger. Personal component libraries, server secrets and unrelated/unlinked canvases are excluded. Legacy v1/v2 backups remain readable; financial-only legacy exports cannot recreate missing image bytes. See [calendar and backup details](docs/CALENDAR-SETTINGS-BACKUP-fa.md).
 
 The server stores all application data in PostgreSQL through Npgsql/EF Core 10. `Ledgers` holds per-user revision metadata; `FinanceRecords` holds individual records with tenant-scoped keys, kind, version, tombstone, order and JSONB payload. Foreign keys, check constraints and indexes protect records, receipts and whiteboard relationships. Whiteboards/libraries also use JSONB; exact operation receipts remain text. Each API ledger read still returns a full snapshot; larger deployments may need delta sync. Browser IndexedDB remains the offline cache and operation queue. See [schema, setup, migration from SQLite and backups](docs/POSTGRESQL-fa.md).
 

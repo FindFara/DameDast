@@ -53,7 +53,7 @@ test("browser catalog matches the embedded .NET catalog; market search and categ
   assert.equal((html.match(/data-action="market-symbol"/g) || []).length, 1);
   assert.ok(html.includes('data-symbol="FOOLAD"'));
 });
-test("notes, drawings, tasks and reminders are independent pages and keep user text escaped", () => {
+test("notes, projects, habits, tasks and reminders are independent pages and keep user text escaped", () => {
   setLanguage("fa");
   const note = {
     id: "note",
@@ -66,7 +66,7 @@ test("notes, drawings, tasks and reminders are independent pages and keep user t
       checklist: [{ id: "task", text: "<b>Task</b>", done: false }],
     },
   };
-  for (const page of ["notes", "canvas", "calendar", "tasks", "reminders", "goals"]) {
+  for (const page of ["notes", "projects", "habits", "bookmarks", "calendar", "tasks", "reminders", "goals"]) {
     const html = renderPage({ ...base, page, records: [note], planner:{date:"2026-11-16",view:"month",filters:["event","task","reminder","installment","goal"]} });
     assert.ok(!html.includes("organizer-tabs"));
     assert.ok(!html.includes("<script>"));
@@ -111,7 +111,7 @@ test("every pinned item appears on the dashboard, and notification times are Per
   );
   setLanguage("en");
   const planner = navigationGroups.find((g) => g.items.includes("notes"));
-  assert.deepEqual(planner.items, ["notes", "canvas", "calendar", "tasks", "reminders", "goals"]);
+  assert.deepEqual(planner.items, ["notes", "projects", "habits", "bookmarks", "calendar", "tasks", "reminders", "goals"]);
 });
 
 test("notes show only text and card pins, and keep grid/list views independent of tasks and files", () => {

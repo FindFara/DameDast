@@ -127,61 +127,6 @@ dialog::backdrop {
   background: #15212b38 !important;
   backdrop-filter: blur(6px);
 }
-#drawing-studio[hidden] {
-  display: none !important;
-}
-#drawing-studio {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  max-width: none;
-  max-height: none;
-  overflow: hidden;
-  z-index: 50;
-  background: var(--bg);
-}
-#drawing-studio iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: var(--bg);
-}
-.whiteboard-open {
-  overflow: hidden;
-}
-.whiteboard-open .topbar {
-  display: none;
-}
-.whiteboard-open #app-menu-button {
-  inset-inline-start: 68px;
-  inset-block-start: 17px;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-}
-.whiteboard-open.nav-open #app-menu-button {
-  inset-inline-start: 22px;
-  inset-block-start: 22px;
-}
-.note-drawing-preview img,
-.desk-canvas-preview img {
-  display: block;
-  width: 100%;
-  height: 180px;
-  object-fit: contain;
-  background: #faf9f4;
-}
-.whiteboard-placeholder {
-  display: grid;
-  place-items: center;
-  min-height: 150px;
-  color: #8a75ac;
-}
 .page-heading {
   margin-block-start: 10px;
 }
@@ -225,14 +170,6 @@ dialog::backdrop {
     width: 38px;
     height: 38px;
   }
-  .whiteboard-open #app-menu-button {
-    inset-inline-start: 66px;
-    inset-block-start: 16px;
-  }
-  .whiteboard-open.nav-open #app-menu-button {
-    inset-inline-start: 22px;
-    inset-block-start: 22px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .sidebar {
@@ -240,33 +177,11 @@ dialog::backdrop {
   }
 }
 
-.whiteboard-open #app-menu-button {
-  inset-inline-start: auto;
-  inset-inline-end: auto;
-  left: 68px;
-  right: auto;
-}
-.whiteboard-open.nav-open #app-menu-button {
-  left: auto;
-  right: 22px;
-}
-html[dir="ltr"] .whiteboard-open.nav-open #app-menu-button {
-  left: 22px;
-  right: auto;
-}
-
 .organizer-tabs {
   scrollbar-width: none;
 }
 .organizer-tabs::-webkit-scrollbar {
   display: none;
-}
-
-.whiteboard-open:not(.nav-open) #app-menu-button {
-  inset-inline-start: auto;
-  inset-inline-end: auto;
-  left: 80px;
-  right: auto;
 }
 
 #app-menu-button[hidden] {
@@ -331,9 +246,6 @@ html[dir="rtl"] select {
   flex-shrink: 0;
 }
 .shell-tools > .icon-button { width: 40px; height: 40px; }
-.whiteboard-open .shell-tools { inset-inline-start: 70px; padding: 0; background: none; border: 0; box-shadow: none; }
-.whiteboard-open .shell-tools > .icon-button { display: none; }
-.whiteboard-open.nav-open .shell-tools { inset-inline-start: 22px; }
 @media (max-width: 599px) {
   .shell-tools { inset-inline-start: 14px; inset-block-start: 14px; }
 }

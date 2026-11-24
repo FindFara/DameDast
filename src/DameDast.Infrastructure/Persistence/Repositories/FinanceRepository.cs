@@ -52,16 +52,18 @@ public sealed class FinanceRepository(IDbContextFactory<FinanceDb> factory, Time
                 continue;
             }
 
-            var updated = FinanceRules.Apply(records, change);
-            records.RemoveAll(x => x.Id == change.Id);
-            records.Add(updated);
-            if (!storedRecords.TryGetValue(updated.Id, out var stored))
+            foreach (var updated in FinanceRules.ApplyWithEffects(records, change))
             {
-                stored = new FinanceRecordRow { UserId = userId, Id = updated.Id };
-                row.Records.Add(stored);
-                storedRecords.Add(updated.Id, stored);
+                records.RemoveAll(x => x.Id == updated.Id);
+                records.Add(updated);
+                if (!storedRecords.TryGetValue(updated.Id, out var stored))
+                {
+                    stored = new FinanceRecordRow { UserId = userId, Id = updated.Id };
+                    row.Records.Add(stored);
+                    storedRecords.Add(updated.Id, stored);
+                }
+                stored.UpdateFrom(updated, nextOrder++);
             }
-            stored.UpdateFrom(updated, nextOrder++);
             receipt = new Receipt { UserId = userId, OperationId = change.OperationId, Payload = payload };
             db.Receipts.Add(receipt);
             receipts.Add(receipt.OperationId, receipt);

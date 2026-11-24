@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using DameDast.Application.Interfaces.Whiteboards;
 using DameDast.Application.Interfaces.Assets;
 using DameDast.Application.Interfaces.Workbench;
@@ -20,6 +21,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.TryAddSingleton(TimeProvider.System);
         services.AddMediatR(configuration =>
         {
             configuration.RegisterServicesFromAssemblyContaining<SyncFinanceCommand>();

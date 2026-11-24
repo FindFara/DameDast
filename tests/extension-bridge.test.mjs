@@ -18,3 +18,15 @@ test('portfolio data is delivered only to the exact configured PWA origin',async
  assert.equal((await send({type:'portfolio-bundle'},{tab:{id:1},url:'https://app.example/#connected'})).ok,true);
  assert.equal((await send({type:'portfolio-bundle'},{url:'https://app.example/'})).ok,false);
 });
+
+test('article clips can only be read or acknowledged by the configured app, without losing other clips',async()=>{
+ const clip={id:crypto.randomUUID(),title:'.NET',url:'https://dot.net/',excerpt:'Selected text'};
+ stored.clips=[clip,{...clip,id:crypto.randomUUID(),title:'Another'}];
+ assert.equal((await send({type:'clip-inbox'},{tab:{id:1},url:'https://app.example.evil/'})).ok,false);
+ const received=await send({type:'clip-inbox'},{tab:{id:1},url:'https://app.example/#bookmarks'});
+ assert.equal(received.ok,true);assert.equal(received.clips.length,2);assert.deepEqual(received.clips[0].tags,['Read later']);
+ assert.equal((await send({type:'clip-ack',id:clip.id},{tab:{id:1},url:'https://else.example/'})).ok,false);
+ assert.equal(stored.clips.length,2);
+ assert.equal((await send({type:'clip-ack',id:clip.id},{tab:{id:1},url:'https://app.example/#bookmarks'})).ok,true);
+ assert.equal(stored.clips.length,1);assert.equal(stored.clips[0].title,'Another');
+});

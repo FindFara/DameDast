@@ -21,7 +21,6 @@ import {
 } from "./finance.js";
 import { inMonth, solarText } from "./calendar.js";
 import { organizerReport, nextReminder, tehranParts } from "./organizer.js";
-import { drawingSvg } from "./drawing.js";
 import { assetEntries, decimalText } from "./assets.js";
 import { groupedNumeric } from "./number-inputs.js";
 import { categoryInfo } from "./planning.js";
@@ -70,22 +69,6 @@ function notesWidget(c, w) {
         `<article class="desk-note"><button class="desk-note-title" data-action="edit" data-id="${r.id}" dir="auto">${label(c, r.data.title)}</button>${r.data.body ? `<p dir="auto">${label(c, r.data.body.slice(0, 120))}</p>` : ""}<small>${solarText(r.data.updatedOn)}</small></article>`,
     )
     .join("");
-}
-function canvasWidget(c, w) {
-  const note = rowsOf(c, "note")
-    .filter((r) =>
-      w.referenceId
-        ? r.id === w.referenceId
-        : !!(r.data.drawing || r.data.whiteboardId),
-    )
-    .sort((a, b) => b.data.updatedOn.localeCompare(a.data.updatedOn))[0];
-  if (!note?.data.drawing && !note?.data.whiteboardId)
-    return empty(
-      w.referenceId
-        ? "This note is no longer available."
-        : "No handwritten notes yet.",
-    );
-  return `<button class="desk-canvas-preview" data-action="canvas-open" data-id="${note.id}" aria-label="${t("Open canvas")}">${note.data.whiteboardId ? (note.data.whiteboardPreview ? `<img src="${esc(note.data.whiteboardPreview)}" alt=""/>` : t("Open canvas")) : drawingSvg(note.data.drawing, true)}</button><strong class="desk-caption" dir="auto">${label(c, note.data.title)}</strong>`;
 }
 function accountsWidget(c) {
   const tx = rowsOf(c, "transaction"),
@@ -235,7 +218,6 @@ const components = {
   ...Object.fromEntries(toolTypes.map(type => [type, toolMarkup])),
   summary: summaryWidget,
   notes: notesWidget,
-  canvas: canvasWidget,
   accounts: accountsWidget,
   installments: installmentsWidget,
   tasks: tasksWidget,
@@ -272,10 +254,10 @@ export function widgetSizeFields(widget) {
   return `<div class="desk-size-fields">${dimension("width","Width",24,widget.width)}${dimension("height","Height",12,widget.height)}</div>`;
 }
 export function widgetSettings(w, c) {
-  const referenceNotes = w.type === "canvas" ? rowsOf(c, "note").filter(isDrawingNote) : textNotes(c.records);
+  const referenceNotes = textNotes(c.records);
   return `${
-    ["notes", "canvas"].includes(w.type)
-      ? `<label class="field">${t("Note to display")}<select name="referenceId"><option value="">${t(w.type === "canvas" ? "Latest handwritten note" : "Latest notes")}</option>${referenceNotes
+    w.type === "notes"
+      ? `<label class="field">${t("Note to display")}<select name="referenceId"><option value="">${t("Latest notes")}</option>${referenceNotes
           .map(
             (r) =>
               `<option value="${r.id}" ${r.id === w.referenceId ? "selected" : ""}>${label(c, r.data.title)}</option>`,

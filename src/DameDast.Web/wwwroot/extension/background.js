@@ -1,3 +1,4 @@
+import {normalizeClip} from './shared/clips.js';
 import {BUNDLE,normalizeSnapshot} from './shared/portfolio.js';
 export function validTarget(raw) {
   const url=new URL(raw);if(url.username||url.password||url.search||url.hash||url.pathname!=='/')throw Error('فقط نشانی اصلی برنامه را وارد کن؛ بدون مسیر، توکن یا پارامتر.');
@@ -16,6 +17,15 @@ chrome.runtime.onMessage.addListener((message,sender,respond)=>{
       await registerBridge(origin);await chrome.storage.local.set({target:origin});
       if(old&&old!==origin)await chrome.permissions.remove({origins:[old+'/*']});
       respond({ok:true,origin});return;
+    }
+    if(message?.type==='clip-inbox'||message?.type==='clip-ack'){
+      const {target,clips=[]}=await chrome.storage.local.get(['target','clips']);
+      if(!target||!sender.tab||new URL(sender.url).origin!==target)throw Error('Untrusted destination.');
+      if(message.type==='clip-ack'){
+        if(typeof message.id!=='string'||!clips.some(clip=>clip.id===message.id)) {respond({ok:true});return;}
+        await chrome.storage.local.set({clips:clips.filter(clip=>clip.id!==message.id)});respond({ok:true});return;
+      }
+      respond({ok:true,clips:clips.map(normalizeClip)});return;
     }
     if(message?.type==='portfolio-bundle'){
       const {target,snapshots=[]}=await chrome.storage.local.get(['target','snapshots']);

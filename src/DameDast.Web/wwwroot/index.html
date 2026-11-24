@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <meta name="damdast-version" content="damedast-fara-accounts-30" />
+    <meta name="damdast-version" content="damedast-fara-productivity-31" />
     <script src="/update.js?v=30" defer></script>
     <meta name="damdast-app" content="portfolio-v1" />
     <meta name="google" content="notranslate" />
@@ -35,12 +35,14 @@
     <link rel="stylesheet" href="/ui-polish.css" />
     <link rel="stylesheet" href="/interaction.css" />
     <link rel="stylesheet" href="/note-page.css" />
+    <link rel="stylesheet" href="/productivity.css" />
     <link rel="stylesheet" href="/desk-tools.css" />
     <link rel="stylesheet" href="/desk-home.css" />
     <link rel="stylesheet" href="/desk-pet.css" />
   </head>
   <body>
     <div class="shell-tools" role="toolbar" aria-label="Quick actions">
+      <button type="button" class="icon-button" id="workspace-search-button" data-action="workspace-search" aria-label="Search everywhere" title="Ctrl+K"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></button>
     <button id="app-menu-button" aria-label="Menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
           <button
             id="sync-button"
@@ -108,7 +110,6 @@
     <div id="global-create"><button id="mobile-add" class="mobile-add" aria-label="Add"></button></div>
     <dialog id="workbench-dialog"></dialog>
     <dialog id="notification-center" class="notification-center"></dialog>
-    <section id="drawing-studio" class="drawing-studio" hidden></section>
     <dialog id="editor">
       <form id="editor-form">
         <div class="dialog-heading">
@@ -133,6 +134,8 @@
         </div>
       </form>
     </dialog>
+    <dialog id="workspace-search-dialog" class="workspace-search-dialog"><form method="dialog"><button class="icon-button" aria-label="Close">×</button></form><label for="workspace-search-input" id="workspace-search-label"></label><input id="workspace-search-input" type="search" autocomplete="off"><div id="workspace-search-results" aria-live="polite"></div></dialog>
+    <dialog id="payment-dialog"></dialog>
     <dialog id="notice"><div id="notice-content"></div></dialog>
     <div id="toast" role="status"></div>
   </body>

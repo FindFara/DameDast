@@ -23,7 +23,7 @@ test('drawing records and text notes stay in distinct collections',()=>{
   const notesPicker=widgetSettings({type:'notes',x:0,y:0,width:4,height:2},{records});
   const drawingPicker=widgetSettings({type:'canvas',x:0,y:0,width:4,height:2},{records});
   assert.match(notesPicker,/<option value="text"/);assert.doesNotMatch(notesPicker,/<option value="drawing"/);
-  assert.match(drawingPicker,/<option value="drawing"/);assert.doesNotMatch(drawingPicker,/<option value="text"/);
+  assert.doesNotMatch(drawingPicker,/<option value="drawing"/);assert.doesNotMatch(drawingPicker,/<option value="text"/);
 });
 test('repeating tasks use an actual upcoming occurrence and respect the end of the series',()=>{
   const record={id:'weekly',kind:'calendarEvent',data:{title:'Weekly',kind:'task',startDate:'2026-11-20',repeat:'weekly',completedDates:[]}};

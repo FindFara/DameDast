@@ -10,7 +10,7 @@ export function deskFloatingActions(editing, icon) {
 
 export const componentGroups = [
   { id: "daily", title: "Everyday tools", types: ["search", "googleServices", "shortcut", "clock", "plainCalendar", "link", "calculator", "keyGenerator", "image", "pet"] },
-  { id: "writing", title: "Writing and planning", types: ["notes", "canvas", "tasks", "reminders"] },
+  { id: "writing", title: "Writing and planning", types: ["notes", "tasks", "reminders"] },
   { id: "money", title: "Finances", types: ["summary", "accounts", "installments", "goals", "markets", "allocation", "assets", "receivables"] },
 ];
 export function componentPicker(catalog, icon) {

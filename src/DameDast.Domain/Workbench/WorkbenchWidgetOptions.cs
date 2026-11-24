@@ -12,7 +12,7 @@ public sealed record WorkbenchWidgetOptions(string? ImageData = null, string? Ur
 public static class WorkbenchOptionRules
 {
     public const int MaximumImageDataLength = 120000;
-    private static readonly string[] ShortcutPages = ["overview","notes","tasks","calendar","canvas","accounts","transactions","budgets","goals","reminders","assets","market","installments","monthlyPlan","monthlyExpenses","receivables","connected","suggestions","locked","reports","settings"];
+    private static readonly string[] ShortcutPages = ["overview","notes","tasks","calendar","canvas","projects","habits","bookmarks","accounts","transactions","budgets","goals","reminders","assets","market","installments","monthlyPlan","monthlyExpenses","receivables","connected","suggestions","locked","reports","settings"];
 
     public static void Validate(string type, WorkbenchWidgetOptions? options)
     {
