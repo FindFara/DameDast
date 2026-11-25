@@ -145,7 +145,8 @@ export class PageToolbarController {
     const contents = document.createElement("div");
     contents.className = "page-toolbar-contents";
     this.panel.append(contents);
-    holder.append(this.trigger, this.panel);
+    // RTL rail order keeps the trigger at the moving, physical left edge.
+    holder.append(this.panel, this.trigger);
     if (inline) this.move(inline, contents);
     if (source) contents.append(this.command(source, config.icon));
     for (const heading of view.querySelectorAll(".page-heading")) {
