@@ -129,6 +129,7 @@ export function makeDemo() {
       deleted: false,
       data: {
         name: "Everyday account",
+        cardNumber: "0000000000000001",
         openingBalance: 18500000,
         color: "teal",
       },
@@ -140,6 +141,7 @@ export function makeDemo() {
       deleted: false,
       data: {
         name: "Savings account",
+        cardNumber: "0000000000000002",
         openingBalance: 32000000,
         color: "blue",
       },

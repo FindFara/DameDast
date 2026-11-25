@@ -59,6 +59,7 @@ import {
   escapeHtml as esc,
 } from "./finance.js";
 import { connectedPage } from "./connected-ui.js";
+import { formatCardNumber } from "./account-card-number.js";
 
 export const sections = {
   calendar:["Calendar",'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 5h3m4 0h1"/>'],
@@ -413,6 +414,7 @@ function accounts(c) {
         `<article class="account-bank-card ${["teal", "blue", "purple", "orange"].includes(a.data.color) ? a.data.color : "teal"}">
           <header class="account-card-heading"><h2 dir="auto">${dataText(c, a.data.name)}</h2><div class="row-actions"><button type="button" class="icon-button" data-action="edit" data-id="${esc(a.id)}" aria-label="${t("Edit")}" title="${t("Edit")}">${icon("edit")}</button><button type="button" class="icon-button" data-action="delete" data-id="${esc(a.id)}" aria-label="${t("Delete")}" title="${t("Delete")}">${icon("trash")}</button></div></header>
           <div class="account-card-markings" aria-hidden="true"><svg class="account-card-chip" viewBox="0 0 48 36"><rect x="1" y="1" width="46" height="34" rx="7"/><path d="M17 1v10L10 18l7 7v10M31 1v10l7 7-7 7v10M1 12h13m-13 12h13m20-12h13M34 24h13M17 11h14v14H17z"/></svg><svg class="account-card-contactless" viewBox="0 0 24 24"><path d="M8 9a5 5 0 0 1 0 6m4-9a10 10 0 0 1 0 12m4-15a15 15 0 0 1 0 18"/></svg><span class="account-card-brand" dir="ltr">DameDast</span></div>
+          <bdi class="account-card-number" dir="ltr" aria-label="${t(formatCardNumber(a.data.cardNumber) ? "Card number" : "No card number")}">${formatCardNumber(a.data.cardNumber) || "•••• •••• •••• ••••"}</bdi>
           <div class="account-card-balance"><span>${t("Balance")}</span><div class="amount">${number(balance(a, txs(c)), 0, c)}${unit()}</div></div>
           <footer class="account-card-footer"><div class="account-card-opening"><span>${t("Opening balance")}</span>${number(a.data.openingBalance, 0, c)}</div>${actionButton("transfer", "Transfer", "", "text-button")}</footer>
         </article>`,
@@ -668,6 +670,13 @@ export function editorFields(
         d.name || "",
         "text",
         'required maxlength="50"',
+      ) +
+      field(
+        "Card number (optional)",
+        "cardNumber",
+        formatCardNumber(d.cardNumber),
+        "tel",
+        'inputmode="numeric" dir="ltr" maxlength="23" autocomplete="off" placeholder="0000 0000 0000 0000"',
       ) +
       moneyField(
         "Opening balance (toman)",

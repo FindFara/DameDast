@@ -5,6 +5,7 @@ import { validateProductivity, projectKinds, habitLogId } from "./productivity.j
 import { projectField, searchResults, recordLabel } from "./productivity-ui.js";
 import { extensionClips, acknowledgeClip } from "./clip-inbox.js";
 import { accountSpace, setAccountScope, scopedStorageKey, accountHeaders, initialSpace, canOpenSpace } from "./account-scope.js";
+import { parseCardNumber } from "./account-card-number.js";
 import { ProfileMenu } from "./profile-menu.js";
 import { filterTransactions, normalizeTransactionFilters } from "./transaction-board.js";
 import { migrateLegacyPreferences } from "./legacy-storage.js";
@@ -647,6 +648,7 @@ function validateData(kind, data, id) {
 
   const positive = (value) =>
     Number.isSafeInteger(value) && value > 0 && value <= 1e12;
+  if (kind === "account") data.cardNumber = parseCardNumber(data.cardNumber);
   if (
     kind === "account" &&
     (!data.name.trim() ||

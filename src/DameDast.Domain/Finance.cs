@@ -123,6 +123,7 @@ public static class FinanceRules
                     throw new FinanceException("Opening balance must be a whole-toman amount within the allowed range.");
                 if (wallet.Color is not ("teal" or "blue" or "purple" or "orange"))
                     throw new FinanceException("Invalid account color.");
+                ValidateCardNumber(wallet.CardNumber);
                 break;
             case "transaction":
                 var movement = Read<Movement>(change.Data);
@@ -196,6 +197,12 @@ public static class FinanceRules
             default:
                 throw new FinanceException("Invalid record type.");
         }
+    }
+
+    private static void ValidateCardNumber(string? number)
+    {
+        if (!string.IsNullOrEmpty(number) && (number.Length != 16 || number.Any(c => c is < '0' or > '9')))
+            throw new FinanceException("Enter a 16-digit card number.");
     }
 
     public static T Read<T>(JsonElement data)
