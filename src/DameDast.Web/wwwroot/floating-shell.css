@@ -287,19 +287,33 @@ html[dir="rtl"] select {
  html[dir=rtl] #page-toolbar-actions{direction:rtl}
 }
 
-@media(max-width:680px){
- #page-toolbar-actions{display:flex;align-items:center;gap:3px}
- #page-toolbar-actions[hidden]{display:none}
- #page-toolbar-actions>.heading-actions{display:flex;gap:0;flex-wrap:nowrap;width:auto}
- .mobile-page-header #page-toolbar-actions>.icon-button,.mobile-page-header #page-toolbar-actions .keep-icon{width:36px;min-width:36px;height:40px;min-height:40px;padding:8px!important}
- #view .page-toolbar-source,#view .page-toolbar-heading-empty{display:none!important}
- #view .toolbar:has(>.page-toolbar-source):not(:has(>:not(.page-toolbar-source))){display:none}
+/* One expandable rail, always opening physically to the left. */
+.shell-tools { direction: rtl; left: auto; right: 22px; }
+#page-toolbar-actions { display: flex; align-items: center; gap: 0; flex: 0 0 auto; direction: rtl; min-width: 0; }
+#page-toolbar-actions[hidden] { display: none; }
+.page-toolbar-toggle { width: 32px; min-width: 32px; height: 40px; flex-shrink: 0; }
+.page-toolbar-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform 180ms ease; }
+#page-toolbar-actions.is-expanded .page-toolbar-toggle svg { transform: rotate(180deg); }
+.page-toolbar-panel { max-width: 0; opacity: 0; overflow: clip; transition: max-width 180ms ease, opacity 150ms ease; }
+#page-toolbar-actions.is-expanded .page-toolbar-panel { max-width: 160px; opacity: 1; }
+.page-toolbar-contents { display: flex; align-items: center; width: max-content; gap: 3px; }
+#page-toolbar-actions .heading-actions { display: flex; flex-wrap: nowrap; width: auto; gap: 0; margin: 0; }
+#page-toolbar-actions :is(.page-toolbar-command,.keep-icon) { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 8px !important; flex-shrink: 0; }
+#page-toolbar-actions :is(.page-toolbar-command,.keep-icon) svg { width: 20px; height: 20px; }
+#page-toolbar-actions .dashboard-controls { display: flex; flex-wrap: nowrap; width: auto; margin: 0; gap: 3px; }
+#page-toolbar-actions .dashboard-date { padding: 7px; gap: 4px; font-size: 12px; min-height: 38px; max-width: 94px; }
+#page-toolbar-actions .dashboard-date svg { width: 14px; height: 14px; }
+#view .page-toolbar-source { display: none !important; }
+@media(max-width:680px) {
+ #view .page-toolbar-heading-empty { display: none !important; }
+ #view .page-heading:not(:has(button:not(.desktop-add):not(.page-toolbar-source),a,input:not([type="hidden"]),select)) { display: none; }
+ .mobile-page-header #page-toolbar-actions :is(.page-toolbar-command,.keep-icon) { width: 36px; min-width: 36px; }
 }
-.page-toolbar-popover{position:fixed;inset:auto;margin:0;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink);box-shadow:0 12px 40px #0003;max-height:calc(100dvh - 24px);overflow:auto;font-family:var(--font-body)}
-.page-toolbar-menu-command{display:flex;align-items:center;gap:12px;text-align:start;border:0;border-radius:10px;background:transparent;color:var(--ink);padding:10px 12px;width:100%;min-height:44px;font:inherit;font-size:13px;cursor:pointer}
-.page-toolbar-menu-command:hover,.page-toolbar-menu-command:focus-visible{background:var(--accent-soft);outline:2px solid var(--accent)}
-.page-toolbar-menu-command:disabled{opacity:.45;cursor:default}
-.page-toolbar-menu-command svg,.page-toolbar-command svg,.page-toolbar-overflow svg{width:20px;height:20px;flex-shrink:0}
-.page-toolbar-field{border-top:1px solid var(--border);margin-top:6px;padding:12px 6px}
-.page-toolbar-field .solar-month{display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:360px){.mobile-page-header #page-toolbar-actions>.icon-button,.mobile-page-header #page-toolbar-actions .keep-icon{width:32px;min-width:32px;height:38px;min-height:38px}}
+@media(max-width:360px) {
+ .mobile-page-header .page-toolbar-toggle { width: 28px; min-width: 28px; height: 38px; }
+ .mobile-page-header #page-toolbar-actions :is(.page-toolbar-command,.keep-icon) { width: 32px; min-width: 32px; height: 38px; min-height: 38px; }
+ #page-toolbar-actions .dashboard-date { font-size: 11px; padding: 6px; gap: 3px; max-width: 76px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .page-toolbar-panel,.page-toolbar-toggle svg { transition: none; }
+}

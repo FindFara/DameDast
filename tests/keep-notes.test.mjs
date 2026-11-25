@@ -323,7 +323,8 @@ test("the integrated notes page keeps only the supported menus and controls", as
     html,
     /keep-topbar|keep-sidebar|keep-bulk|data-k="(?:select|exit-selection|refresh|settings|menu|reminder|convert|compose-checklist)"/,
   );
-  assert.match(html, /data-k="notes-menu"/);
+  assert.match(html, /data-k="edit-labels"/);
+  assert.doesNotMatch(html, /data-k="notes-menu"/);
   const menu = notesMenu(c, "notes", "");
   assert.match(menu, /role="menu"/);
   assert.doesNotMatch(menu, /data-route="(?:archive|trash)"/);

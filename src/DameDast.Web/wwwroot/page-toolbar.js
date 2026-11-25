@@ -1,111 +1,64 @@
 import { t } from "./i18n.js";
 import { icon } from "./ui.js";
 
-// Only page-level actions are registered here. Record actions stay with their records.
+const add = '.page-heading [data-action="add"],.page-heading [data-action="task-add"],.page-heading [data-planner-action="new"]';
+// This allowlist defines the floating rail. Other page controls stay in the page.
 export const pageToolbarConfig = {
-  overview: {
-    inline: ".overview-heading .dashboard-controls",
-    headingActions: false,
-  },
-  notes: { inline: ".keep-app .heading-actions", headingActions: false },
-  transactions: {
-    extra: [
-      '[data-action="csv"]',
-      '[data-action="transaction-filters-toggle"]',
-    ],
-  },
-  reports: { extra: ['[data-action="csv"]'] },
-  connected: {
-    extra: [
-      ".connected-toolbar > button[data-action]",
-      ".connected-toolbar > a",
-    ],
-  },
-  calendar: { extra: [".planner-toolbar button[data-planner-action]"] },
-  market: { extra: ['[data-action="market-refresh"]'] },
-  installments: { extra: ['.toolbar [data-action="push"]'] },
-  settings: {
-    extra: [
-      '[data-action="backup-notes"]',
-      '[data-action="backup-finance"]',
-      '[data-action="backup"]',
-      '[data-action="restore-backup"]',
-    ],
-    hideExtra: false,
-  },
+  overview: { inline: ".overview-heading .dashboard-controls" },
+  notes: { inline: ".keep-app .heading-actions" },
+  transactions: { command: '[data-action="csv"]', icon: "download" },
+  accounts: { command: add, icon: "plus" },
+  calendar: { command: '.page-heading [data-planner-action="new"]', icon: "plus" },
+  tasks: { command: add, icon: "plus" },
+  projects: { command: add, icon: "plus" },
+  habits: { command: add, icon: "plus" },
+  bookmarks: { command: add, icon: "plus" },
+  goals: { command: add, icon: "plus" },
+  budgets: { command: add, icon: "plus" },
+  reminders: { command: add, icon: "plus" },
+  installments: { command: add, icon: "plus" },
+  receivables: { command: add, icon: "plus" },
+  locked: { command: add, icon: "plus" },
+  assets: { command: '.page-heading [data-action="asset-add"]', icon: "plus" },
+  monthlyPlan: { command: add, icon: "plus" },
+  monthlyExpenses: { command: add, icon: "plus" },
 };
-const commandIcon = (source) => {
-  const name = source.dataset.action || source.dataset.plannerAction || "";
-  if (
-    /csv|export|backup|download/.test(name) ||
-    source.hasAttribute("download")
-  )
-    return "download";
-  if (/import|restore|clip/.test(name)) return "upload";
-  if (/filter/.test(name)) return "filter";
-  if (/add|new|create/.test(name)) return "plus";
-  if (/refresh|sync|read/.test(name)) return "refresh";
-  return "more";
-};
+
 export class PageToolbarController {
   constructor() {
     this.portals = [];
-    this.sources = [];
     this.commands = [];
+    this.expanded = false;
     this.observer = new MutationObserver(() => this.syncCommandState());
-    document.addEventListener("pointerdown", (event) => {
-      if (
-        this.menu?.matches(":popover-open") &&
-        !this.menu.contains(event.target) &&
-        !this.trigger?.contains(event.target)
-      )
-        this.closeMenu(false);
+    document.addEventListener("pointerdown", event => {
+      if (this.expanded && !this.holder?.contains(event.target) &&
+          !event.target.closest?.('[popover],dialog,[role="dialog"]')) this.close(false);
     });
-    document.addEventListener("keydown", (event) => {
-      if (!this.menu?.matches(":popover-open")) return;
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        this.closeMenu();
-        return;
-      }
-      if (
-        !event.target.matches("[data-page-command]") ||
-        !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
-      )
-        return;
+    document.addEventListener("keydown", event => {
+      if (!this.expanded || event.key !== "Escape") return;
+      // Nested pickers and editors handle their own Escape first.
+      if ([...document.querySelectorAll('dialog[open],[popover]')].some(el => el.open || el.matches(':popover-open'))) return;
       event.preventDefault();
-      const buttons = [
-        ...this.menu.querySelectorAll("[data-page-command]"),
-      ].filter((b) => !b.disabled);
-      const index = buttons.indexOf(event.target);
-      const next =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? buttons.length - 1
-            : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) %
-              buttons.length;
-      buttons[next]?.focus();
+      this.close();
+    });
+    document.addEventListener("focusin", event => {
+      if (this.expanded && !this.holder?.contains(event.target) &&
+          !event.target.closest?.('[popover],dialog,[role="dialog"]')) this.close(false);
     });
   }
   restore() {
-    this.closeMenu(false);
+    this.close(false);
     this.observer.disconnect();
     for (const { node, placeholder } of this.portals) {
       if (placeholder.isConnected) placeholder.replaceWith(node);
       else node.remove();
     }
-    for (const source of this.sources)
-      source.classList.remove("page-toolbar-source");
-    document
-      .querySelectorAll(".page-toolbar-heading-empty")
-      .forEach((el) => el.classList.remove("page-toolbar-heading-empty"));
+    for (const { source } of this.commands) source.classList.remove("page-toolbar-source");
+    document.querySelectorAll(".page-toolbar-heading-empty")
+      .forEach(el => el.classList.remove("page-toolbar-heading-empty"));
     this.portals = [];
-    this.sources = [];
     this.commands = [];
-    this.menu?.remove();
-    this.menu = null;
+    this.panel = this.trigger = null;
   }
   move(node, target) {
     const placeholder = document.createComment("page toolbar control");
@@ -113,174 +66,95 @@ export class PageToolbarController {
     target.append(node);
     this.portals.push({ node, placeholder });
   }
-  collect(view, config) {
-    const entries = new Map();
-    const add = (source, hide = true) => {
-      if (!entries.has(source)) entries.set(source, { source, hide });
-    };
-    if (config.headingActions !== false)
-      view
-        .querySelectorAll(".page-heading button,.page-heading a")
-        .forEach((source) => {
-          if (!source.closest(".solar-month,[data-month-control]")) add(source);
-        });
-    for (const selector of config.extra || [])
-      view
-        .querySelectorAll(selector)
-        .forEach((source) => add(source, config.hideExtra !== false));
-    return [...entries.values()];
-  }
-  command(entry, inline = false) {
-    const { source, hide } = entry;
-    const label =
-      source.getAttribute("aria-label") ||
-      source.textContent.trim() ||
-      source.title ||
-      t("Page actions");
+  command(source, glyph) {
+    const label = source.getAttribute("aria-label") || source.textContent.trim() || source.title;
     const button = document.createElement("button");
     button.type = "button";
-    button.dataset.pageCommand =
-      source.dataset.action || source.dataset.plannerAction || label;
-    button.className = inline
-      ? "icon-button page-toolbar-command"
-      : "page-toolbar-menu-command";
+    button.className = "icon-button page-toolbar-command";
+    button.dataset.pageCommand = source.dataset.action || source.dataset.plannerAction;
     button.setAttribute("aria-label", label);
     button.title = label;
-    button.innerHTML =
-      source.querySelector("svg")?.outerHTML || icon(commandIcon(source));
-    if (!inline) {
-      const span = document.createElement("span");
-      span.textContent = label;
-      button.append(span);
-    }
+    button.innerHTML = icon(glyph);
     button.onclick = () => {
       if (source.disabled || !source.isConnected) return;
-      this.closeMenu(false);
       source.click();
-      queueMicrotask(() => {
-        if (document.querySelector("dialog[open]")) return;
-        const next = inline
-          ? this.commands.find(
-              (command) =>
-                command.button.dataset.pageCommand ===
-                button.dataset.pageCommand,
-            )?.button
-          : this.trigger;
-        next?.focus({ preventScroll: true });
-      });
     };
-    if (hide) {
-      source.classList.add("page-toolbar-source");
-      this.sources.push(source);
-    }
+    source.classList.add("page-toolbar-source");
     this.commands.push({ source, button });
-    this.observer.observe(source, {
-      attributes: true,
-      attributeFilter: ["disabled", "aria-pressed", "aria-expanded"],
-    });
+    this.observer.observe(source, { attributes: true, attributeFilter: ["disabled", "aria-pressed", "aria-expanded"] });
     return button;
   }
   syncCommandState() {
     for (const { source, button } of this.commands) {
       button.disabled = !!source.disabled;
       for (const name of ["aria-pressed", "aria-expanded"]) {
-        if (source.hasAttribute(name))
-          button.setAttribute(name, source.getAttribute(name));
+        if (source.hasAttribute(name)) button.setAttribute(name, source.getAttribute(name));
         else button.removeAttribute(name);
       }
     }
   }
-  createMenu(entries, fields, holder) {
-    this.menu = document.createElement("div");
-    this.menu.className = "page-toolbar-popover";
-    this.menu.setAttribute("popover", "manual");
-    this.menu.setAttribute("role", "dialog");
-    this.menu.setAttribute("aria-label", t("Page actions"));
-    document.body.append(this.menu);
-    for (const entry of entries) this.menu.append(this.command(entry));
-    for (const field of fields) {
-      const row = document.createElement("div");
-      row.className = "page-toolbar-field";
-      this.menu.append(row);
-      this.move(field, row);
-    }
-    this.trigger = document.createElement("button");
-    this.trigger.type = "button";
-    this.trigger.className = "icon-button page-toolbar-overflow";
-    this.trigger.setAttribute("aria-label", t("Page actions"));
-    this.trigger.title = t("Page actions");
-    this.trigger.setAttribute("aria-haspopup", "dialog");
-    this.trigger.setAttribute("aria-expanded", "false");
-    this.trigger.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>';
-    this.trigger.onclick = () =>
-      this.menu.matches(":popover-open") ? this.closeMenu() : this.openMenu();
-    holder.append(this.trigger);
-  }
-  openMenu() {
-    this.menu.showPopover();
+  open(focus = true) {
+    if (!this.panel) return;
+    this.expanded = true;
+    this.holder.classList.add("is-expanded");
     this.trigger.setAttribute("aria-expanded", "true");
-    const rect = this.trigger.getBoundingClientRect(),
-      width = Math.min(300, innerWidth - 24);
-    this.menu.style.width = width + "px";
-    this.menu.style.left =
-      Math.max(12, Math.min(rect.right - width, innerWidth - width - 12)) +
-      "px";
-    this.menu.style.top =
-      Math.max(
-        12,
-        Math.min(rect.bottom + 8, innerHeight - this.menu.offsetHeight - 12),
-      ) + "px";
-    this.menu.querySelector("button,input,select")?.focus();
+    this.panel.inert = false;
+    this.panel.removeAttribute("aria-hidden");
+    if (focus) this.panel.querySelector("button,input,select")?.focus({ preventScroll: true });
   }
-  closeMenu(focus = true) {
-    if (this.menu?.matches(":popover-open")) {
-      this.menu.hidePopover();
-      this.trigger?.setAttribute("aria-expanded", "false");
-      if (focus) this.trigger?.focus();
+  close(focus = true) {
+    this.expanded = false;
+    this.holder?.classList.remove("is-expanded");
+    this.trigger?.setAttribute("aria-expanded", "false");
+    if (this.panel) {
+      this.panel.inert = true;
+      this.panel.setAttribute("aria-hidden", "true");
     }
+    if (focus) this.trigger?.focus({ preventScroll: true });
   }
   update(page, fallbackTitle) {
     const title = document.querySelector("#mobile-page-title"),
       holder = document.querySelector("#page-toolbar-actions"),
       view = document.querySelector("#view");
     if (!title || !holder || !view) return;
+    const keepOpen = this.page === page && this.expanded;
     this.restore();
+    this.holder = holder;
+    this.page = page;
     holder.replaceChildren();
     holder.hidden = true;
-    title.textContent =
-      view.querySelector(".page-heading h1,h1")?.textContent || fallbackTitle;
+    title.textContent = view.querySelector(".page-heading h1,h1")?.textContent || fallbackTitle;
     title.title = title.textContent;
-    if (!matchMedia("(max-width:680px)").matches) return;
-    const config = pageToolbarConfig[page] || {};
-    const inline = config.inline && view.querySelector(config.inline);
-    if (inline) this.move(inline, holder);
-    const entries = this.collect(view, config);
-    const fields = [
-      ...view.querySelectorAll(".page-heading .solar-month"),
-    ].filter((el) => !el.closest("#page-toolbar-actions"));
-    const primary =
-      entries.find(({ source }) =>
-        /^(add|task-add|new)$/.test(
-          source.dataset.action || source.dataset.plannerAction || "",
-        ),
-      ) || (entries.length === 1 && !fields.length ? entries[0] : null);
-    if (primary) holder.append(this.command(primary, true));
-    const remaining = entries.filter((entry) => entry !== primary);
-    if (remaining.length || fields.length)
-      this.createMenu(remaining, fields, holder);
+    const config = pageToolbarConfig[page];
+    if (!config) return;
+    const inline = config.inline && view.querySelector(config.inline),
+      source = config.command && view.querySelector(config.command);
+    if (!inline && !source) return;
+    this.trigger = document.createElement("button");
+    this.trigger.type = "button";
+    this.trigger.className = "icon-button page-toolbar-toggle";
+    this.trigger.setAttribute("aria-label", t("Page actions"));
+    this.trigger.setAttribute("aria-expanded", "false");
+    this.trigger.setAttribute("aria-controls", "page-toolbar-panel");
+    this.trigger.title = t("Page actions");
+    this.trigger.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 7-5 5 5 5"/></svg>';
+    this.trigger.onclick = () => this.expanded ? this.close() : this.open();
+    this.panel = document.createElement("div");
+    this.panel.id = "page-toolbar-panel";
+    this.panel.className = "page-toolbar-panel";
+    const contents = document.createElement("div");
+    contents.className = "page-toolbar-contents";
+    this.panel.append(contents);
+    holder.append(this.trigger, this.panel);
+    if (inline) this.move(inline, contents);
+    if (source) contents.append(this.command(source, config.icon));
     for (const heading of view.querySelectorAll(".page-heading")) {
-      const unregistered = [
-        ...heading.querySelectorAll("button,a,input:not([type=hidden]),select"),
-      ].some(
-        (el) =>
-          !el.classList.contains("page-toolbar-source") &&
-          !el.closest(".page-toolbar-source"),
-      );
-      if (!unregistered) heading.classList.add("page-toolbar-heading-empty");
+      if (!heading.querySelector('button:not(.page-toolbar-source),a,input:not([type="hidden"]),select'))
+        heading.classList.add("page-toolbar-heading-empty");
     }
-    holder.hidden = !holder.childElementCount;
+    holder.hidden = false;
     this.syncCommandState();
+    if (keepOpen) this.open(false); else this.close(false);
   }
 }
 let controller;

@@ -910,9 +910,6 @@ html[data-theme="dark"] [data-color="rose"] {
 }
 
 /* Notes are a regular app page: the shared shell, background, font and accent remain authoritative. */
-body.notes-workspace #sync-button {
-  display: none;
-}
 .keep-app {
   width: 100%;
   min-width: 0;
