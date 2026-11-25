@@ -1,4 +1,4 @@
-import { monthControl } from "./calendar.js";
+import {readNoteSettings} from "./keep-preferences.js";
 import { restoredWorkspaces } from "./backup.js";
 import { t, getLanguage, getTheme, effectiveTheme } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
@@ -12,7 +12,7 @@ const row = (label, help, control) =>
 const option = (value, title, selected) =>
   `<option value="${value}" ${selected === value ? "selected" : ""}>${t(title)}</option>`;
 export function settingsPage(c, { icon, actionButton, pageHeading }) {
-  const p = preferences(),
+  const p = preferences(), notes = readNoteSettings(c.space),
     button = (action, label) => actionButton(action, label, "", "secondary");
   const workspaces = restoredWorkspaces();
   const startGroup = (id, label, style = "") => `<details class="panel setting-group ${style}" data-setting-group="${id}" ${c.settingsGroupsOpen?.[id] ? "open" : ""}><summary><span>${t(label)}</span>${icon("arrow")}</summary><div class="setting-group-content">`;
@@ -22,6 +22,9 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${row("Language", "Changes the app language and reading direction.", `<select id="language-setting" aria-label="${t("Language")}">${option("en", "English", getLanguage())}${option("fa", getLanguage() === "en" ? "Fa" : "فارسی", getLanguage())}</select>`)}
  ${row("Theme", "Choose light, dark, or follow your device.", `<select id="theme-setting" aria-label="${t("Theme")}">${["light", "dark", "system"].map((v) => option(v, v[0].toUpperCase() + v.slice(1), getTheme())).join("")}</select>`)}
  ${row("App background", "Changes the background of every page, including the workbench.", `<div class="app-background-controls"><input type="color" id="app-background-setting" value="${p.mainBackground || (effectiveTheme()==="dark"?"#10171d":"#f5f7f6")}" aria-label="${t("App background")}"><button type="button" class="secondary" data-action="reset-app-background">${t("Use theme background")}</button></div>`)}
+ ${endGroup}${startGroup("notes", "Notes settings")}
+ ${row("Default notes view", "Choose the initial layout for your notes.", `<select data-note-preference="view" aria-label="${t("Default notes view")}">${option("grid","Grid",notes.view)}${option("list","List",notes.view)}</select>`)}
+ ${row("Text link previews", "Show a compact text preview for links in notes.", `<label class="switch-control"><input type="checkbox" data-note-preference="linkPreviews" ${notes.linkPreviews ? "checked" : ""} aria-label="${t("Text link previews")}"><span></span></label>`)}
  ${endGroup}${startGroup("calendar", "Calendar")}
  ${row("Calendar system", "Calendar views and repeating events can use Persian or Gregorian months.", `<select data-preference="calendar" aria-label="${t("Calendar system")}">${option("persian", "Solar Hijri", p.calendar)}${option("gregory", "Gregorian", p.calendar)}</select>`)}
  ${row("First day of week", "Sets the first column in week and month views.", `<select data-preference="weekStart" aria-label="${t("First day of week")}">${option(6, "Saturday", p.weekStart)}${option(1, "Monday", p.weekStart)}${option(0, "Sunday", p.weekStart)}</select>`)}
@@ -35,20 +38,15 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${c.space.startsWith("google:") ? row("Pending changes", "Changes waiting to be accepted by the server.", button("review-pending", "Review pending")) + row("Guest data", "Copy local records into your signed-in workspace.", button("migrate-guest", "Import")) : ""}
  ${c.session.authenticated ? row("Google account", "Signs this device out of your workspace.", button("logout", "Sign out")) : ""}
  ${endGroup}${startGroup("backups", "Backups", "data-settings")}
- ${row("Notes backup", "Includes notes, drawings, tasks, calendar items and reminders.", button("backup-notes", "Export notes"))}
+ <div class="backup-section-options">
+ ${row("Notes backup", "Includes notes, tasks, projects, habits, saved links and reminders.", button("backup-notes", "Export notes"))}
  ${row("Financial backup", "Includes accounts, transactions, installments, budgets, assets and financial plans.", button("backup-finance", "Export finances"))}
+ </div>
  ${row("Full backup", "Includes both sections and all app preferences.", button("backup", "Export everything"))}
  ${row("Restore backup", "Creates a separate local workspace from a validated backup. Your existing records are kept.", button("restore-backup", "Import backup"))}
  ${endGroup}${startGroup("devices", "Data and devices")}
  ${row("Reminders", "Background notifications need permission, sign-in and the .NET reminder service.", button("push", "Enable reminders"))}
  ${row("Device", "Install the same web app on your phone or desktop.", button("install", "Install app"))}
  ${endGroup}
- <details class="panel desk-settings-panel" id="workbench-settings" ${c.workbenchSettingsOpen ? "open" : ""}>
- <summary class="desk-settings-summary"><span>${icon("workbench")}<strong>${t("Workbench")}</strong></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary>
- <div class="desk-settings-content">
- ${row("Edit workbench", "Enable editing to arrange components and change their size.", `<label class="switch-control"><input type="checkbox" data-preference="workbenchEditing" ${p.workbenchEditing ? "checked" : ""} aria-label="${t("Edit workbench")}"><span></span></label>`)}
- ${row("Reporting month", "Controls the period used by the financial components on your desk.", monthControl(c.month, "month", true))}
- <a class="secondary desk-open-link" href="#workbench">${t("Open workbench")}${icon("arrow")}</a>
- </div></details>
  ${c.session.demoEnabled ? `${startGroup("demo", "Sample data")}<div class="demo-actions">${button("demo", "Try demo")}${c.space === "demo" ? button("reset-demo", "Reset demo") : ""}</div>${endGroup}` : ""}</div></div>`;
 }

@@ -26,6 +26,7 @@ export function numericField(input) {
   return (
     input instanceof HTMLInputElement &&
     input.type === "text" &&
+    !input.hasAttribute("data-date-part") &&
     (["numeric", "decimal"].includes(input.inputMode) ||
       input.classList.contains("money-input"))
   );

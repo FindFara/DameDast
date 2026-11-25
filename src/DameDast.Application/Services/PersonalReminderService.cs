@@ -24,6 +24,13 @@ public sealed class PersonalReminderService : IPersonalReminderService
                 foreach (var occurrence in OrganizerRules.DueOccurrences(reminder, now))
                     Add(record, occurrence.Occurrence, null, reminder.Title, "reminder", "/#reminders", occurrence.DueAt);
             }
+            else if (record.Kind == "note")
+            {
+                var note = FinanceRules.Read<PersonalNote>(record.Data);
+                if (note.Status == "trashed" || note.Reminder is not { } reminder) continue;
+                foreach (var occurrence in OrganizerRules.DueOccurrences(reminder, now))
+                    Add(record, occurrence.Occurrence, null, string.IsNullOrWhiteSpace(note.Title) ? reminder.Title : note.Title, "note", $"/#note/{record.Id}", occurrence.DueAt);
+            }
             else if (record.Kind == "installment")
             {
                 var installment = FinanceRules.Read<Installment>(record.Data);

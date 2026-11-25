@@ -37,7 +37,7 @@ public sealed class ReminderService(IFinanceRepository finance, IPushSubscriptio
     {
         var now = clock.UtcNow();
         var alerts = personal.Notifications(records, now)
-            .Where(x => x.Kind == "reminder" && !x.Read && now - x.DueAt < TimeSpan.FromDays(1)).Take(12);
+            .Where(x => (x.Kind is "reminder" or "note") && !x.Read && now - x.DueAt < TimeSpan.FromDays(1)).Take(12);
         foreach (var alert in alerts)
         {
             var key = $"{device.Id}:personal:{alert.SourceId}:{alert.Occurrence}";
@@ -45,7 +45,7 @@ public sealed class ReminderService(IFinanceRepository finance, IPushSubscriptio
             var persian = device.Language == "fa";
             var message = new PushMessage(persian ? "دمِ دست · یادآوری" : "DameDast · Reminder",
                 persian ? "یک یادآور برای بررسی داری." : "You have a reminder to review.",
-                device.Language, persian ? "rtl" : "ltr", "/#reminders", "damdast-personal-" + alert.SourceId);
+                device.Language, persian ? "rtl" : "ltr", alert.Url, "damdast-personal-" + alert.SourceId);
             var result = await gateway.SendAsync(device, message, cancellationToken);
             if (result == PushDeliveryResult.Delivered) await receipts.RecordAsync(key, clock.UtcNow(), cancellationToken);
             else if (result == PushDeliveryResult.Expired)

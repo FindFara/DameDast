@@ -1,3 +1,6 @@
+import {synchronizePageToolbar} from "./page-toolbar.js";
+import {saveNoteSettings} from "./keep-preferences.js";
+import {validateNote,checkLabelName} from "./keep-model.js";
 import { validateProductivity, projectKinds, habitLogId } from "./productivity.js";
 import { projectField, searchResults, recordLabel } from "./productivity-ui.js";
 import { extensionClips, acknowledgeClip } from "./clip-inbox.js";
@@ -7,8 +10,9 @@ import { filterTransactions, normalizeTransactionFilters } from "./transaction-b
 import { migrateLegacyPreferences } from "./legacy-storage.js";
 import { readPins, togglePin, savePins } from "./nav-pins.js";
 import "./select-sheet.js";
+import "./date-picker.js";
 import { isDrawingNote, toggleTask } from "./notebook.js";
-import { NotePageController, isNoteRoute } from "./note-page.js";
+import { NotePageController, isNoteRoute } from "./keep-notes.js";
 import { DeskToolController } from "./desk-tool-controller.js";
 import { PlannerController } from "./planner-controller.js";
 import { validateCalendarEntry } from "./planner.js";
@@ -42,7 +46,7 @@ import {
 } from "./number-inputs.js";
 import { fromJalali, validIso } from "./calendar.js";
 import { instruments as marketInstruments } from "./market-catalog.js";
-import { navigationGroups, plannerPages } from "./navigation.js";
+import { navigationGroups, navigationColor, plannerPages } from "./navigation.js";
 import {
   organizerReport,
   notificationKey,
@@ -88,6 +92,7 @@ import {
   escapeHtml as esc,
   materialize,
   makeDemo,
+  DEMO_VERSION,
 } from "./finance.js";
 import {
   t,
@@ -127,7 +132,7 @@ let clipInbox = [];
 const connected = new ConnectedStore(() => {
   if (ready && ["connected", "workbench"].includes(page)) render();
 });
-let session = { authenticated: false, googleConfigured: false, demoEnabled: false },
+let session = { authenticated: false, googleConfigured: false, demoEnabled: true },
   space = "guest",
   state,
   page = "overview";
@@ -136,6 +141,10 @@ let selectedMonth = monthOf(today()),
   typeFilter = "",
   flowPeriod = "monthly";
 let transactionFilters = {};
+let transactionFiltersOpen = false;
+let notificationFilter = "unread";
+let refreshInProgress = false;
+let notificationsHtml = "";
 let editorPreset = null;
 let marketCategory = "all",
   marketSearch = "",
@@ -202,7 +211,6 @@ const context = () => ({
   projectId,
   attentionOpen,
   amountsVisible: dashboardAmountsVisible,
-  workbenchSettingsOpen,
   settingsGroupsOpen,
   notesView,
   workbenchEditing: desk.editing,
@@ -222,6 +230,9 @@ const context = () => ({
   filter,
   typeFilter,
   transactionFilters,
+  transactionFiltersOpen,
+  notificationFilter,
+  refreshInProgress,
   flowPeriod,
   pendingCount: state.pending.length,
   marketData,
@@ -249,10 +260,10 @@ const desk = new WorkbenchController({
   error: (error) => showError(error),
   icon,
 });
-let workbenchSettingsOpen = false;
 const notePage = new NotePageController({
   context, refresh: render, error: showError,
-  save: (data, id, version) => commit("note", data, id, false, version),
+  save: (data, id, version, noteScope) => commit("note", data, id, false, version, noteScope),
+  write: commit, refreshData: refreshWorkspace,
 });
 const deskTools = new DeskToolController({ context, error: showError });
 
@@ -363,6 +374,7 @@ function renderChrome() {
   $(".shell-tools").setAttribute("aria-label", t("Quick actions"));
   $("#global-create").innerHTML = page === "workbench" ? deskFloatingActions(preferences().workbenchEditing,icon) : createLauncher();
   $("#app-menu-button").setAttribute("aria-label", t("Menu"));
+  $("#app-menu-button").innerHTML = icon("more");
   $("#app-menu-close").setAttribute("aria-label", t("Close"));
   $("#brand-name").textContent = t("DameDast");
   $("#brand-caption").textContent = "";
@@ -372,11 +384,11 @@ function renderChrome() {
   $("#navigation").setAttribute("aria-label", t("Menu"));
   const activePage = page === "organizer" ? "notes" : page;
   const navLink = (key, pinnable = false) =>
-    `<div class="nav-link-row" style="--nav-color:${shortcutColors[key] || "#687f91"}"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
+    `<div class="nav-link-row" style="--nav-color:${navigationColor(key) || shortcutColors[key] || "#687f91"}"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
   $("#navigation").innerHTML =
     (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
     navLink("overview") + navLink("workbench") +
-    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
+    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" style="--nav-color:${group.color}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
     `<div class="nav-footer-links">${navLink("reports")}${navLink("settings")}</div>`;
   $("#mobile-navigation").innerHTML = [
     "overview",
@@ -413,19 +425,20 @@ function renderChrome() {
     `<span class="google-g" aria-hidden="true">G</span><span>${t(session.authenticated ? "Google account" : "Sign in")}</span>`;
   $("#sync-button").innerHTML = icon(
     "refresh",
-    syncPromise || marketLoading ? "is-spinning" : "",
+    refreshInProgress || syncPromise || marketLoading ? "is-spinning" : "",
   );
   $("#sync-button").setAttribute(
     "aria-busy",
-    String(!!syncPromise || marketLoading),
+    String(refreshInProgress || !!syncPromise || marketLoading),
   );
+  $("#sync-button").disabled = refreshInProgress;
   $("#workspace-search-label").textContent = t("Search everywhere");
   $("#workspace-search-input").placeholder = t("Search everywhere");
   refreshWorkspaceSearch();
   updateNotificationBell();
   $("#sync-button").setAttribute(
     "aria-label",
-    t(page === "market" ? "Refresh" : "Sync"),
+    t(refreshInProgress ? "Refreshing…" : "Refresh"),
   );
   $("#mode-banner").hidden = space !== "demo";
   $("#mode-banner").innerHTML =
@@ -447,18 +460,22 @@ function render() {
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
+  if (page === "overview") selectedMonth = `${monthOf(today()).slice(0, 4)}-${selectedMonth.slice(5)}`;
   document.body.classList.toggle("workbench-fullscreen", page === "workbench");
   renderChrome();
   noteLayout.disconnect();
   if (!isNoteRoute(hash)) notePage.deactivate();
-  $("#view").innerHTML = isNoteRoute(hash) ? notePage.render(context()) : renderPage(context());
-  notePage.attach();
+  document.body.classList.toggle("notes-workspace",isNoteRoute(hash));
+  if(isNoteRoute(hash) && document.querySelector(".keep-app")?.dataset.scope===space) notePage.update();
+  else $("#view").innerHTML = isNoteRoute(hash) ? notePage.render(context()) : renderPage(context());
+  if(isNoteRoute(hash)) notePage.attach();
   document.querySelectorAll('.notes-grid:not(.notes-list) > .note-card').forEach(card => noteLayout.observe(card));
   desk.attach();
   deskTools.attach();
   planner.attach();
   formatNumericFields($("#view"));
   updateStatus();
+  synchronizePageToolbar(page,t(sections[page][0]));
   if (
     ["overview", "market", "assets", "workbench"].includes(page) &&
     !marketLoading &&
@@ -566,19 +583,8 @@ function validateData(kind, data, id) {
   )
     throw Error("This category name already exists.");
   if (kind === "reminder") validateReminder(data);
-  if (
-    kind === "note" &&
-    data.checklist &&
-    (data.checklist.length > 50 ||
-      data.checklist.some((x) => !x.text?.trim() || x.text.length > 200) ||
-      new Set(data.checklist.map((x) => x.id)).size !== data.checklist.length)
-  )
-    throw Error("Use up to 50 unique tasks, with text up to 200 characters.");
-  if (
-    kind === "note" &&
-    (!data.title.trim() || data.title.length > 80 || data.body.length > 4000)
-  )
-    throw Error("Enter a title and a note up to 4000 characters.");
+  if(kind === "note" && !data.drawing && !data.whiteboardId) validateNote(data);
+  if(kind === "noteLabel") checkLabelName(data.name,records(),id);
   if (kind === "allocationPlan") {
     validatePlan(data);
     if (
@@ -705,9 +711,13 @@ async function commit(
   id = crypto.randomUUID(),
   remove = false,
   expectedVersion = null,
+  expectedSpace = space,
 ) {
   await withLock(async () => {
-    state = await loadSpace(space);
+    if(space !== expectedSpace) throw Error("Account changed. Reopen the note.");
+    const loaded = await loadSpace(expectedSpace);
+    if(space !== expectedSpace) throw Error("Account changed. Reopen the note.");
+    state = loaded;
     const current = materialize(state).find((r) => r.id === id);
     if (expectedVersion !== null && (current?.version || 0) !== expectedVersion)
       throw Error("This record changed. Reopen the form.");
@@ -727,6 +737,7 @@ async function commit(
     });
     await persist();
   });
+  if(space !== expectedSpace) return;
   render();
   if (space.startsWith("google:")) void sync();
 }
@@ -930,15 +941,36 @@ async function sync() {
       } catch {}
       await persist();
       render();
+      return true;
     } catch {
       updateStatus("Pending changes");
       if (navigator.onLine) toast("Sync failed. Changes are kept locally.");
+      return false;
     }
   }).finally(() => {
     syncPromise = null;
     if (ready) renderChrome();
   });
   return syncPromise;
+}
+async function refreshWorkspace() {
+  if (refreshInProgress) return false;
+  refreshInProgress = true;
+  renderChrome();
+  try {
+    if (space.startsWith("google:")) {
+      if (!navigator.onLine) { toast("Offline. Showing saved data."); return false; }
+      if (await sync() === false) return false;
+    } else {
+      await withLock(async () => { state = await loadSpace(space); });
+    }
+    if (page === "connected") await connected.sync();
+    if (["overview", "market", "assets", "workbench"].includes(page) && navigator.onLine) await loadMarket();
+    render();
+    toast(!navigator.onLine ? "Offline. Showing saved data." : marketError && ["overview", "market", "assets", "workbench"].includes(page) ? "Data refreshed. Live prices are unavailable." : "Data and notifications refreshed.");
+    return true;
+  } catch (error) { showError(error); return false; }
+  finally { refreshInProgress = false; renderChrome(); }
 }
 async function showConflict(id) {
   const response = await network("/api/finance", { cache: "no-store" });
@@ -1255,7 +1287,7 @@ async function migrateGuest() {
             const existing = new Set(materialize(state).map((r) => r.id));
             for (const r of [
               ...source.filter(
-                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit",
+                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit" || r.kind === "noteLabel",
               ),
               ...source.filter((r) => r.kind === "monthlyExpense"),
               ...source.filter(
@@ -1267,6 +1299,7 @@ async function migrateGuest() {
                     "notificationRead",
                     "project",
                     "habit",
+                    "noteLabel",
                   ].includes(r.kind),
               ),
               ...source.filter((r) => r.kind === "notificationRead"),
@@ -1283,6 +1316,7 @@ async function migrateGuest() {
                 continue;
               const data = structuredClone(r.data);
               if (data.projectId) data.projectId = mapping[data.projectId] || null;
+              if (r.kind === "note" && data.labels) data.labels=data.labels.map(id=>mapping[id]).filter(Boolean);
               if (r.kind === "habitLog") data.habitId = mapping[data.habitId];
               if (r.kind === "installment" && data.payment) data.payment = { ...data.payment, transactionId: mapping[data.payment.transactionId] || crypto.randomUUID(), accountId: mapping[data.payment.accountId], category: data.payment.category.startsWith("custom:") ? "custom:" + mapping[data.payment.category.slice(7)] : data.payment.category };
               if (r.kind === "workbench")
@@ -1501,6 +1535,9 @@ async function onAction(event) {
     return;
   }
   const { action, id, kind } = element.dataset;
+  if (action === "transaction-filters-toggle") { transactionFiltersOpen = !transactionFiltersOpen; render(); return; }
+  if (action === "notifications-filter") { notificationFilter = element.dataset.filter === "all" ? "all" : "unread"; renderNotifications(); return; }
+  if (action === "notifications-refresh") { await refreshWorkspace(); return; }
   if (action === "workspace-search") { openWorkspaceSearch(); return; }
   if (action === "workspace-open") {
     $("#workspace-search-input").value = "";
@@ -1600,6 +1637,13 @@ async function onAction(event) {
     }
     return;
   }
+  if(["note-reminder-edit","note-reminder-delete","note-reminder-complete"].includes(action)){
+    const record=records().find(r=>r.id===id&&r.kind==="note"&&r.data.status!=="trashed"&&r.data.reminder);
+    if(!record)return;notePage.activate(context());
+    if(action==="note-reminder-edit")notePage.reminderDialog(id);
+    else await notePage.patch([id],d=>({reminder:action==="note-reminder-delete"?null:{...d.reminder,completed:!d.reminder.completed}}));
+    return;
+  }
   if (action === "task-add") { planner.dialog(null, { kind: "task", startDate: today() }); return; }
   if (action === "task-toggle") {
     const record = records().find(record => record.id === id && record.kind === "calendarEvent" && record.data.kind === "task");
@@ -1639,7 +1683,7 @@ async function onAction(event) {
     return;
   }
   if (action === "notifications-open") {
-    $("#notification-center").innerHTML = notificationsMarkup(context());
+    renderNotifications();
     $("#notification-center").showModal();
     return;
   }
@@ -1656,6 +1700,8 @@ async function onAction(event) {
       if (action === "notification-open") {
         $("#notification-center").close();
         location.hash = n.url.split("#")[1];
+        const record = records().find(record=>record.id===n.sourceId);
+        if (record && ["reminder","goal","installment"].includes(record.kind)) openEditor(record.kind,record.id);
       }
     }
     return;
@@ -1935,7 +1981,7 @@ async function onAction(event) {
   if (action === "demo") {
     if (!session.demoEnabled) return;
     await changeSpace("demo");
-    if (!records().length || state.demoVersion !== 4) {
+    if (!records().length || state.demoVersion !== DEMO_VERSION) {
       state = makeDemo();
       await persist();
       render();
@@ -1994,13 +2040,13 @@ document.addEventListener("submit", event => {
   if (event.target.id !== "transaction-filters") return;
   event.preventDefault();
   try {
-    transactionFilters = normalizeTransactionFilters(Object.fromEntries(new FormData(event.target)));
+    transactionFilters = normalizeTransactionFilters({ ...Object.fromEntries(new FormData(event.target)), sort: transactionFilters.sort });
     render();
   } catch (error) { event.target.querySelector(".transaction-filter-error").textContent = t(error.message); }
 });
 document.addEventListener("reset", event => {
   if (event.target.id !== "transaction-filters") return;
-  event.preventDefault(); transactionFilters = {}; render();
+  event.preventDefault(); transactionFilters = { sort: transactionFilters.sort }; render();
 });
 $("#editor-form").addEventListener("submit", submitEditor);
 $("#editor-form").addEventListener(
@@ -2021,20 +2067,18 @@ $("#editor-form").addEventListener("input", (event) => {
 });
 $("#cancel-button").onclick = () => $("#editor").close();
 $("#google-button").onclick = googleLogin;
-$("#sync-button").onclick = () =>
-  page === "market"
-    ? void loadMarket()
-    : page === "connected"
-      ? void connected.sync()
-      : space.startsWith("google:")
-        ? void sync()
-        : void loadMarket();
+$("#sync-button").onclick = () => void refreshWorkspace();
 $("#theme-button").onclick = () => {
   setTheme(effectiveTheme() === "dark" ? "light" : "dark");
   render();
 };
 
 document.addEventListener("change", (event) => {
+  if (event.target.id === "transaction-sort") {
+    transactionFilters = normalizeTransactionFilters({ ...transactionFilters, sort: event.target.value });
+    render(); return;
+  }
+
   if (event.target.name === "marketSymbol") {
     const instrument = marketInstruments.find(
         (i) => i.symbol === event.target.value,
@@ -2097,6 +2141,10 @@ document.addEventListener("change", (event) => {
   if (event.target.id === "type-filter") {
     typeFilter = event.target.value;
     render();
+  }
+  if(event.target.matches("[data-note-preference]")){
+    saveNoteSettings(space,{[event.target.dataset.notePreference]:event.target.type === "checkbox" ? event.target.checked : event.target.value});
+    notePage.reloadSettings();render();
   }
   if (event.target.id === "language-setting")
     void changeLanguage(event.target.value);
@@ -2237,7 +2285,7 @@ async function boot() {
       session = await response.json();
     } catch {
       // A cached identifier is not a verified session on a shared browser.
-      session = { authenticated:false, googleConfigured:false, demoEnabled:false };
+      session = { authenticated:false, googleConfigured:false, demoEnabled:true };
     }
     setAccountScope(session);
     localStorage.removeItem("damedast-last-user");
@@ -2252,7 +2300,7 @@ async function boot() {
     state = await loadSpace(space);
     if (
       space === "demo" &&
-      (!materialize(state).length || state.demoVersion !== 4)
+      (!materialize(state).length || state.demoVersion !== DEMO_VERSION)
     ) {
       state = makeDemo();
       await persist();
@@ -2467,9 +2515,17 @@ function updateNotificationBell() {
       ? `<span class="notification-count">${report.unread > 99 ? "99+" : localizedNumber(report.unread)}</span>`
       : "");
   const dialog = $("#notification-center");
-  if (dialog?.open) dialog.innerHTML = notificationsMarkup(context());
-  else if (dialog && !dialog.innerHTML)
-    dialog.innerHTML = notificationsMarkup(context());
+  if (dialog?.open || (dialog && !dialog.innerHTML)) renderNotifications();
+}
+function renderNotifications() {
+  const dialog = $("#notification-center"), html = notificationsMarkup(context());
+  if (html === notificationsHtml && dialog.innerHTML) return;
+  const scroll = dialog.querySelector(".notification-list")?.scrollTop || 0;
+  const focused = dialog.contains(document.activeElement) ? { action: document.activeElement.dataset.action, key: document.activeElement.dataset.key } : null;
+  dialog.innerHTML = html; notificationsHtml = html;
+  const list = dialog.querySelector(".notification-list");
+  if (list) list.scrollTop = scroll;
+  if (focused) [...dialog.querySelectorAll("button")].find(button=>button.dataset.action===focused.action && button.dataset.key===focused.key)?.focus({preventScroll:true});
 }
 async function markNotificationsRead(notifications) {
   await withLock(async () => {
@@ -2708,16 +2764,13 @@ document.addEventListener("change", async (event) => {
   }
 });
 window.addEventListener("resize", () => {
+  if(ready)synchronizePageToolbar(page,t(sections[page][0]));
   if (ready && page === "workbench" && !desk.isInteracting) render();
 });
 document.addEventListener("click", (event) => {
   for (const detail of document.querySelectorAll(".setting-info[open]"))
     if (!detail.contains(event.target)) detail.open = false;
 });
-document.addEventListener("toggle", (event) => {
-  if (event.target.id === "workbench-settings" && event.target.isConnected)
-    workbenchSettingsOpen = event.target.open;
-}, true);
 
 function workspacePages() { return Object.entries(sections).map(([id, [label]]) => ({ id, title: t(label) })); }
 function refreshWorkspaceSearch() {

@@ -55,7 +55,7 @@ try {
   assert.equal(await attention.evaluate(el=>el.open),false);
   assert.equal(await attention.evaluate(el=>el.classList.contains('has-multiple')),true);
   const badge=page.locator('.dashboard-date');
-  assert.equal(await badge.getAttribute('datetime'),data.date);
+  assert.equal(await badge.locator('time').getAttribute('datetime'),data.date);
   assert.ok(!/[0-9۰-۹]{4}/.test(await badge.innerText()),'Date omits the year');
   assert.equal(await page.locator('.attention-summary time').count(),0);
   const badgeBox=await badge.boundingBox(), eyeBox=await page.locator('.amounts-toggle').boundingBox();
@@ -79,8 +79,13 @@ try {
   assert.equal(await page.locator('#workspace-search-input').evaluate(el=>el===document.activeElement),true);
   assert.equal(await page.locator('#navigation').isVisible(),true);
   await page.evaluate(()=>document.querySelectorAll('.nav-group').forEach(group=>group.open=true));
-  const colors=await page.locator('.nav-group-items .nav-item > svg').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).color));
-  assert.equal(new Set(colors).size,colors.length,'Every submenu has its own color');
+  const colors=[];
+  for(const group of await page.locator('.nav-group').all()) {
+    const groupColors=await group.locator('.nav-item > svg').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).color));
+    assert.equal(new Set(groupColors).size,1,'Submenus share their group color');
+    colors.push(groupColors[0]);
+  }
+  assert.equal(new Set(colors).size,4,'Each menu group has its own color');
   await screenshot(page,'menu-colors');
   await page.locator('#app-menu-close').click();
   await go(page,'overview');

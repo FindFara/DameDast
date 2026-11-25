@@ -1,5 +1,8 @@
-const CACHE = "damedast-shell-v58";
+const CACHE = "damedast-shell-v77";
 const SHELL = [
+  "/page-toolbar.js",
+  "/keep-preferences.js",
+  "/keep-notes.js", "/keep-view.js", "/keep-model.js", "/keep-notes.css", "/fonts/vazirmatn.woff2",
   "/desk-dog.js",
   "/desk-pet.js",
   "/desk-pet-renderer.js",
@@ -75,6 +78,8 @@ const SHELL = [
   "/organizer.js",
   "/organizer-ui.js",
   "/calendar.js",
+  "/date-picker.js",
+  "/date-picker.css",
   "/planning.js",
   "/planning-ui.js",
   "/suggestions-ui.js",

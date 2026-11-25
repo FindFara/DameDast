@@ -52,7 +52,7 @@ export function attentionReport(records, now = new Date()) {
   return { date, month, previous, increases, overdue, weekStart, weekEnd, payments: payments.sort((a, b) => a.dueDate.localeCompare(b.dueDate)) };
 }
 export function validateProductivity(kind, data, records, id) {
-  if (data.projectId && (!projectKinds.includes(kind) || !records.some(r => !r.deleted && r.kind === "project" && r.id === data.projectId))) throw Error("Choose an existing project.");
+  if (data.projectId && (!projectKinds.includes(kind) || !records.some(r => !r.deleted && r.data.status!=="trashed" && r.kind === "project" && r.id === data.projectId))) throw Error("Choose an existing project.");
   if (["project", "habit"].includes(kind) && (!data.name?.trim() || data.name.length > 80)) throw Error("Enter a valid title or name.");
   if (kind === "project" && (typeof data.description !== "string" || data.description.length > 4000)) throw Error("Enter a valid description.");
   if (kind === "bookmark") {

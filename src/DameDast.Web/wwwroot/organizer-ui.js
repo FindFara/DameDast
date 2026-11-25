@@ -54,9 +54,11 @@ function tasksPage(c) {
   return `<div class="notes-toolbar"><input id="search" type="search" value="${esc(c.filter)}" placeholder="${t("Search tasks")}" aria-label="${t("Search tasks")}"></div><div class="organizer-summary"><strong>${localizedNumber(entries.filter(task => !task.done).length)}</strong><span>${t("Open tasks")}</span></div><section class="panel task-list standalone-tasks">${entries.map(task => `<article class="standalone-task ${task.done ? "done" : ""}"><button type="button" role="checkbox" aria-checked="${!!task.done}" class="task-checkbox" aria-label="${title(c, task.title)}" data-action="${task.source === "noteTask" ? "todo-toggle" : "task-toggle"}" data-id="${task.record.id}" data-task-id="${task.id}" data-date="${task.occurrence || ""}">${task.done ? "✓" : ""}</button><button type="button" class="task-edit" data-planner-action="open" data-id="${task.record.id}" data-source="${task.source}" data-task-id="${task.id}" data-date="${task.occurrence || task.date}"><strong dir="auto">${title(c, task.title)}</strong>${task.date ? `<small>${solarText(task.date)}</small>` : ""}</button></article>`).join("") || `<div class="empty">${t("No tasks yet.")}</div>`}</section>`;
 }
 function reminderCards(c) {
+  const linked=c.records.filter(r=>!r.deleted&&r.kind==='note'&&r.data.status!=='trashed'&&r.data.reminder);
+  const linkedCards=linked.map(r=>{const d=r.data.reminder,next=nextReminder(d,c.now);return `<article class="panel personal-reminder ${d.completed?'completed':''}"><span class="badge">${t('Linked note')}</span><h2 dir="auto">${title(c,r.data.title||d.title)}</h2><div class="reminder-times">${d.times.map(time=>`<bdi dir="ltr">${esc(time)}</bdi>`).join('')}</div><p class="small-note">${esc(d.timeZone||'Asia/Tehran')}</p><p class="reminder-next">${next?`${t('Next')}: ${smallDate(next.dueAt)}`:t(d.completed?'Completed':'No upcoming occurrence in the next year.')}</p><div class="card-foot">${button('note-reminder-complete',d.completed?'Reactivate':'Complete',`data-id="${r.id}"`,'text-button')}<div class="row-actions">${button('note-reminder-edit','Edit',`data-id="${r.id}"`,'text-button')}${button('note-reminder-delete','Delete',`data-id="${r.id}"`,'text-button')}</div></div></article>`;}).join('');
   return `<div class="cards-grid">${
     c.records
-      .filter((r) => r.kind === "reminder")
+      .filter((r) => !r.deleted && r.kind === "reminder")
       .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned))
       .map((r) => {
         const d = r.data,
@@ -65,11 +67,11 @@ function reminderCards(c) {
             d.repeat === "once"
               ? t("Once")
               : `${t("Every")} ${localizedNumber(d.interval)} ${t({ daily: "day(s)", weekly: "week(s)", monthly: "Persian month(s)" }[d.repeat])}`;
-        return `<article class="panel personal-reminder ${d.completed ? "completed" : ""}"><div class="card-heading">${badge(d.completed ? "Completed" : d.pinned ? "Pinned" : repeat)}${pinnedButton(r)}</div><h2 dir="auto">${title(c, d.title)}</h2>${d.body ? `<p dir="auto" class="small-note">${title(c, d.body)}</p>` : ""}<div class="reminder-times">${d.times.map((time) => `<bdi dir="ltr">${esc(time)}</bdi>`).join("")}</div><p class="small-note">${repeat}${d.maxOccurrences ? " · " + localizedNumber(d.maxOccurrences) + " " + t("occurrences") : ""}</p><p class="reminder-next">${next ? `${t("Next")}: ${smallDate(next.dueAt)}` : t(d.completed ? "Completed" : "No upcoming occurrence in the next year.")}</p><div class="card-foot">${button("reminder-complete", d.completed ? "Reactivate" : "Complete", `data-id="${r.id}"`, "text-button")}<div class="row-actions">${button("edit", "Edit", `data-id="${r.id}"`, "text-button")}${button("delete", "Delete", `data-id="${r.id}"`, "text-button")}</div></div></article>`;
+        return `<article class="panel personal-reminder ${d.completed ? "completed" : ""}"><div class="card-heading">${badge(d.completed ? "Completed" : d.pinned ? "Pinned" : repeat)}${pinnedButton(r)}</div><h2 dir="auto">${title(c, d.title)}</h2>${d.body ? `<p dir="auto" class="small-note">${title(c, d.body)}</p>` : ""}<div class="reminder-times">${d.times.map((time) => `<bdi dir="ltr">${esc(time)}</bdi>`).join("")}</div><p class="small-note">${repeat} · ${esc(d.timeZone||"Asia/Tehran")}${d.maxOccurrences ? " · " + localizedNumber(d.maxOccurrences) + " " + t("occurrences") : ""}</p><p class="reminder-next">${next ? `${t("Next")}: ${smallDate(next.dueAt)}` : t(d.completed ? "Completed" : "No upcoming occurrence in the next year.")}</p><div class="card-foot">${button("reminder-complete", d.completed ? "Reactivate" : "Complete", `data-id="${r.id}"`, "text-button")}<div class="row-actions">${button("edit", "Edit", `data-id="${r.id}"`, "text-button")}${button("delete", "Delete", `data-id="${r.id}"`, "text-button")}</div></div></article>`;
       })
       .join("") ||
-    `<section class="panel empty">${t("No personal reminders yet.")}${button("add", "New reminder", 'data-kind="reminder"', "primary")}</section>`
-  }</div><p class="small-note">${t("Reminder times use Tehran time. Push reminders need your .NET server and notification permission.")}</p>`;
+    (linkedCards?"":`<section class="panel empty">${t("No personal reminders yet.")}${button("add", "New reminder", 'data-kind="reminder"', "primary")}</section>`)
+  }${linkedCards}</div><p class="small-note">${t("Each reminder follows its displayed time zone. Push reminders need your .NET server and notification permission.")}</p>`;
 }
 export function organizerTab(page) {
   return page === "goals"
@@ -102,17 +104,21 @@ export function pinnedPanel(c) {
     .join("")}</div></section>`;
 }
 export function notificationsMarkup(c) {
-  const report = organizerReport(c.records, c.now);
-  return `<div class="dialog-heading"><h2>${t("Notifications")} <span class="badge">${localizedNumber(report.unread)}</span></h2><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">×</button></div><div class="notification-toolbar">${button("notifications-read-all", "Mark all read", "", "text-button")}</div><div class="notification-list">${
-    report.notifications
-      .slice(0, 100)
-      .map(
-        (n) =>
-          `<article class="notification-item ${n.read ? "read" : "unread"}"><span class="notification-dot"></span><button type="button" class="notification-content" data-action="notification-open" data-key="${esc(notificationKey(n))}"><strong dir="auto">${title(c, n.title)}</strong><small>${t(n.kind === "reminder" ? "Reminders" : n.kind === "goal" ? "Savings goals" : "Installments")} · ${smallDate(n.dueAt)}</small></button>${n.read ? "" : button("notification-read", "Mark read", `data-key="${esc(notificationKey(n))}"`, "text-button")}</article>`,
-      )
-      .join("") || `<div class="empty">${t("You are all caught up.")}</div>`
-  }</div>`;
+  const report = organizerReport(c.records, c.now), unreadOnly = c.notificationFilter !== "all";
+  const visible = report.notifications.filter(n => !unreadOnly || !n.read).slice(0,100);
+  const groups = [["reminder","Reminders","Review reminder"],["installment","Installments","Review payment"],["goal","Savings goals","Review goal"]];
+  return `<div class="dialog-heading"><div><small class="notification-eyebrow">${t("Your assistant")}</small><h2>${t("Notifications")} <span class="badge">${localizedNumber(report.unread)}</span></h2></div><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">×</button></div>
+    <div class="notification-toolbar"><div class="segment-control" aria-label="${t("Notifications")}">${[["unread","Unread"],["all","All"]].map(([value,label])=>`<button type="button" data-action="notifications-filter" data-filter="${value}" aria-pressed="${(value==='unread')===unreadOnly}" class="${(value==='unread')===unreadOnly?'active':''}">${t(label)}</button>`).join("")}</div><button type="button" class="text-button" data-action="notifications-refresh" ${c.refreshInProgress?'disabled':''}>${t(c.refreshInProgress?"Refreshing…":"Refresh")}</button><button type="button" class="text-button" data-action="notifications-read-all" ${report.unread?'':'disabled'}>${t("Mark all read")}</button></div>
+    <div class="notification-list">${groups.map(([kind,label,action])=>{
+      const items=visible.filter(n=>n.kind===kind||(kind==='reminder'&&n.kind==='note')); if(!items.length)return "";
+      return `<section class="notification-group notification-${kind}"><header><span class="notification-group-icon">${notificationGlyph(kind)}</span><h3>${t(label)}</h3><span class="badge">${localizedNumber(items.length)}</span></header>${items.map(n=>`<article class="notification-card ${n.read?'read':'unread'}"><div class="notification-card-heading"><strong dir="auto">${title(c,n.title)}</strong><span class="notification-state">${t(n.read?'Read':'Unread')}</span></div><p>${t(kind==='reminder'?'A reminder for you.':kind==='installment'?'A payment needs your attention.':'Review your goal progress.')}</p><time datetime="${esc(n.dueAt)}">${smallDate(n.dueAt)}</time><div class="notification-card-actions">${button("notification-open",action,`data-key="${esc(notificationKey(n))}"`,"secondary")}${n.read?'':button("notification-read","Mark read",`data-key="${esc(notificationKey(n))}"`,"text-button")}</div></article>`).join("")}</section>`;
+    }).join("") || `<div class="notification-empty">${notificationGlyph('reminder')}<h3>${t("You are all caught up.")}</h3><p>${t(unreadOnly?"New reminders and payments will appear here.":"There are no notifications yet.")}</p></div>`}</div>`;
 }
+function notificationGlyph(kind) {
+  const paths = { reminder:'<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5Zm5 3h4"/>', installment:'<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 10h18M7 3v4m10-4v4M7 14h4"/>', goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m12 12 8-8"/>' };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[kind]}</svg>`;
+}
+
 const input = (label, name, value = "", attributes = "") =>
   `<label class="field">${t(label)}<input name="${name}" value="${esc(value)}" ${attributes}></label>`;
 export function organizerEditorFields(kind, d) {

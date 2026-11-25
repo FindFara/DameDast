@@ -34,6 +34,17 @@ test('pins keep their order without a count limit and filter duplicate or unavai
   assert.deepEqual(pins,['notes','transactions','accounts']);
   assert.deepEqual(validPins(['notes','notes','unknown','calendar','transactions','accounts'],['notes','calendar','transactions','accounts']),['notes','calendar','transactions','accounts']);
 });
+test('transaction sorting supports both amount directions and both date directions with date tie breakers',()=>{
+ const row=(id,amount,date)=>({id,kind:'transaction',data:{amount,date,type:'expense'}});
+ const records=[row('a',200,'2026-11-01'),row('b',100,'2026-11-02'),row('c',200,'2026-11-03')];
+ const sorted=sort=>filterTransactions(records,normalizeTransactionFilters({sort})).map(r=>r.id);
+ assert.deepEqual(sorted('amount-desc'),['c','a','b']);
+ assert.deepEqual(sorted('amount-asc'),['b','c','a']);
+ assert.deepEqual(sorted('date-asc'),['a','b','c']);
+ assert.deepEqual(sorted('date-desc'),['c','b','a']);
+ assert.deepEqual(sorted('unknown'),['c','b','a']);
+ assert.deepEqual(records.map(r=>r.id),['a','b','c']);
+});
 test('option search matches Persian and Arabic year digits and equivalent Persian letters',()=>{
   const options=[{text:'۱۴۰۵'},{text:'۱۴۰۶'},{text:'علي',hidden:false},{text:'hidden',hidden:true}];
   assert.deepEqual(filterOptions(options,'1405').map(x=>x.text),['۱۴۰۵']);

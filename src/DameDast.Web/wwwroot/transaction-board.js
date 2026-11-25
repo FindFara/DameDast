@@ -4,6 +4,7 @@ import { plainNumeric } from "./number-inputs.js";
 
 export function normalizeTransactionFilters(values = {}) {
   const filters = Object.fromEntries(["search", "type", "group", "minAmount", "maxAmount", "dateFrom", "dateTo"].map(key => [key, String(values[key] || "").trim()]));
+  filters.sort = ["date-desc", "date-asc", "amount-desc", "amount-asc"].includes(values.sort) ? values.sort : "date-desc";
   for (const field of ["minAmount", "maxAmount"]) if (filters[field]) {
     filters[field] = plainNumeric(filters[field]);
     if (!/^\d+(?:\.\d+)?$/.test(filters[field]) || !Number.isFinite(Number(filters[field]))) throw Error("Enter a valid amount range.");
@@ -19,7 +20,12 @@ export function filterTransactions(records, filters = {}, searchText = record =>
       && (!filters.minAmount || data.amount >= Number(filters.minAmount)) && (!filters.maxAmount || data.amount <= Number(filters.maxAmount))
       && (!filters.dateFrom || data.date >= filters.dateFrom) && (!filters.dateTo || data.date <= filters.dateTo))
     .filter(record => !query || searchText(record).toLowerCase().includes(query))
-    .sort((a,b)=>b.data.date.localeCompare(a.data.date));
+    .sort((a,b)=> {
+      const byDate = b.data.date.localeCompare(a.data.date);
+      if (filters.sort === "amount-desc") return b.data.amount - a.data.amount || byDate;
+      if (filters.sort === "amount-asc") return a.data.amount - b.data.amount || byDate;
+      return filters.sort === "date-asc" ? -byDate : byDate;
+    });
 }
 export function transactionBoard(c, records, {icon, categoryTitle, accountName, dataText}) {
   return `<div class="transaction-board" role="region" aria-label="${t("Transactions")}"><ul class="transaction-rows transaction-all-rows">${records.map(record=>{

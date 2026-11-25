@@ -1,11 +1,13 @@
 import { locale } from "./i18n.js";
 import { paymentEffect } from "./installment-payment.js";
+import { shiftDay, weekday } from "./planner.js";
 import {
   addSolarMonths,
   solarText,
   monthOf,
   dateInMonth,
   shiftMonth,
+  jalaliParts,
 } from "./calendar.js";
 export const categories = [
   "Food & drinks",
@@ -117,6 +119,7 @@ export function totals(transactions) {
       .reduce((s, t) => s + t.data.amount, 0),
   };
 }
+export const DEMO_VERSION = 5;
 export function makeDemo() {
   const accounts = [
     {
@@ -157,7 +160,7 @@ export function makeDemo() {
     data,
   });
   const base = today();
-  const day = Number(base.slice(-2));
+  const day = jalaliParts(base).day;
   const tx = (amount, category, type, note, offset = 0) =>
     record("transaction", {
       accountId: accounts[0].id,
@@ -165,8 +168,7 @@ export function makeDemo() {
       type,
       amount,
       category,
-      date:
-        base.slice(0, 8) + String(Math.max(1, day - offset)).padStart(2, "0"),
+      date: dateInMonth(monthOf(base), Math.max(1, day - offset)),
       note,
     });
   const records = [
@@ -244,11 +246,7 @@ export function makeDemo() {
       deadline: null,
     }),
   );
-  const after = (days) => {
-    const d = new Date(base + "T12:00:00");
-    d.setDate(d.getDate() + days);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
+  const after = days => shiftDay(base, days);
   for (let i = 0; i < 6; i++)
     records.push(
       record("installment", {
@@ -421,48 +419,42 @@ export function makeDemo() {
       valuations: [],
     }),
   );
-  const element = (
-    type,
-    x,
-    y,
-    width,
-    height,
-    color = "#24785e",
-    text = null,
-  ) => ({
-    id: crypto.randomUUID(),
-    type,
-    x,
-    y,
-    width,
-    height,
-    color,
-    strokeWidth: 3,
-    ...(text ? { text } : {}),
+  addProductivitySamples(records, record, base, after);
+  return { demoVersion: DEMO_VERSION, snapshot: { revision: 0, records }, pending: [] };
+}
+
+function addProductivitySamples(records, record, base, after) {
+  const project = record("project", { name: "توسعهٔ دم‌دست", description: "برنامه‌ریزی نسخهٔ بعدی، یادداشت‌ها و هزینه‌های پروژه در یک جا." });
+  const trip = record("project", { name: "سفر آخر هفته", description: "برنامهٔ یک سفر کوتاه و مدیریت هزینه‌ها." });
+  const learning = record("habit", { name: "مطالعهٔ روزانه", weeklyTarget: 5, color: "#367c61", startDate: after(-14) });
+  const gym = record("habit", { name: "باشگاه", weeklyTarget: 3, color: "#829bc9", startDate: after(-14) });
+  const task = (title, offset, done = false) => record("calendarEvent", {
+    title, description: "این مورد برای آزمایش برنامه است.", startDate: after(offset), endDate: after(offset),
+    allDay: true, kind: "task", done, color: "#72ab95", repeat: "none", repeatCalendar: "persian", completedDates: [], projectId: project.id,
   });
-  records.push(
-    record("note", {
-      title: "My investment map",
-      body: "",
-      pinned: false,
-      updatedOn: base,
-      checklist: [],
-      drawing: {
-        version: 1,
-        width: 1600,
-        height: 1000,
-        elements: [
-          element("rectangle", 180, 220, 340, 200),
-          element("rectangle", 850, 220, 400, 200),
-          element("text", 230, 310, 0, 0, "#203b35", "Save with a purpose"),
-          element("text", 920, 310, 0, 0, "#203b35", "Invest in small steps"),
-          element("arrow", 550, 310, 260, 0),
-          element("ellipse", 520, 590, 500, 220, "#3d6db5"),
-          element("text", 610, 690, 0, 0, "#3d6db5", "Review each month"),
-          element("arrow", 1050, 460, -190, 100, "#3d6db5"),
-        ],
-      },
+  const nextWeek = 7 - ((weekday(base) + 1) % 7);
+  records.push(project, trip, learning, gym,
+    task("بررسی رابط کاربری موبایل", -2), task("تکمیل صفحهٔ پروژه‌ها", 1), task("بررسی بکاپ‌ها", 0, true),
+    record("calendarEvent", {
+      title: "مرور هفتگی پروژه", description: "مرور تسک‌ها و برنامهٔ هفتهٔ بعد", startDate: after(1), endDate: after(1),
+      allDay: false, startTime: "18:00", endTime: "19:00", kind: "event", done: false, color: "#829bc9",
+      repeat: "none", repeatCalendar: "persian", completedDates: [], projectId: project.id,
     }),
+    record("installment", { title: "قسط آزمایشی هفتهٔ بعد", amount: 1800000, dueDate: after(nextWeek + 2), paid: false, reminderDays: 3 }),
+    record("note", {
+      title: "برنامهٔ نسخهٔ بعدی", body: "## کارهای این هفته\n- [x] طراحی صفحهٔ پروژه‌ها\n- [ ] بررسی نسخهٔ موبایل\n\n> هر روز یک قدم کوچک\n\n:::toggle ایده‌ها\nمرتب‌سازی منوها و ساده‌تر کردن داشبورد\n:::",
+      updatedOn: base, pinned: true, projectId: project.id,
+    }),
+    record("note", { title: "فهرست وسایل سفر", body: "## وسایل ضروری\n- [ ] شارژر و پاوربانک\n- [ ] کتاب\n- [x] رزرو اقامتگاه", updatedOn: base, pinned: false, projectId: trip.id }),
+    record("bookmark", { title: "مستندات ASP.NET Core", url: "https://learn.microsoft.com/aspnet/core/", excerpt: "مرجع ساخت API و برنامه‌های وب با دات‌نت.", tags: ["دات‌نت", "Read later"], projectId: project.id }),
+    record("bookmark", { title: "راهنمای React", url: "https://react.dev/learn", excerpt: "ساخت رابط کاربری با کامپوننت‌های قابل استفادهٔ مجدد.", tags: ["برنامه‌نویسی"] }),
   );
-  return { demoVersion: 4, snapshot: { revision: 0, records }, pending: [] };
+  for (const offset of [-6, -4, -2, 0])
+    records.push(record("habitLog", { habitId: learning.id, date: after(offset), done: true }));
+  for (const offset of [-5, -2])
+    records.push(record("habitLog", { habitId: gym.id, date: after(offset), done: true }));
+  const goal = records.find(row => row.kind === "goal");
+  if (goal) goal.data.projectId = trip.id;
+  const expense = records.find(row => row.kind === "transaction" && row.data.category === "Shopping");
+  if (expense) expense.data.projectId = trip.id;
 }

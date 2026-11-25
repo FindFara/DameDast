@@ -249,3 +249,57 @@ html[dir="rtl"] select {
 @media (max-width: 599px) {
   .shell-tools { inset-inline-start: 14px; inset-block-start: 14px; }
 }
+
+.mobile-page-header { display:contents; }
+.mobile-page-context { display:none; }
+@media(max-width:680px){
+ .mobile-page-header{position:fixed;inset-block-start:12px;inset-inline:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;z-index:65;pointer-events:none}
+ .mobile-page-context{display:flex;flex:1;min-width:0;align-items:center;justify-content:space-between;gap:8px;pointer-events:auto}
+ #mobile-page-title{font-family:var(--font-body);font-size:18px;line-height:1.4;font-weight:700;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--app-background-ink,var(--ink))}
+ .mobile-page-header>.shell-tools{position:static;inset:auto;order:-1;flex:0 0 auto;pointer-events:auto;gap:3px;padding:4px}
+ .mobile-page-header .shell-tools #app-menu-button,.mobile-page-header .shell-tools>.icon-button{width:38px;min-width:38px;height:40px}
+ #page-toolbar-actions{flex:0 0 auto;min-width:0}
+ #page-toolbar-actions[hidden]{display:none}
+ #page-toolbar-actions .dashboard-controls{gap:5px;width:auto;max-width:none;margin:0;flex-wrap:nowrap}
+ #page-toolbar-actions .amounts-toggle{width:34px;min-width:34px;height:38px}
+ #page-toolbar-actions .dashboard-date{padding:7px;gap:4px;font-size:12px;min-height:38px;max-width:94px;overflow:hidden}
+ #page-toolbar-actions .dashboard-date time,#page-toolbar-actions .dashboard-date span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #page-toolbar-actions .dashboard-date svg{width:14px;min-width:14px;height:14px}
+ #view .page-heading>h1{display:none}
+ #view .overview-heading{display:none}
+ #view .page-heading:not(:has(.heading-actions>*)){display:none}
+}
+@media(max-width:360px){
+ .mobile-page-header{inset-inline:8px;gap:6px}
+ .mobile-page-context{gap:5px}
+ #mobile-page-title{font-size:14px;max-width:125px}
+ .mobile-page-header .shell-tools{gap:2px;padding:3px}
+ .mobile-page-header .shell-tools #app-menu-button,.mobile-page-header .shell-tools>.icon-button{width:32px;min-width:32px;height:38px}
+ #page-toolbar-actions .dashboard-controls{gap:3px}
+ #page-toolbar-actions .amounts-toggle{width:30px;min-width:30px}
+ #page-toolbar-actions .dashboard-date{font-size:11px;padding:6px;gap:3px;max-width:76px}
+}
+
+@media(max-width:680px){
+ .mobile-page-header{direction:rtl}
+ .mobile-page-context{direction:ltr}
+ #mobile-page-title{text-align:left;margin:0}
+ html[dir=rtl] #page-toolbar-actions{direction:rtl}
+}
+
+@media(max-width:680px){
+ #page-toolbar-actions{display:flex;align-items:center;gap:3px}
+ #page-toolbar-actions[hidden]{display:none}
+ #page-toolbar-actions>.heading-actions{display:flex;gap:0;flex-wrap:nowrap;width:auto}
+ .mobile-page-header #page-toolbar-actions>.icon-button,.mobile-page-header #page-toolbar-actions .keep-icon{width:36px;min-width:36px;height:40px;min-height:40px;padding:8px!important}
+ #view .page-toolbar-source,#view .page-toolbar-heading-empty{display:none!important}
+ #view .toolbar:has(>.page-toolbar-source):not(:has(>:not(.page-toolbar-source))){display:none}
+}
+.page-toolbar-popover{position:fixed;inset:auto;margin:0;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--ink);box-shadow:0 12px 40px #0003;max-height:calc(100dvh - 24px);overflow:auto;font-family:var(--font-body)}
+.page-toolbar-menu-command{display:flex;align-items:center;gap:12px;text-align:start;border:0;border-radius:10px;background:transparent;color:var(--ink);padding:10px 12px;width:100%;min-height:44px;font:inherit;font-size:13px;cursor:pointer}
+.page-toolbar-menu-command:hover,.page-toolbar-menu-command:focus-visible{background:var(--accent-soft);outline:2px solid var(--accent)}
+.page-toolbar-menu-command:disabled{opacity:.45;cursor:default}
+.page-toolbar-menu-command svg,.page-toolbar-command svg,.page-toolbar-overflow svg{width:20px;height:20px;flex-shrink:0}
+.page-toolbar-field{border-top:1px solid var(--border);margin-top:6px;padding:12px 6px}
+.page-toolbar-field .solar-month{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:360px){.mobile-page-header #page-toolbar-actions>.icon-button,.mobile-page-header #page-toolbar-actions .keep-icon{width:32px;min-width:32px;height:38px;min-height:38px}}

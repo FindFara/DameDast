@@ -27,6 +27,7 @@ const kinds = new Set([
   "receivable",
   "locked",
   "note",
+  "noteLabel",
   "reminder",
   "notificationRead",
   "category",
@@ -41,7 +42,7 @@ const kinds = new Set([
   "project", "bookmark", "habit", "habitLog",
 ]);
 export const backupSections = ["all", "notes", "finance"];
-const writingKinds = new Set(["note", "reminder", "calendarEvent", "notificationRead", "bookmark", "habit", "habitLog"]);
+const writingKinds = new Set(["note", "noteLabel", "reminder", "calendarEvent", "notificationRead", "bookmark", "habit", "habitLog"]);
 export function selectBackupRecords(records, section = "all") {
   if (!backupSections.includes(section)) throw Error("Invalid backup section.");
   return records.filter((r) => !r.deleted && (section === "all" || r.kind === "project" || (section === "notes" ? writingKinds.has(r.kind) : !writingKinds.has(r.kind) && r.kind !== "workbench")));

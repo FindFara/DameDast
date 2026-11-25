@@ -10,6 +10,7 @@ import {
 import { setLanguage } from "../src/DameDast.Web/wwwroot/i18n.js";
 import { instruments } from "../src/DameDast.Web/wwwroot/market-catalog.js";
 import { navigationGroups } from "../src/DameDast.Web/wwwroot/navigation.js";
+import { organizerReport } from "../src/DameDast.Web/wwwroot/organizer.js";
 const base = {
   page: "market",
   records: [],
@@ -30,6 +31,17 @@ const base = {
   marketLoading: false,
   marketHistoryLoading: false,
 };
+test("notification cards keep read occurrences in All and hide them from Unread", () => {
+  const reminder={id:'notice-source',kind:'reminder',data:{title:'Review the project',startDate:'2026-11-16',times:['09:00'],repeat:'once',interval:1}};
+  const occurrence=organizerReport([reminder],base.now).notifications[0];
+  const records=[reminder,{id:'read',kind:'notificationRead',data:occurrence}];
+  const unread=notificationsMarkup({...base,records,notificationFilter:'unread'});
+  const all=notificationsMarkup({...base,records,notificationFilter:'all'});
+  assert.doesNotMatch(unread,/notification-card read/);
+  assert.match(all,/notification-card read/);
+  assert.match(all,/Review the project/);
+  assert.match(all,/data-action="notification-open"/);
+});
 test("browser catalog matches the embedded .NET catalog; market search and categories constrain cards", () => {
   assert.deepEqual(
     instruments,

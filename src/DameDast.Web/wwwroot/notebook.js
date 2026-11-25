@@ -2,7 +2,7 @@ import { tehranParts } from "./organizer.js";
 import { nextCalendarOccurrence } from "./planner.js";
 
 export const isDrawingNote = record => record?.kind === "note" && !!(record.data.drawing || record.data.whiteboardId);
-export const textNotes = records => records.filter(record => !record.deleted && record.kind === "note" && !isDrawingNote(record));
+export const textNotes = records => records.filter(record => !record.deleted && record.kind === "note" && !["archived","trashed"].includes(record.data.status) && !isDrawingNote(record));
 export const plainNoteDraft = data => ({ title: typeof data?.title === "string" ? data.title : "", body: typeof data?.body === "string" ? data.body : "" });
 export const notePayload = (previous, draft, date) => ({ pinned: false, ...previous, ...plainNoteDraft(draft), title: plainNoteDraft(draft).title.trim(), updatedOn: date });
 
@@ -17,7 +17,7 @@ export function taskEntries(records, now = new Date()) {
         done: record.data.repeat === "none" ? record.data.done : !!record.data.completedDates?.includes(occurrence),
         source: "calendarEvent", occurrence }];
     }
-    if (record.kind === "note") return (record.data.checklist || []).map(item => ({
+    if (record.kind === "note" && record.data.status!=="trashed") return (record.data.checklist || []).map(item => ({
       record, item, id: item.id, title: item.text, date: item.dueDate || "", done: item.done, source: "noteTask",
     }));
     return [];

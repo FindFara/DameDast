@@ -1,0 +1,23 @@
+.solar-date .date-picker-trigger { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 11px; color: var(--ink); background: var(--surface); font: inherit; font-size: 15px; cursor: pointer; text-align: start; }
+.solar-date .date-picker-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.date-picker-dialog { width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 22px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 80px #0004; }
+.date-picker-dialog::backdrop { background: #071b1766; backdrop-filter: blur(5px); }
+.date-picker-dialog .dialog-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.date-picker-dialog h2 { font-size: 18px; margin: 0; }
+.date-picker-preview { text-align: center; margin: 16px 0 20px; color: var(--accent); font-size: 16px; font-weight: 600; }
+.date-wheels { display: grid; grid-template-columns: .8fr 1.2fr 1fr; gap: 10px; }
+.date-wheel { min-width: 0; text-align: center; }
+.date-wheel h3 { color: var(--muted); font-size: 14px; font-weight: 500; margin: 0 0 12px; }
+.date-wheel-track { display: grid; grid-template-rows: 38px 38px 50px 38px 38px; gap: 3px; touch-action: none; user-select: none; }
+.date-wheel-neighbor { border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 4px 0; font: inherit; font-size: 15px; min-width: 0; }
+.date-wheel-neighbor.distance-1 { opacity: .5; transform: scale(.9); }
+.date-wheel-neighbor.distance-2 { opacity: .24; transform: scale(.8); }
+.date-wheel .date-wheel-current { width: 100%; min-width: 0; margin: 0; padding: 6px 2px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 12px; background: var(--accent-soft); color: var(--ink); text-align: center; font: inherit; font-size: 18px; font-weight: 600; box-shadow: none; }
+.date-wheel-current:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.date-wheel-arrows { display: flex; justify-content: center; gap: 6px; padding-top: 10px; }
+.date-wheel-arrows button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: var(--surface-soft); font-size: 19px; cursor: pointer; }
+.date-picker-hint { text-align: center; color: var(--muted); font-size: 12px; margin: 18px 0 8px; }
+.date-picker-error { color: var(--negative); font-size: 13px; min-height: 20px; margin: 0; }
+.date-picker-dialog footer { display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.date-picker-dialog footer .primary { margin-inline-start: auto; }
+@media (max-width: 420px) { .date-picker-dialog { padding: 18px 14px; } .date-wheels { gap: 7px; } }

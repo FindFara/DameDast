@@ -66,6 +66,16 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Page actions":"ابزارهای این صفحه",
+  "Grid":"شبکه‌ای",
+  "List":"فهرستی",
+  "Each reminder follows its displayed time zone. Push reminders need your .NET server and notification permission.":"زمان هر یادآور بر اساس منطقهٔ زمانی همان یادآور است. اعلان پس‌زمینه به سرور دات‌نت و مجوز اعلان نیاز دارد.",
+  "Linked note":"یادداشت مرتبط",
+  "Notes settings":"تنظیمات یادداشت‌ها",
+  "Default notes view":"نمای پیش‌فرض یادداشت‌ها",
+  "Choose the initial layout for your notes.":"نمای نمایش یادداشت‌ها را انتخاب کنید.",
+  "Text link previews":"پیش‌نمایش متنی لینک‌ها",
+  "Show a compact text preview for links in notes.":"خلاصهٔ متنی لینک‌ها را در کارت یادداشت نشان بده.",
   "Sign in with Google": "ورود با گوگل",
   "My workspace": "فضای شخصی من",
   "Account": "حساب کاربری",
@@ -1341,4 +1351,19 @@ Object.assign(fa, {
   "items to review": "مورد نیاز به بررسی",
   "Everything is up to date.": "همه چیز مرتب است.",
   "Reschedule or complete your tasks": "موعد کارها را تغییر بده یا انجامشان بده",
+  "Includes notes, tasks, projects, habits, saved links and reminders.": "یادداشت‌ها، تسک‌ها، پروژه‌ها، عادت‌ها، لینک‌های ذخیره‌شده و یادآوری‌ها را شامل می‌شود.",
 });
+
+Object.assign(fa, {
+  "Select date": "انتخاب تاریخ", "Enter a valid date.": "تاریخ معتبر وارد کن.",
+  "Scroll to choose; click a value to type.": "با کشیدن یا اسکرول انتخاب کن؛ در دسکتاپ روی مقدار بزن و بنویس.",
+  "Newest first": "جدیدترین تاریخ", "Oldest first": "قدیمی‌ترین تاریخ", "Highest amount": "بیشترین مبلغ", "Lowest amount": "کمترین مبلغ", "Sort by": "مرتب‌سازی", "Filters": "فیلترها",
+  "Your assistant": "دستیار تو", "Unread": "خوانده‌نشده", "Read": "خوانده‌شده",
+  "Review reminder": "دیدن یادآوری", "Review payment": "بررسی پرداخت", "Review goal": "دیدن هدف",
+  "A reminder for you.": "یک یادآوری برای تو.", "A payment needs your attention.": "زمان بررسی این پرداخت رسیده.", "Review your goal progress.": "پیشرفت این هدف را مرور کن.",
+  "New reminders and payments will appear here.": "یادآوری‌ها و پرداخت‌های تازه اینجا نمایش داده می‌شوند.", "There are no notifications yet.": "هنوز اعلانی نداری.",
+  "Refreshing…": "در حال تازه‌سازی…", "Data and notifications refreshed.": "اطلاعات و اعلان‌ها به‌روز شدند.",
+  "Data refreshed. Live prices are unavailable.": "اطلاعات تازه شد؛ قیمت‌های زنده در دسترس نیستند.", "Offline. Showing saved data.": "آفلاین هستی؛ اطلاعات ذخیره‌شده نمایش داده می‌شود.",
+});
+
+Object.assign(fa, {"Clear":"پاک کردن"});
