@@ -255,6 +255,7 @@ const fa = {
   Type: "نوع",
   "Amount (toman)": "مبلغ (تومان)",
   "Account name": "نام حساب",
+  Balance: "موجودی حساب",
   "Opening balance": "موجودی اولیه",
   "Opening balance (toman)": "موجودی اولیه (تومان)",
   "Account color": "رنگ حساب",
