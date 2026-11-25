@@ -52,6 +52,12 @@ public sealed class FinanceRepository(IDbContextFactory<FinanceDb> factory, Time
                 continue;
             }
 
+            if (!change.Delete && change.Kind == "note")
+            {
+                var previous = records.SingleOrDefault(x => x.Id == change.Id);
+                NoteRules.ValidateTransition(previous is null ? null : FinanceRules.Read<PersonalNote>(previous.Data),
+                    FinanceRules.Read<PersonalNote>(change.Data), clock.UtcNow());
+            }
             foreach (var updated in FinanceRules.ApplyWithEffects(records, change))
             {
                 records.RemoveAll(x => x.Id == updated.Id);

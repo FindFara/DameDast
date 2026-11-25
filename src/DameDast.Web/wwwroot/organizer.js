@@ -10,26 +10,29 @@ const fmt = new Intl.DateTimeFormat("en-CA", {
   minute: "2-digit",
   hourCycle: "h23",
 });
-export function tehranParts(now = new Date()) {
+export function tehranParts(now = new Date(),timeZone="Asia/Tehran") {
   const p = Object.fromEntries(
-    fmt.formatToParts(new Date(now)).map((x) => [x.type, x.value]),
+    (timeZone==="Asia/Tehran"?fmt:new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"})).formatToParts(new Date(now)).map((x) => [x.type, x.value]),
   );
   return {
     date: `${p.year}-${p.month}-${p.day}`,
     time: `${p.hour}:${p.minute}`,
   };
 }
-export function tehranInstant(date, time) {
-  let utc = Date.parse(`${date}T${time}:00Z`);
-  const wanted = utc;
-  for (let i = 0; i < 3; i++) {
-    const p = tehranParts(utc),
-      shown = Date.parse(`${p.date}T${p.time}:00Z`);
-    const delta = wanted - shown;
-    if (!delta) break;
-    utc += delta;
+export function tehranInstant(date, time, timeZone="Asia/Tehran") {
+  const wanted=Date.parse(`${date}T${time}:00Z`);
+  const offsets=[...new Set([-36,0,36].map(hours=>{
+    const sample=wanted+hours*3600000,p=tehranParts(sample,timeZone);
+    return sample-Date.parse(`${p.date}T${p.time}:00Z`);
+  }))];
+  for(let minute=0;minute<=180;minute++){
+    const target=wanted+minute*minuteMs;
+    const matches=offsets.map(offset=>target+offset).filter(instant=>{
+      const p=tehranParts(instant,timeZone);return Date.parse(`${p.date}T${p.time}:00Z`)===target;
+    });
+    if(matches.length)return Math.max(...matches);
   }
-  return utc;
+  throw Error("Invalid reminder date, time or time zone.");
 }
 export function parseTimes(text) {
   const latin = String(text)
@@ -54,6 +57,7 @@ export function parseTimes(text) {
   return values.sort();
 }
 export function validateReminder(r) {
+  if(r.timeZone){try{new Intl.DateTimeFormat("en",{timeZone:r.timeZone}).format();}catch{throw Error("Invalid reminder time zone.");}}
   const max = r.repeat === "monthly" ? 12 : r.repeat === "weekly" ? 52 : 365;
   if (
     !r.title?.trim() ||
@@ -113,7 +117,7 @@ export function occurrencesOn(r, date) {
         : [
             {
               occurrence: `${date}T${time}`,
-              dueAt: new Date(tehranInstant(date, time)).toISOString(),
+              dueAt: new Date(tehranInstant(date, time,r.timeZone||"Asia/Tehran")).toISOString(),
             },
           ],
     );
@@ -121,7 +125,7 @@ export function occurrencesOn(r, date) {
 export function reminderOccurrences(r, now = new Date(), days = 7) {
   if (r.completed) return [];
   const current = new Date(now).getTime(),
-    today = tehranParts(current).date,
+    today = tehranParts(current,r.timeZone||"Asia/Tehran").date,
     result = [];
   for (let i = Math.max(1, Math.min(7, days)) - 1; i >= 0; i--)
     for (const o of occurrencesOn(r, dateShift(today, -i)))
@@ -131,7 +135,7 @@ export function reminderOccurrences(r, now = new Date(), days = 7) {
 export function nextReminder(r, now = new Date()) {
   if (r.completed) return null;
   const current = new Date(now).getTime(),
-    today = tehranParts(current).date;
+    today = tehranParts(current,r.timeZone||"Asia/Tehran").date;
   for (let i = 0; i <= 366; i++) {
     const next = occurrencesOn(r, dateShift(today, i)).find(
       (o) => Date.parse(o.dueAt) > current,
@@ -168,6 +172,8 @@ export function organizerReport(records, now = new Date()) {
     if (r.kind === "reminder") {
       for (const o of reminderOccurrences(d, now))
         add(r, o.occurrence, d.title, "reminder", "/#reminders", o.dueAt);
+    } else if(r.kind==="note" && d.status!=="trashed" && d.reminder){
+      for(const o of reminderOccurrences(d.reminder,now)) add(r,o.occurrence,d.title||d.reminder.title,"note",`/#note/${r.id}`,o.dueAt);
     } else if (
       r.kind === "installment" &&
       !d.paid &&
@@ -210,10 +216,10 @@ export function organizerReport(records, now = new Date()) {
       );
   }
   const pinned = active.filter(
-      (r) => ["note", "goal", "reminder"].includes(r.kind) && r.data.pinned,
+      (r) => ["note", "goal", "reminder"].includes(r.kind) && r.data.pinned && !["archived","trashed"].includes(r.data.status),
     ),
     tasks = active
-      .filter((r) => r.kind === "note")
+      .filter((r) => r.kind === "note" && r.data.status!=="trashed")
       .flatMap((r) =>
         (r.data.checklist || []).map((item) => ({ note: r, item })),
       );

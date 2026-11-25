@@ -48,16 +48,20 @@ export function installSelectSheet() {
   function update(select) {
     let button=triggers.get(select);
     if(!button || !button.isConnected) {
-      button=document.createElement("button");button.type="button";button.className="unified-select-trigger";
+      button=select.parentElement.querySelector('[data-select-trigger]');
+      if(!button) {
+        button=document.createElement("button");button.type="button";button.className="unified-select-trigger";
+        button.innerHTML='<span></span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>';
+        select.after(button);
+      }
       button.setAttribute("aria-haspopup","dialog");
-      button.innerHTML='<span></span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>';
-      select.after(button);triggers.set(select,button);
+      triggers.set(select,button);
       button.addEventListener("click",()=>open(select));
       select.classList.add("unified-native-select");select.tabIndex=-1;select.setAttribute("aria-hidden","true");
       select.addEventListener("invalid",event=>{event.preventDefault();open(select,select.validationMessage || t("Choose an option"));});
     }
     const text=select.selectedOptions[0]?.textContent || t("Choose an option");
-    if(button.firstElementChild.textContent!==text)button.firstElementChild.textContent=text;
+    if(!button.hasAttribute('data-select-trigger') && button.firstElementChild.textContent!==text)button.firstElementChild.textContent=text;
     const label=labelFor(select)+": "+text;
     if(button.getAttribute("aria-label")!==label)button.setAttribute("aria-label",label);
     if(button.disabled!==select.disabled)button.disabled=select.disabled;

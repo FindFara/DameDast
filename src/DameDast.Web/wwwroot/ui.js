@@ -163,7 +163,9 @@ const extraIcons = {
   income: '<path d="M18 5 6 17M6 7v10h10"/>',
   expense: '<path d="M6 17 18 5M8 5h10v10"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
   bell: '<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5Zm5 3h4"/>',
+  upload: '<path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/>',
   download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
   wallet:
     '<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M16 12h5m-4 4h1"/>',
@@ -219,12 +221,18 @@ const addNames = {
 export const addLabel = (kind) => t(addNames[kind] || "Add");
 export const monthText = monthLabel;
 const monthPicker = (month) => monthControl(month, "month", true);
+function dashboardMonthPicker(c, date) {
+  const current = c.month === monthOf(date);
+  const caption = current ? solarText(date, false) : monthText(c.month).replace(/\s+\S+$/, "");
+  const trigger = `<button type="button" class="dashboard-date" data-select-trigger title="${t("Month")}: ${monthText(c.month)}">${icon("calendar")}${current ? `<time datetime="${date}">${caption}</time>` : `<span>${caption}</span>`}</button>`;
+  return monthControl(c.month, "month", true, Number(monthOf(date).slice(0, 4)), trigger);
+}
 const empty = (text, kind) =>
   `<div class="empty"><span class="empty-mark">${icon(kind === "installment" ? "installments" : kind === "locked" ? "locked" : "wallet")}</span><p>${t(text)}</p>${kind ? actionButton("add", addNames[kind], `data-kind="${kind}"`) : ""}</div>`;
 function pageHeading(c, title, kind = null) {
   const overview = c.page === "overview", date = overview ? tehranParts(c.now).date : null;
   const controls = overview
-    ? `<div class="dashboard-controls">${monthPicker(c.month)}<button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button><time class="dashboard-date" datetime="${date}" aria-label="${t("Today")}">${icon("calendar")}<span>${solarText(date, false)}</span></time></div>`
+    ? `<div class="dashboard-controls"><button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>${dashboardMonthPicker(c, date)}</div>`
     : ["budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : "";
   return `<div class="page-heading${overview ? " overview-heading" : ""}"><h1>${t(title)}</h1><div class="heading-actions">${controls}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
 }
@@ -390,7 +398,9 @@ function transactions(c) {
   const list = filterTransactions(c.records, filters, r => `${r.data.note || ""} ${categoryTitle(c, r.data.category)} ${accountName(c, r.data.accountId)}`);
   const groups = [...new Set([...categoryList(c.records,categories).map(category=>category.id), ...kind(c,"transaction").map(record=>record.data.category).filter(Boolean)])];
   const amount = (label,name) => `<label class="field">${t(label)}<input name="${name}" inputmode="decimal" value="${esc(filters[name] || "")}" dir="ltr" placeholder="${t("No limit")}"></label>`;
-  return `${pageHeading(c, "Transactions", "transaction")}<form id="transaction-filters" class="transaction-filters"><label class="field">${t("Search transactions")}<input name="search" type="search" value="${esc(filters.search || "")}"></label><label class="field">${t("Group")}<select name="group"><option value="">${t("All groups")}</option>${groups.map(group=>`<option value="${esc(group)}" ${filters.group===group?"selected":""}>${esc(categoryTitle(c,group))}</option>`).join("")}<option value="__uncategorized" ${filters.group==="__uncategorized"?"selected":""}>${t("Uncategorized")}</option></select></label><label class="field">${t("Type")}<select name="type"><option value="">${t("All types")}</option>${["expense","income","transfer"].map(type=>`<option value="${type}" ${filters.type===type?"selected":""}>${t({expense:"Expense",income:"Income",transfer:"Transfer"}[type])}</option>`).join("")}</select></label>${amount("Minimum amount", "minAmount")}${amount("Maximum amount", "maxAmount")}${dateControl("From date","dateFrom",filters.dateFrom || "")}${dateControl("To date","dateTo",filters.dateTo || "")}<div class="transaction-filter-actions"><button type="submit" class="primary">${t("Apply filters")}</button><button type="reset" class="secondary">${t("Clear filters")}</button>${actionButton("csv", "Export CSV")}</div><p class="transaction-filter-error" role="alert"></p></form>${panel("Transactions", list.length ? transactionBoard(c,list,{icon,categoryTitle,accountName,dataText}) : empty("No transactions","transaction"), `<span class="badge">${money(list.length)}</span>`)}`;
+  const sortOptions = [["date-desc", "Newest first"], ["date-asc", "Oldest first"], ["amount-desc", "Highest amount"], ["amount-asc", "Lowest amount"]];
+  const activeCount = Object.entries(filters).filter(([key,value])=>key!=="sort" && value).length;
+  return `${pageHeading(c, "Transactions", "transaction")}<div class="transaction-tools"><button type="button" class="secondary" data-action="transaction-filters-toggle" aria-expanded="${!!c.transactionFiltersOpen}" aria-controls="transaction-filters">${icon("filter")}${t("Filters")}${activeCount ? `<span class="badge">${money(activeCount)}</span>` : ""}</button><label class="transaction-sort"><span>${t("Sort by")}</span><select id="transaction-sort" aria-label="${t("Sort by")}">${sortOptions.map(([value,label])=>`<option value="${value}" ${(filters.sort || "date-desc")===value?"selected":""}>${t(label)}</option>`).join("")}</select></label>${actionButton("csv", "Export CSV")}</div><form id="transaction-filters" class="transaction-filters" ${c.transactionFiltersOpen ? "" : "hidden"}><label class="field">${t("Search transactions")}<input name="search" type="search" value="${esc(filters.search || "")}"></label><label class="field">${t("Group")}<select name="group"><option value="">${t("All groups")}</option>${groups.map(group=>`<option value="${esc(group)}" ${filters.group===group?"selected":""}>${esc(categoryTitle(c,group))}</option>`).join("")}<option value="__uncategorized" ${filters.group==="__uncategorized"?"selected":""}>${t("Uncategorized")}</option></select></label><label class="field">${t("Type")}<select name="type"><option value="">${t("All types")}</option>${["expense","income","transfer"].map(type=>`<option value="${type}" ${filters.type===type?"selected":""}>${t({expense:"Expense",income:"Income",transfer:"Transfer"}[type])}</option>`).join("")}</select></label>${amount("Minimum amount", "minAmount")}${amount("Maximum amount", "maxAmount")}${dateControl("From date","dateFrom",filters.dateFrom || "")}${dateControl("To date","dateTo",filters.dateTo || "")}<div class="transaction-filter-actions"><button type="submit" class="primary">${t("Apply filters")}</button><button type="reset" class="secondary">${t("Clear filters")}</button></div><p class="transaction-filter-error" role="alert"></p></form>${panel("Transactions", list.length ? transactionBoard(c,list,{icon,categoryTitle,accountName,dataText}) : empty("No transactions","transaction"), `<span class="badge">${money(list.length)}</span>`)}`;
 }
 
 function accounts(c) {

@@ -35,7 +35,7 @@ public static class OrganizerRules
         {
             var receipt = FinanceRules.Read<NotificationRead>(change.Data);
             var source = records.FirstOrDefault(x => x.Id == receipt.SourceId);
-            if (source is null || source.Kind is not ("reminder" or "installment" or "externalSnapshot" or "goal")
+            if (source is null || source.Kind is not ("reminder" or "installment" or "externalSnapshot" or "goal" or "note")
                 || !DateTime.TryParseExact(receipt.Occurrence, "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out _)
                 || receipt.ItemKey is { Length: > 128 }
@@ -48,6 +48,9 @@ public static class OrganizerRules
 
     public static void Validate(PersonalReminder reminder)
     {
+        try { _ = TimeZoneInfo.FindSystemTimeZoneById(reminder.TimeZone); }
+        catch (Exception error) when (error is TimeZoneNotFoundException or InvalidTimeZoneException or ArgumentException)
+        { throw new FinanceException("Invalid reminder time zone."); }
         var maxInterval = reminder.Repeat switch { "weekly" => 52, "monthly" => 12, _ => 365 };
         if (string.IsNullOrWhiteSpace(reminder.Title) || reminder.Title.Length > 80 || reminder.Title != reminder.Title.Trim()
             || reminder.Body is null || reminder.Body.Length > 4000
@@ -66,7 +69,7 @@ public static class OrganizerRules
     public static IReadOnlyList<ReminderOccurrence> DueOccurrences(PersonalReminder reminder, DateTimeOffset now, int days = 7)
     {
         if (reminder.Completed) return [];
-        var today = DateOnly.FromDateTime(Time.ToTehran(now).DateTime);
+        var today = DateOnly.FromDateTime(Time.InTimeZone(now, reminder.TimeZone).DateTime);
         var first = today.AddDays(-Math.Clamp(days, 1, 7) + 1);
         var result = new List<ReminderOccurrence>();
         for (var date = first; date <= today; date = date.AddDays(1))
@@ -77,7 +80,7 @@ public static class OrganizerRules
             for (var index = 0; index < times.Length; index++)
             {
                 if (reminder.MaxOccurrences is { } limit && sequence.Value * times.Length + index >= limit) continue;
-                var due = Time.TehranAt(date, TimeOnly.ParseExact(times[index], "HH:mm", CultureInfo.InvariantCulture));
+                var due = Time.At(date, TimeOnly.ParseExact(times[index], "HH:mm", CultureInfo.InvariantCulture), reminder.TimeZone);
                 if (due > now) continue;
                 result.Add(new($"{date:yyyy-MM-dd}T{times[index]}", due));
             }

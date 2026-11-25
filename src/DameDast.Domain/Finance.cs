@@ -20,6 +20,14 @@ public static class FinanceRules
         if (change.Kind == "habit" && change.Delete)
             foreach (var log in records.Where(r => !r.Deleted && r.Kind == "habitLog" && Read<HabitLog>(r.Data).HabitId == change.Id))
                 updated.Add(Apply(records, new Mutation(change.OperationId, log.Id, log.Kind, log.Version, true, default)));
+        if (change.Kind == "noteLabel" && change.Delete)
+            foreach (var record in records.Where(r => !r.Deleted && r.Kind == "note"))
+            {
+                var note = Read<PersonalNote>(record.Data);
+                if (note.Labels?.Contains(change.Id) != true) continue;
+                var payload = JsonSerializer.SerializeToElement(note with { Labels = note.Labels.Where(id => id != change.Id).ToArray() }, Json);
+                updated.Add(Apply(records, new Mutation(change.OperationId, record.Id, record.Kind, record.Version, false, payload)));
+            }
         return updated;
     }
     public static FinanceRecord Apply(IReadOnlyList<FinanceRecord> records, Mutation change, bool paymentEffect = false)

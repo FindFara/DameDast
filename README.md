@@ -1,10 +1,12 @@
 # DameDast · دمِ دست
 
-New: an actionable attention card, global search, account-linked installment payments, project workspaces, weekly habits, slash commands, notes with pinnable tabs, and article clipping in the existing extension. Canvas has been retired, removing its 22 MB bundle and collaboration runtime. Historical canvas records remain exportable for backup compatibility. [Feature guide (Persian)](docs/PRODUCTIVITY-fa.md).
+New: an actionable attention card, global search, account-linked installment payments, project workspaces, weekly habits, autosaving card-based notes with labels, archive, trash, rich text and persistent history, and article clipping in the existing extension. Canvas has been retired, removing its 22 MB bundle and collaboration runtime. Historical canvas records remain exportable for backup compatibility. [Feature guide (Persian)](docs/PRODUCTIVITY-fa.md).
 
 Complete source: ASP.NET Core 10 backend, current web/PWA frontend, browser extension, tests and Docker deployment.
 
 [راهنمای فارسی](README-fa.md)
+
+Notes now use a bilingual, keyboard-accessible card workspace with a recoverable composer, checklist editing, scoped drafts and real server reminder integration. See [notes implementation and limits (Persian)](docs/NOTES-fa.md).
 
 Latest frontend: project workspaces and independent writing and planning sections, a redesigned workbench with explicit device visibility settings, compact radial + menu and separate notes/finance/full backups. Historical attachment bytes remain preserved in backup compatibility; there is no attachment interface.
 

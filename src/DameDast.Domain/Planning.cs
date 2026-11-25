@@ -34,9 +34,12 @@ public static class PlanningRules
                 if (FinanceRules.Categories.Concat(["Investment", "Savings"]).Contains(category.Name, StringComparer.OrdinalIgnoreCase) || records.Where(r => r.Kind == "category" && !r.Deleted && r.Id != change.Id).Any(r => FinanceRules.Read<FinanceCategory>(r.Data).Name.Equals(category.Name, StringComparison.OrdinalIgnoreCase)))
                     throw new FinanceException("This category name already exists.");
                 break;
+            case "noteLabel":
+                NoteRules.ValidateLabel(records, change);
+                break;
             case "note":
                 var note = FinanceRules.Read<PersonalNote>(change.Data);
-                Text(note.Title, 80);
+                NoteRules.Validate(note);
                 if (note.Body is null || note.Body.Length > 4000)
                     throw new FinanceException("Notes must not exceed 4000 characters.");
                 Date(note.UpdatedOn);

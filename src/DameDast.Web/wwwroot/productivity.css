@@ -45,17 +45,24 @@
 .nav-link-row .nav-item.active { border-color: color-mix(in srgb, var(--nav-color) 24%, var(--border)); }
 .nav-link-row .nav-item.active:after { background: var(--nav-tone); }
 .nav-link-row .nav-pin:hover,.nav-link-row .nav-pin.is-pinned { color: var(--nav-tone); background: color-mix(in srgb, var(--nav-color) 12%, transparent); }
+.nav-group > summary, .nav-group > summary.has-active { color: color-mix(in srgb, var(--nav-color) 68%, var(--ink)); }
 
 /* One compact set of reporting controls and a year-free date. */
 .overview-heading { flex-wrap: wrap; }
 .overview-heading .heading-actions { margin-inline-start: auto; }
-.dashboard-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dashboard-controls { display: flex; align-items: center; gap: 8px; width: max-content; }
 .dashboard-date { display: inline-flex; align-items: center; gap: 7px; min-height: 39px; padding: 8px 11px; border-radius: 11px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; white-space: nowrap; }
 .dashboard-date svg { width: 16px; height: 16px; }
-html[dir="ltr"] .dashboard-date { order: -1; }
+html[dir="ltr"] .dashboard-controls .solar-month { order: -1; }
 .dashboard-controls .amounts-toggle { width: 38px; height: 39px; }
-.dashboard-controls .solar-month { gap: 6px; }
-.dashboard-controls .unified-select-trigger { min-height: 39px; font-size: 13px; padding-inline: 10px; }
+.dashboard-controls .solar-month { display: flex; gap: 0; width: max-content; min-width: 0; }
+.dashboard-date { justify-content: center; font: inherit; font-size: 14px; cursor: pointer; }
+.dashboard-date:hover { border-color: var(--accent); }
+.dashboard-date:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.backup-section-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-block-end: 10px; }
+.settings-page .backup-section-options .setting-row { display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
+.backup-section-options .setting-control { width: 100%; min-width: 0; }
+.backup-section-options .secondary { width: 100%; min-width: 0; white-space: normal; font-size: 14px; }
 
 /* The folded summary shows the total; its color follows the requested threshold. */
 .attention-card { margin-block: 0 24px; padding: 0; overflow: clip; --attention-border: var(--border); border-color: var(--attention-border); }
@@ -109,9 +116,53 @@ html[dir="ltr"] .dashboard-date { order: -1; }
   .attention-chevron { margin-inline-start: auto; }
   .attention-columns { padding: 10px; gap: 10px; }
   .overview-heading .heading-actions { width: 100%; }
-  .dashboard-controls { justify-content: flex-end; width: 100%; }
+  .dashboard-controls { width: max-content; max-width: 100%; margin-inline-start: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .attention-chevron { transition: none; } }
 
 .attention-view-all svg { width: 14px; height: 14px; }
 html[dir="rtl"] .attention-view-all svg { transform: rotate(180deg); }
+
+.transaction-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.transaction-tools > button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.transaction-tools > button > svg { width: 18px; height: 18px; }
+.transaction-sort { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; font-size: 14px; color: var(--muted); }
+.transaction-sort .unified-select-trigger { width: auto; min-width: 145px; min-height: 44px; font-size: 14px; }
+.transaction-filters[hidden] { display: none; }
+.transaction-filters:not([hidden]) { background: var(--surface); padding: 18px; border: 1px solid var(--border); border-radius: 16px; }
+.notification-center { width: min(720px, calc(100vw - 24px)); padding: 24px; }
+.notification-eyebrow { display: block; color: var(--accent); font-size: 13px; margin-bottom: 6px; }
+.notification-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border: 0; }
+.notification-toolbar .segment-control { margin-inline-end: auto; }
+.notification-toolbar .text-button { font-size: 13px; }
+.notification-list { display: grid; gap: 20px; padding: 2px; max-height: 60dvh; }
+.notification-group { --notice-color: #658dc4; min-width: 0; padding: 14px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 18px; }
+.notification-installment { --notice-color: #c58b48; }
+.notification-goal { --notice-color: #367c61; }
+.notification-group > header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.notification-group > header h3 { font-size: 15px; margin: 0; }
+.notification-group > header .badge { margin-inline-start: auto; }
+.notification-group-icon { display: grid; place-items: center; width: 34px; height: 34px; color: var(--notice-color); border-radius: 10px; background: color-mix(in srgb, var(--notice-color) 12%, var(--surface)); }
+.notification-group-icon svg, .notification-empty > svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.notification-card { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-inline-start: 3px solid var(--notice-color); border-radius: 12px; margin-top: 10px; }
+.notification-card.read { border-inline-start-color: var(--border); }
+.notification-card-heading { display: flex; align-items: baseline; gap: 10px; justify-content: space-between; }
+.notification-card-heading strong { font-size: 15px; overflow-wrap: anywhere; }
+.notification-state { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.notification-card p { font-size: 14px; margin: 10px 0 6px; color: var(--muted); }
+.notification-card time { font-size: 12px; color: var(--muted); }
+.notification-card-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.notification-card-actions button { min-height: 36px; font-size: 13px; }
+.notification-empty { text-align: center; padding: 35px 18px; color: var(--muted); }
+.notification-empty > svg { width: 32px; height: 32px; color: var(--accent); }
+.notification-empty h3 { color: var(--ink); font-size: 17px; }
+.notification-empty p { font-size: 14px; }
+@media (max-width: 540px) { .transaction-sort { gap: 6px; } .transaction-tools { gap: 8px; } .notification-center { padding: 18px 14px; } .notification-group { padding: 10px; } .notification-card { padding: 13px; } }
+
+@media(max-width:680px){
+ #view .page-heading.overview-heading{flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px}
+ #view .overview-heading h1{flex:0 1 auto;min-width:0;margin:0;white-space:nowrap;font-size:clamp(19px,5vw,26px)}
+ #view .overview-heading .heading-actions{width:auto;min-width:0;flex:0 0 auto;flex-wrap:nowrap;margin-inline-start:auto}
+ #view .overview-heading .dashboard-controls{width:max-content;max-width:none;margin-inline-start:0;gap:6px;flex-wrap:nowrap}
+ #view .overview-heading .dashboard-date{font-size:12px;padding:7px 8px;gap:5px}
+}
