@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseHTML } from "linkedom";
+import { makeDemo, materialize, today } from "../src/DameDast.Web/wwwroot/finance.js";
 import { weeklyAgenda } from "../src/DameDast.Web/wwwroot/weekly-agenda.js";
 import { weeklyAgendaPanel } from "../src/DameDast.Web/wwwroot/weekly-agenda-ui.js";
 import { developmentFields, developmentPage, toggleDevelopmentFields } from "../src/DameDast.Web/wwwroot/development-ui.js";
@@ -69,10 +70,28 @@ test("weekly cards carry real source references, escape titles and show independ
   a.data.title = "<script>bad()</script>";
   const html = weeklyAgendaPanel({ records: [a, b], now });
   const { document } = parseHTML(html);
-  assert.equal(document.querySelectorAll(".weekly-agenda-day").length, 7);
+  assert.equal(document.querySelectorAll(".weekly-agenda-day").length, 1);
   assert.equal(document.querySelectorAll(".weekly-agenda-item.is-done").length, 1);
   assert.equal(document.querySelectorAll(".weekly-agenda-item.is-overdue").length, 1);
   assert.equal(document.querySelector("script"), null);
   assert.match(html, /&lt;script&gt;/);
   assert.equal(document.querySelector('[data-id="a"]').dataset.source, "developmentEntry");
+});
+
+test("sample workspace has swipeable days with more than three real linked activities; empty days stay hidden", () => {
+  const records = materialize(makeDemo());
+  const clock = today() + "T10:00:00Z";
+  const week = weeklyAgenda(records, clock);
+  const day = week.find(day => day.date === today());
+  assert.ok(day.items.length >= 6);
+  assert.ok(day.items.some(item => item.area === "vocabulary" && item.done));
+  assert.ok(day.items.some(item => item.area === "essay" && !item.done));
+  const { document } = parseHTML(weeklyAgendaPanel({ records, now: clock, space: "demo" }));
+  assert.equal(document.querySelectorAll(".weekly-agenda-day").length, week.filter(day => day.items.length).length);
+  assert.ok(document.querySelector(".weekly-agenda-items.has-overflow[tabindex='0']"));
+  assert.equal(weeklyAgendaPanel({ records: [], now: clock }), "");
+  for (const item of document.querySelectorAll(".weekly-agenda-item")) {
+    assert.ok(item.querySelector("strong").getAttribute("title"));
+    assert.ok(item.getAttribute("aria-label"));
+  }
 });

@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v91";
+const CACHE = "damedast-shell-v92";
 const SHELL = [
   "/weekly-agenda.js", "/weekly-agenda-ui.js",
   "/exercise.js", "/exercise-ui.js", "/exercise-clock.js",

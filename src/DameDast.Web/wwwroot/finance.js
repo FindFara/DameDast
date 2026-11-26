@@ -119,7 +119,7 @@ export function totals(transactions) {
       .reduce((s, t) => s + t.data.amount, 0),
   };
 }
-export const DEMO_VERSION = 5;
+export const DEMO_VERSION = 6;
 export function makeDemo() {
   const accounts = [
     {
@@ -422,6 +422,7 @@ export function makeDemo() {
     }),
   );
   addProductivitySamples(records, record, base, after);
+  addWeeklySamples(records, record, base);
   return { demoVersion: DEMO_VERSION, snapshot: { revision: 0, records }, pending: [] };
 }
 
@@ -459,4 +460,32 @@ function addProductivitySamples(records, record, base, after) {
   if (goal) goal.data.projectId = trip.id;
   const expense = records.find(row => row.kind === "transaction" && row.data.category === "Shopping");
   if (expense) expense.data.projectId = trip.id;
+}
+
+function addWeeklySamples(records, record, base) {
+  const start = shiftDay(base, -((weekday(base) + 1) % 7));
+  const activity = (area, title, date = base, done = false, minutes = 30) => record("developmentEntry", {
+    area, title, date, done: done && date <= base, minutes, notes: "", resourceId: null,
+  });
+  const words = [
+    { term: "practice", meaning: "تمرین کردن", example: "I practice every day." },
+    { term: "progress", meaning: "پیشرفت", example: "Small steps lead to progress." },
+    { term: "goal", meaning: "هدف", example: "My goal is to learn English." },
+  ];
+  const vocabulary = record("languageVocabulary", { date: base, title: "Daily practice", topic: "Write about your daily learning routine.", words, read: true });
+  records.push(vocabulary,
+    record("languageEssay", { date: base, title: "My learning routine", body: "I practice English every day. My goal is to make progress.", vocabularyId: vocabulary.id, assignedWords: words, corrections: [], reviewed: false, reviewNotes: "" }),
+    activity("study", "مطالعهٔ معماری نرم‌افزار و مرور الگوهای طراحی برای پروژهٔ شخصی", base, false, 45),
+    activity("exercise", "تمرین سینه و جلو بازو", base, false, 60),
+    activity("plan", "مرور هدف‌های فردی و برنامهٔ مسیر شغلی", base, true, 20),
+    activity("essay", "انشای روزانه دربارهٔ یادگیری و هدف‌های آینده", base, false, 25),
+    activity("vocabulary", "مرور کلمات امروز", base, false, 15),
+    record("calendarEvent", { title: "مرتب‌سازی کارهای پروژه و ثبت گزارش پیشرفت هفتگی", description: "", startDate: base, endDate: base, allDay: true, kind: "task", done: false, color: "#72ab95", repeat: "none", repeatCalendar: "persian", completedDates: [], projectId: null }),
+  );
+  for (const index of [1, 3]) {
+    const date = shiftDay(start, index);
+    records.push(activity("study", "مطالعهٔ فصل جدید", date, index === 1),
+      activity("exercise", "تمرین بدنسازی", date),
+      activity("plan", "مطالعهٔ توسعهٔ فردی", date, index === 3));
+  }
 }
