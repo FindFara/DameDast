@@ -848,6 +848,12 @@ async function submitEditor(event) {
       if (space !== entryScope || editing !== entryRecord || editorKind !== developmentKind || !$("#editor").open) return;
     }
     if (projectKinds.includes(editorKind)) data.projectId = data.projectId || null;
+    if (editorKind === "habit") {
+      data.days = new FormData(event.target).getAll("habitDays").map(Number);
+      if (!data.days.length) throw Error("Choose at least one weekday.");
+      data.weeklyTarget = data.days.length;
+      delete data.habitDays;
+    }
     if (["project", "habit"].includes(editorKind)) data.name = data.name.trim();
     if (editorKind === "bookmark") { data.tags = [...new Set((data.tagsText || "").split(/[,،]/).map(x => x.trim()).filter(Boolean))]; delete data.tagsText; }
     if (editorKind === "transaction") {
@@ -1523,6 +1529,7 @@ async function changeLanguage(value) {
       values.completed = !!values.completed;
     }
     if (editorKind === "goal") values.pinned = !!values.pinned;
+    if (editorKind === "habit") values.days = new FormData($("#editor-form")).getAll("habitDays").map(Number);
     if (editorKind === "allocationPlan")
       values.rows = [...document.querySelectorAll("[data-plan-row]")].map(
         (r) => ({
@@ -1616,6 +1623,9 @@ async function onAction(event) {
       if (record.data.area === "essay") language.openEssay(record.data.date, element);
       else if (record.data.area === "vocabulary") { language.date = record.data.date; location.hash = "languageVocabulary"; }
       else openEditor(developmentKind, id);
+    } else if (record.kind === "habit") {
+      location.hash = "habits";
+      openEditor("habit", id);
     } else {
       location.hash = "tasks";
       planner.dialog(record, element.dataset.source === "noteTask" ? { taskId: element.dataset.taskId } : { occurrence: element.dataset.date });

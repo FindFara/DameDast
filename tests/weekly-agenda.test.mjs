@@ -95,3 +95,20 @@ test("sample workspace has swipeable days with more than three real linked activ
     assert.ok(item.getAttribute("aria-label"));
   }
 });
+
+test("habits appear only on selected weekdays after their start date, with their color and per-day completion", () => {
+  const habit = row("habit", "habit", { name: "Read daily", days: [0, 2, 4], weeklyTarget: 3, startDate: "2026-11-22", color: "#829bc9" });
+  const log = row("log", "habitLog", { habitId: habit.id, date: "2026-11-24", done: true });
+  const legacy = row("legacy", "habit", { name: "Old habit", weeklyTarget: 3, startDate: "2026-11-01", color: "#367c61" });
+  let items = weeklyAgenda([habit, log, legacy], now).flatMap(day => day.items);
+  assert.deepEqual(items.map(item => item.date), ["2026-11-22", "2026-11-24", "2026-11-26"]);
+  assert.deepEqual(items.map(item => item.status), ["overdue", "done", "planned"]);
+  assert.ok(items.every(item => item.color === "#829bc9" && item.source === "habit"));
+  const { document } = parseHTML(weeklyAgendaPanel({ records: [habit, log], now }));
+  assert.equal(document.querySelectorAll(".is-habit").length, 3);
+  assert.match(document.querySelector(".is-habit").getAttribute("style"), /#829bc9/);
+  log.data.done = false;
+  assert.equal(weeklyAgenda([habit, log], now).flatMap(day => day.items).find(item => item.date === "2026-11-24").status, "overdue");
+  habit.deleted = true;
+  assert.equal(weeklyAgenda([habit, log], now).flatMap(day => day.items).length, 0);
+});

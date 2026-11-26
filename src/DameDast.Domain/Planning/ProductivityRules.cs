@@ -4,7 +4,7 @@ namespace DameDast.Domain;
 
 public sealed record Project(string Name, string Description = "");
 public sealed record Bookmark(string Title, string Url, string Excerpt, IReadOnlyList<string> Tags, Guid? ProjectId = null);
-public sealed record Habit(string Name, int WeeklyTarget, DateOnly StartDate, string Color = "#367c61");
+public sealed record Habit(string Name, int WeeklyTarget, DateOnly StartDate, string Color = "#367c61", IReadOnlyList<int>? Days = null);
 public sealed record HabitLog(Guid HabitId, DateOnly Date, bool Done = true);
 
 public static class ProductivityRules
@@ -42,6 +42,7 @@ public static class ProductivityRules
                 if (habit.WeeklyTarget is < 1 or > 7 || habit.StartDate.Year is < 2000 or > 2100
                     || habit.Color is not ("#367c61" or "#829bc9" or "#bb94c8" or "#db9a81"))
                     throw new FinanceException("Choose a weekly target from 1 to 7.");
+                ValidateHabitDays(habit);
                 if (records.Any(r => !r.Deleted && r.Kind == "habitLog" && FinanceRules.Read<HabitLog>(r.Data) is var entry && entry.HabitId == change.Id && entry.Date < habit.StartDate))
                     throw new FinanceException("Start date must include the existing habit history.");
                 return true;
@@ -54,6 +55,14 @@ public static class ProductivityRules
                 return true;
             default: return false;
         }
+    }
+
+    private static void ValidateHabitDays(Habit habit)
+    {
+        if (habit.Days is not { } days) return; // Existing habits retain their weekly target until scheduled.
+        if (days.Count is < 1 or > 7 || days.Count != habit.WeeklyTarget
+            || days.Any(day => day is < 0 or > 6) || days.Distinct().Count() != days.Count)
+            throw new FinanceException("Choose at least one weekday.");
     }
 
     private static void Text(string? value, int max)

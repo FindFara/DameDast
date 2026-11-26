@@ -532,3 +532,7 @@
   .weekly-agenda-item:hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .weekly-agenda-item { transition: none; } }
+
+.weekly-agenda-item.is-habit { border-inline-start: 4px solid var(--agenda-habit-color); }
+.weekly-agenda-item.is-habit.is-planned { background: color-mix(in srgb, var(--agenda-habit-color) 12%, var(--surface)); }
+.weekly-agenda-item.is-habit .weekly-agenda-kind::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-inline-end: 5px; background: var(--agenda-habit-color); }

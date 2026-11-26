@@ -119,7 +119,7 @@ export function totals(transactions) {
       .reduce((s, t) => s + t.data.amount, 0),
   };
 }
-export const DEMO_VERSION = 6;
+export const DEMO_VERSION = 7;
 export function makeDemo() {
   const accounts = [
     {
@@ -429,8 +429,8 @@ export function makeDemo() {
 function addProductivitySamples(records, record, base, after) {
   const project = record("project", { name: "توسعهٔ دم‌دست", description: "برنامه‌ریزی نسخهٔ بعدی، یادداشت‌ها و هزینه‌های پروژه در یک جا." });
   const trip = record("project", { name: "سفر آخر هفته", description: "برنامهٔ یک سفر کوتاه و مدیریت هزینه‌ها." });
-  const learning = record("habit", { name: "مطالعهٔ روزانه", weeklyTarget: 5, color: "#367c61", startDate: after(-14) });
-  const gym = record("habit", { name: "باشگاه", weeklyTarget: 3, color: "#829bc9", startDate: after(-14) });
+  const learning = record("habit", { name: "مطالعهٔ روزانه", days: [6, 0, 1, 2, 3], weeklyTarget: 5, color: "#367c61", startDate: after(-14) });
+  const gym = record("habit", { name: "باشگاه", days: [6, 1, 3], weeklyTarget: 3, color: "#829bc9", startDate: after(-14) });
   const task = (title, offset, done = false) => record("calendarEvent", {
     title, description: "این مورد برای آزمایش برنامه است.", startDate: after(offset), endDate: after(offset),
     allDay: true, kind: "task", done, color: "#72ab95", repeat: "none", repeatCalendar: "persian", completedDates: [], projectId: project.id,

@@ -86,3 +86,19 @@ test('habit day identity is stable across devices, undo can be rechecked, and de
  let records=materialize({snapshot:{records:[habit,log]},pending:[pending]});assert.equal(habitProgress(records,habit,date).count,1);
  records=materialize({snapshot:{records},pending:[{id:habit.id,kind:'habit',delete:true}]});assert.equal(records.filter(r=>!r.deleted).length,0);
 });
+
+test('habit weekday selections persist independently of old frequency targets and reject invalid schedules', async()=>{
+  const { productivityFields } = await import('../src/DameDast.Web/wwwroot/productivity-ui.js');
+  const data={name:'Practice',weeklyTarget:3,days:[6,1,3],startDate:'2026-11-01',color:'#829bc9'};
+  validateProductivity('habit',data,[],id());
+  const html=productivityFields('habit',data);
+  assert.equal((html.match(/name="habitDays"/g)||[]).length,7);
+  assert.equal((html.match(/ checked/g)||[]).length,3);
+  assert.doesNotMatch(html,/name="weeklyTarget"/);
+  for(const days of [[],[6,6,1],[7,1,3],[0,1],['6',1,3]])
+    assert.throws(()=>validateProductivity('habit',{...data,days},[],id()));
+  const legacy={...data};delete legacy.days;
+  validateProductivity('habit',legacy,[],id());
+  const habit=row('habit',data),logs=['2026-11-23','2026-11-24','2026-11-25'].map(date=>row('habitLog',{habitId:habit.id,date}));
+  assert.equal(habitProgress([habit,...logs],habit,'2026-11-26').count,2);
+});

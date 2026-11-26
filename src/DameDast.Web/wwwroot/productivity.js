@@ -8,6 +8,8 @@ import { tehranParts } from "./organizer.js";
 import { recurringForMonth, visibleBudgets } from "./planning.js";
 
 export const projectKinds = ["note", "calendarEvent", "transaction", "goal", "bookmark", "installment"];
+export const habitWeekdays = [[6, "Saturday"], [0, "Sunday"], [1, "Monday"], [2, "Tuesday"], [3, "Wednesday"], [4, "Thursday"], [5, "Friday"]];
+export const scheduledHabitDays = habit => Array.isArray(habit.data.days) ? habit.data.days : [];
 export const habitColors = ["#367c61", "#829bc9", "#bb94c8", "#db9a81"];
 export async function habitLogId(habitId, date) {
   const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`damedast-habit:${habitId}:${date}`))).slice(0, 16);
@@ -29,8 +31,9 @@ export function searchWorkspace(records, query, pages = []) {
 export function habitProgress(records, habit, date = today()) {
   const start = shiftDay(date, -((weekday(date) + 1) % 7)), end = shiftDay(start, 7);
   const dates = new Set(live(records).filter(r => r.kind === "habitLog" && r.data.habitId === habit.id && r.data.done !== false).map(r => r.data.date));
-  const count = [...dates].filter(day => day >= start && day < end && day <= date).length;
-  return { dates, start, end, count, percent: Math.min(100, Math.round(count / habit.data.weeklyTarget * 100)) };
+  const scheduled = scheduledHabitDays(habit);
+  const count = [...dates].filter(day => day >= start && day < end && day <= date && (!scheduled.length || scheduled.includes(weekday(day)))).length;
+  return { dates, start, end, count, percent: Math.min(100, Math.round(count / (scheduled.length || habit.data.weeklyTarget) * 100)) };
 }
 export function attentionReport(records, now = new Date()) {
   const date = tehranParts(now).date, rows = live(records), month = monthOf(date), previous = shiftMonth(month, -1);
@@ -64,6 +67,9 @@ export function validateProductivity(kind, data, records, id) {
     if (!data.title?.trim() || data.title.length > 200 || !url || !["https:", "http:"].includes(url.protocol) || url.username || url.password || data.url.length > 2000 || typeof data.excerpt !== "string" || data.excerpt.length > 4000 || !Array.isArray(data.tags) || data.tags.length > 12 || data.tags.some(tag => typeof tag !== "string" || !tag.trim() || tag.length > 40) || new Set(data.tags).size !== data.tags.length) throw Error("Enter a valid link, excerpt and tags.");
   }
   if (kind === "habit" && (!Number.isInteger(data.weeklyTarget) || data.weeklyTarget < 1 || data.weeklyTarget > 7 || !habitColors.includes(data.color) || !validIso(data.startDate))) throw Error("Choose a weekly target from 1 to 7.");
+  if (kind === "habit" && data.days != null && (!Array.isArray(data.days) || data.days.length < 1 || data.days.length > 7 ||
+    data.days.some(day => !Number.isInteger(day) || day < 0 || day > 6) || new Set(data.days).size !== data.days.length || data.weeklyTarget !== data.days.length))
+    throw Error("Choose at least one weekday.");
   if (kind === "habit" && records.some(r => !r.deleted && r.kind === "habitLog" && r.data.habitId === id && r.data.date < data.startDate)) throw Error("Start date must include the existing habit history.");
   if (kind === "habitLog") {
     const habit = records.find(r => !r.deleted && r.kind === "habit" && r.id === data.habitId);

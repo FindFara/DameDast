@@ -8,6 +8,18 @@ namespace DameDast.Tests;
 
 public sealed class ProductivityTests
 {
+    [Fact]
+    public void HabitDaysPersistWithMatchingTargetsAndLegacyHabitsRemainReadable()
+    {
+        var habit = new Habit("Read", 3, new DateOnly(2026, 11, 1), "#829bc9", [6, 1, 3]);
+        var saved = FinanceRules.Apply([], Change("habit", habit));
+        Assert.Equal(habit.Days, FinanceRules.Read<Habit>(saved.Data).Days);
+        foreach (var days in new int[][] { [], [6, 6, 1], [7, 1, 3], [0, 1] })
+            Assert.Throws<FinanceException>(() => FinanceRules.Apply([], Change("habit", habit with { Days = days })));
+        var legacy = FinanceRules.Apply([], Change("habit", new Habit("Old habit", 3, new DateOnly(2026, 11, 1))));
+        Assert.Null(FinanceRules.Read<Habit>(legacy.Data).Days);
+    }
+
     private static Mutation Change(string kind, object value, Guid? id = null, long version = 0) => new(Guid.NewGuid(), id ?? Guid.NewGuid(), kind, version, false, JsonSerializer.SerializeToElement(value, FinanceRules.Json));
     private static Installment Loan => new("Rent", 1500, new DateOnly(2026, 11, 28), false, 3);
 

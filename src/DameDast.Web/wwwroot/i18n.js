@@ -70,6 +70,8 @@ const fa = {
   "Checks": "بررسی‌ها",
   "Review task": "بررسی کار",
   "Review budget": "بررسی بودجه",
+  "Days of the week": "روزهای هفته",
+  "Choose at least one weekday.": "حداقل یک روز هفته را انتخاب کن.",
   "Learning hub": "لرنینگ",
   "Learning activities": "فعالیت‌های یادگیری",
   "Personal development": "برنامه‌های شخصی",

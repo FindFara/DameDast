@@ -119,3 +119,14 @@ html[dir="ltr"] .dashboard-controls .solar-month { order: -1; }
  #view .overview-heading .dashboard-controls{width:max-content;max-width:none;margin-inline-start:0;gap:6px;flex-wrap:nowrap}
  #view .overview-heading .dashboard-date{font-size:12px;padding:7px 8px;gap:5px}
 }
+
+.habit-weekday-field { margin: 0; padding: 0; border: 0; min-width: 0; }
+.habit-weekday-field legend { margin-block-end: 10px; font-size: 14px; }
+.habit-weekday-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; margin-block-end: 18px; }
+.habit-weekday-options label { position: relative; display: block; cursor: pointer; }
+.habit-weekday-options input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.habit-weekday-options span { display: grid; place-items: center; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; padding: 8px 4px; font-size: 14px; background: var(--surface); color: var(--ink); }
+.habit-weekday-options input:checked + span { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.habit-weekday-options input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
+.habit-schedule-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 12px; }
+.habit-schedule-chips span { color: color-mix(in srgb, var(--habit-color) 70%, var(--ink)); background: color-mix(in srgb, var(--habit-color) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--habit-color) 40%, var(--border)); border-radius: 7px; padding: 4px 7px; font-size: 12px; }
