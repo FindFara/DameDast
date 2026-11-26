@@ -56,7 +56,7 @@ test('animated steps keep input nodes, handle rapid reversals and rollovers, and
   const {document,animations,send,part} = picker;
   const month = part('month'), day = part('day');
   assert.equal(document.querySelectorAll('.date-wheel-neighbor').length,6);
-  assert.equal(document.querySelectorAll('.date-wheel-arrows, .date-picker-hint, .date-picker-preview, .distance-2').length,0);
+  assert.equal(document.querySelectorAll('.date-wheel-arrows, .date-picker-hint, .date-picker-preview, .date-wheel h3, [data-date-today], .distance-2').length,0);
   send(month, 'keydown', {key:'ArrowUp'});
   assert.equal(part('month'), month); assert.equal(part('day'), day);
   assert.equal(month.getAttribute('aria-valuenow'),'7');
@@ -103,4 +103,30 @@ test('the middle day, month and year values can all be dragged with a mouse in b
     send(input,'pointerup',{clientY:135,pointerId:2});
     assert.equal(Number(input.getAttribute('aria-valuenow')),before);
   }
+});
+
+test('touch dragging survives implicit capture moving from the middle input to its wheel', async context => {
+  const {send,part} = await pickerFixture(context, fromJalali(1405,8,15));
+  for (const name of ['day','month','year']) {
+    const input = part(name), track = input.closest('.date-wheel-track');
+    const before = Number(input.getAttribute('aria-valuenow'));
+    send(input,'pointerdown',{clientY:100,pointerId:1,pointerType:'touch',button:0});
+    send(input,'pointermove',{clientY:85,pointerId:1,pointerType:'touch'});
+    // A real touch has implicit capture on the input. Transferring it to the
+    // track bubbles lostpointercapture from the input before the next move.
+    send(input,'lostpointercapture',{pointerId:1,pointerType:'touch'});
+    send(track,'pointermove',{clientY:65,pointerId:1,pointerType:'touch'});
+    send(track,'pointerup',{clientY:65,pointerId:1,pointerType:'touch'});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before+1,name);
+  }
+});
+
+test('losing the track capture still cancels a touch without committing a different day', async context => {
+  const {send,part} = await pickerFixture(context, fromJalali(1405,8,15));
+  const input = part('day'), track = input.closest('.date-wheel-track');
+  send(input,'pointerdown',{clientY:100,pointerId:1,pointerType:'touch',button:0});
+  send(input,'pointermove',{clientY:65,pointerId:1,pointerType:'touch'});
+  send(track,'lostpointercapture',{pointerId:1,pointerType:'touch'});
+  send(track,'pointerup',{clientY:65,pointerId:1,pointerType:'touch'});
+  assert.equal(input.value,'15'); assert.equal(input.style.transform,'');
 });

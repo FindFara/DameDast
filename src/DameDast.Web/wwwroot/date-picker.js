@@ -37,7 +37,7 @@ export function installDatePicker() {
   const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   function wheel(part) {
     const label = t({ day: "Day", month: "Month", year: "Year" }[part]);
-    return `<section class="date-wheel" data-date-wheel="${part}" aria-label="${label}"><h3>${label}</h3><div class="date-wheel-track">${[-1].map(step=>`<button type="button" class="date-wheel-neighbor distance-${Math.abs(step)}" data-date-step="${step}" tabindex="-1" aria-label="${label} · ${t('Previous')}"><span data-wheel-value>${partText(stepDatePart(parts,part,step),part)}</span></button>`).join("")}<div class="date-wheel-selection"><input type="text" data-wheel-value class="date-wheel-current" data-date-part="${part}" aria-label="${label}" role="spinbutton" aria-valuemin="${part==='year'?minYear:1}" aria-valuemax="${part==='year'?maxYear:part==='month'?12:daysInMonth(parts.year,parts.month)}" aria-valuenow="${parts[part]}" value="${partText(parts,part)}" inputmode="numeric" autocomplete="off" ${matchMedia('(pointer: coarse)').matches?'readonly':''}></div>${[1].map(step=>`<button type="button" class="date-wheel-neighbor distance-${step}" data-date-step="${step}" tabindex="-1" aria-label="${label} · ${t('Next')}"><span data-wheel-value>${partText(stepDatePart(parts,part,step),part)}</span></button>`).join("")}</div></section>`;
+    return `<section class="date-wheel" data-date-wheel="${part}" aria-label="${label}"><div class="date-wheel-track">${[-1].map(step=>`<button type="button" class="date-wheel-neighbor distance-${Math.abs(step)}" data-date-step="${step}" tabindex="-1" aria-label="${label} · ${t('Previous')}"><span data-wheel-value>${partText(stepDatePart(parts,part,step),part)}</span></button>`).join("")}<div class="date-wheel-selection"><input type="text" data-wheel-value class="date-wheel-current" data-date-part="${part}" aria-label="${label}" role="spinbutton" aria-valuemin="${part==='year'?minYear:1}" aria-valuemax="${part==='year'?maxYear:part==='month'?12:daysInMonth(parts.year,parts.month)}" aria-valuenow="${parts[part]}" value="${partText(parts,part)}" inputmode="numeric" autocomplete="off" ${matchMedia('(pointer: coarse)').matches?'readonly':''}></div>${[1].map(step=>`<button type="button" class="date-wheel-neighbor distance-${step}" data-date-step="${step}" tabindex="-1" aria-label="${label} · ${t('Next')}"><span data-wheel-value>${partText(stepDatePart(parts,part,step),part)}</span></button>`).join("")}</div></section>`;
   }
   function moveValues(column, from, animate = true) {
     for (const value of column.querySelectorAll('[data-wheel-value]')) {
@@ -94,7 +94,7 @@ export function installDatePicker() {
     const value = root.querySelector('input[type=hidden]').value;
     parts = jalaliParts(value || today());
     dialog.dir = getLanguage() === "fa" ? "rtl" : "ltr";
-    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">×</button></header><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer><button type="button" class="text-button" data-date-today>${t('Today')}</button>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
+    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">×</button></header><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
     renderWheels();
     root.querySelector('[data-date-input]').setAttribute("aria-expanded", "true");
     dialog.showModal();
@@ -147,7 +147,6 @@ export function installDatePicker() {
   dialog.addEventListener('click', event => {
     if (event.target.closest('[data-date-close]')) { close(); return; }
     if (event.target.closest('[data-date-clear]')) { storeValue(''); return; }
-    if (event.target.closest('[data-date-today]')) { parts=jalaliParts(today()); renderWheels(); return; }
     if (performance.now() <= ignoreClickUntil) return;
     const input = event.target.closest('[data-date-part]');
     if (input && !input.readOnly) { input.focus(); input.select(); }
@@ -201,7 +200,11 @@ export function installDatePicker() {
     }
   });
   dialog.addEventListener('pointercancel', resetGesture);
-  dialog.addEventListener('lostpointercapture', resetGesture);
+  dialog.addEventListener('lostpointercapture', event => {
+    // Touch starts with implicit capture on the input. Losing that capture
+    // while handing the gesture to its track must not cancel the swipe.
+    if (gesture && event.pointerId === gesture.id && event.target === gesture.track) resetGesture();
+  });
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
 }
 if(typeof document!=="undefined") installDatePicker();
