@@ -15,7 +15,6 @@ import {
   tr,
   langButton,
   wordChips,
-  correctionList,
 } from "./language-ui.js";
 import { renderMarkdown } from "./language-markdown.js";
 
@@ -63,17 +62,12 @@ export class LanguageController {
         next,
         a.data.corrections,
       );
-      if (a.pending)
-        a.pending = rebaseCorrections(a.data.body, next, [a.pending])[0];
+      const notes = form.elements.reviewNotes.value;
+      if (next !== a.data.body || notes !== a.data.reviewNotes)
+        a.data.reviewed = false;
+      a.data.reviewNotes = notes;
       a.data.body = next;
       a.data.title = form.elements.title.value.trim();
-      a.data.reviewed = form.elements.reviewed.checked;
-      if (a.pending) {
-        a.pending.replacement =
-          form.elements.replacement?.value ?? a.pending.replacement ?? "";
-        a.pending.explanation =
-          form.elements.explanation?.value ?? a.pending.explanation ?? "";
-      }
     } else if (a.kind === "languageVocabulary") {
       a.data.title = form.elements.title.value.trim();
       a.data.topic = form.elements.topic.value;
@@ -91,7 +85,7 @@ export class LanguageController {
           data: a.data,
           vocabulary: a.vocabulary,
           wordLines: a.wordLines,
-          pending: a.pending,
+          essayMode: a.essayMode,
         }),
       );
     } catch {
@@ -193,26 +187,8 @@ export class LanguageController {
       this.setEssayMode(action === "review-mode");
       return;
     }
-    if (action === "mark-error") {
-      this.markError();
-      return;
-    }
-    if (action === "cancel-correction") {
-      this.active.pending = null;
-      this.renderPending();
-      this.capture();
-      return;
-    }
-    if (action === "add-correction") {
-      this.addCorrection();
-      return;
-    }
-    if (action === "remove-correction") {
-      this.active.data.corrections = this.active.data.corrections.filter(
-        (x) => x.id !== button.dataset.correction,
-      );
-      this.capture();
-      this.updateEssay();
+    if (action === "done-reviewed") {
+      await this.save(true);
       return;
     }
     if (action === "download-lesson") {
@@ -267,18 +243,31 @@ export class LanguageController {
             assignedWords: structuredClone(vocabulary.data.words),
             corrections: [],
             reviewed: false,
+            reviewNotes: "",
           },
     });
     a.data.vocabularyId = a.vocabulary.id;
+    a.data.reviewNotes ??= "";
+    // Preserve any unfinished correction from the previous editor as review notes.
+    if (a.pending) {
+      a.data.reviewNotes = [
+        a.data.reviewNotes,
+        a.pending.original,
+        a.pending.replacement,
+        a.pending.explanation,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      delete a.pending;
+    }
     this.show(
       a,
-      `<div class="language-editor-assignment"><strong dir="ltr">${esc(a.vocabulary.data.title)}</strong><p dir="ltr">${esc(a.vocabulary.data.topic)}</p><div class="language-word-chips" data-editor-words></div></div><label class="field">${tr("Title (optional)", "عنوان (اختیاری)")}<input name="title" dir="auto" maxlength="120" value="${esc(a.data.title)}"></label><div class="language-editor-mode">${langButton("write-mode", tr("Write", "نوشتن"))}${langButton("review-mode", tr("Review", "بازبینی"))}<span data-language-count></span></div><label class="field" data-essay-write>${tr("Essay text", "متن انشا")}<textarea name="body" required dir="ltr" lang="en" maxlength="20000" rows="10" placeholder="${tr("Use today’s words in your own sentences…", "با کلمات امروز جمله‌های خودت را بنویس…")}">${esc(a.data.body)}</textarea></label><div class="language-reviewed-text" data-essay-review dir="auto" hidden></div><div class="language-review-tools">${langButton("mark-error", tr("Mark selected mistake", "علامت‌زدن اشتباه انتخاب‌شده"))}<small>${tr("Select a wrong word or phrase in the writing box, then add its correction.", "کلمه یا عبارت اشتباه را در کادر نوشتن انتخاب کن، سپس اصلاحش را اضافه کن.")}</small></div><div data-pending-correction></div><section class="language-corrections"><h3>${tr("My corrections", "اصلاحات من")}</h3><div data-corrections></div></section><label class="language-check"><input type="checkbox" name="reviewed" ${a.data.reviewed ? "checked" : ""}>${tr("I have reviewed this essay", "این انشا را بازبینی کردم")}</label>`,
+      `<div class="language-editor-assignment"><strong dir="ltr">${esc(a.vocabulary.data.title)}</strong><div class="language-word-chips" data-editor-words></div></div><label class="field">${tr("Title", "عنوان")}<input name="title" dir="auto" maxlength="120" value="${esc(a.data.title)}"></label><div class="language-editor-mode">${langButton("write-mode", tr("Write", "نوشتن"))}${langButton("review-mode", tr("Review", "بازبینی"))}<span data-language-count></span></div><label class="field" data-essay-write>${tr("Essay", "انشا")}<textarea name="body" required dir="ltr" lang="en" maxlength="20000" rows="10">${esc(a.data.body)}</textarea></label><section data-essay-review hidden><div class="language-reviewed-text" data-reviewed-body dir="auto"></div><label class="field">${tr("Review notes", "توضیح اشتباهات")}<textarea name="reviewNotes" dir="auto" maxlength="5000" rows="4">${esc(a.data.reviewNotes)}</textarea></label></section>`,
       tr("Daily essay", "انشای روزانه"),
       opener,
     );
-    this.renderPending();
     this.updateEssay();
-    this.setEssayMode(a.data.reviewed);
+    this.setEssayMode(a.version > 0 && a.essayMode !== "write");
   }
   openVocabulary(opener) {
     const c = this.callbacks.context(),
@@ -295,7 +284,7 @@ export class LanguageController {
       });
     this.show(
       a,
-      `<label class="field">${tr("Title", "عنوان")}<input name="title" maxlength="120" dir="auto" required value="${esc(a.data.title)}"></label><label class="field">${tr("Essay topic", "موضوع انشا")}<textarea name="topic" dir="ltr" maxlength="300" required>${esc(a.data.topic)}</textarea></label><label class="field">${tr("One word per line: word | meaning | example", "هر کلمه در یک خط: کلمه | معنی | مثال")}<textarea name="words" dir="ltr" rows="12" required>${esc(a.wordLines)}</textarea></label><p class="small-note">${tr("Use 1–30 unique words. Previously written essays keep their original word assignment.", "بین ۱ تا ۳۰ کلمهٔ غیرتکراری وارد کن. انشاهای قبلی کلمات زمان نوشتنشان را حفظ می‌کنند.")}</p>`,
+      `<label class="field">${tr("Title", "عنوان")}<input name="title" maxlength="120" dir="auto" required value="${esc(a.data.title)}"></label><label class="field">${tr("Essay topic", "موضوع انشا")}<textarea name="topic" dir="ltr" maxlength="300" required>${esc(a.data.topic)}</textarea></label><label class="field">${tr("One word per line: word | meaning | example", "هر کلمه در یک خط: کلمه | معنی | مثال")}<textarea name="words" dir="ltr" rows="12" required>${esc(a.wordLines)}</textarea></label>`,
       tr("Daily words", "کلمات روز"),
       opener,
     );
@@ -353,7 +342,7 @@ export class LanguageController {
     }
     this.active = a;
     this.opener = opener;
-    this.dialog.innerHTML = `<form data-language-form><header class="dialog-heading"><h2 id="language-dialog-title" dir="auto">${esc(title)}</h2>${langButton("close", "×", `aria-label="${t("Close")}"`, "icon-button")}</header><div class="language-dialog-body">${content}</div><footer class="language-dialog-footer"><span class="language-save-status" role="status">${a.mode === "read" ? "" : tr("Draft kept on this device until you save.", "پیش‌نویس تا زمان ذخیره روی این دستگاه حفظ می‌شود.")}</span><div class="language-row-actions">${a.mode === "read" ? langButton("download-lesson", tr("Download Markdown", "دریافت Markdown"), `data-id="${a.id}"`) : `<button type="submit" class="primary">${t("Save")}</button>`}${langButton("close", t("Close"), "", "secondary")}</div></footer></form>`;
+    this.dialog.innerHTML = `<form data-language-form><header class="dialog-heading"><h2 id="language-dialog-title" dir="auto">${esc(title)}</h2>${langButton("close", "×", `aria-label="${t("Close")}"`, "icon-button")}</header><div class="language-dialog-body">${content}</div><footer class="language-dialog-footer"><span class="language-save-status" role="status"></span><div class="language-row-actions">${a.mode === "read" ? langButton("download-lesson", tr("Download Markdown", "دریافت Markdown"), `data-id="${a.id}"`) : `<button type="submit" class="primary">${t("Save")}</button>${a.kind === "languageEssay" ? langButton("done-reviewed", tr("Done reviewed", "بازبینی تمام شد"), "hidden", "primary") : ""}`}${langButton("close", t("Close"), "", "secondary")}</div></footer></form>`;
     if (!this.dialog.open) this.dialog.showModal();
   }
   status(message, error = false) {
@@ -375,76 +364,42 @@ export class LanguageController {
       a.data.body,
     );
     this.dialog.querySelector("[data-language-count]").textContent =
-      `${wordCount(a.data.body)} ${tr("words", "کلمه")} · ${usedWords(a.data.body, a.data.assignedWords).length}/${a.data.assignedWords.length} ${tr("practice words used", "کلمهٔ تمرین استفاده شده")}`;
-    this.dialog.querySelector("[data-essay-review]").innerHTML =
+      `${wordCount(a.data.body)} ${tr("words", "کلمه")} · ${usedWords(a.data.body, a.data.assignedWords).length}/${a.data.assignedWords.length} ${tr("used", "استفاده شده")}`;
+    this.dialog.querySelector('[data-lang-action="done-reviewed"]').hidden =
+      a.essayMode !== "review" || a.data.reviewed;
+    this.dialog.querySelector("[data-reviewed-body]").innerHTML =
       reviewedEssay(a.data.body, a.data.corrections) ||
       tr("Start writing first.", "ابتدا متن انشا را بنویس.");
-    this.dialog.querySelector("[data-corrections]").innerHTML =
-      correctionList(a.data.corrections, true) ||
-      `<p class="small-note">${tr("Corrections appear here below the essay.", "اصلاحات زیر انشا اینجا نمایش داده می‌شوند.")}</p>`;
   }
   setEssayMode(review) {
+    const a = this.active;
+    if (review && a.version === 0) return;
+    this.capture();
+    a.essayMode = review ? "review" : "write";
     this.dialog.querySelector("[data-essay-write]").hidden = review;
     this.dialog.querySelector("[data-essay-review]").hidden = !review;
-    this.dialog.querySelector('[data-lang-action="mark-error"]').disabled =
-      review;
+    this.dialog.querySelector('[data-lang-action="review-mode"]').disabled =
+      a.version === 0;
+    this.dialog.querySelector('[data-lang-action="done-reviewed"]').hidden =
+      !review || a.data.reviewed;
     for (const b of this.dialog.querySelectorAll('[data-lang-action$="-mode"]'))
       b.setAttribute(
         "aria-pressed",
         String((b.dataset.langAction === "review-mode") === review),
       );
-  }
-  markError() {
-    const area = this.dialog.querySelector('[name="body"]'),
-      start = area.selectionStart,
-      end = area.selectionEnd;
-    this.capture();
-    if (
-      start === end ||
-      end - start > 2000 ||
-      this.active.data.corrections.some(
-        (c) => c.start != null && start < c.end && end > c.start,
-      )
-    )
-      throw Error("Select a different part of the essay.");
-    this.active.pending = {
-      id: crypto.randomUUID(),
-      start,
-      end,
-      original: area.value.slice(start, end),
-      replacement: "",
-      explanation: "",
-    };
-    this.renderPending();
     this.capture();
   }
-  renderPending() {
-    const p = this.active.pending,
-      slot = this.dialog.querySelector("[data-pending-correction]");
-    slot.innerHTML = p
-      ? `<div class="panel language-correction-form"><blockquote class="language-error" dir="auto">${esc(p.original)}</blockquote><label class="field">${tr("Correct version", "شکل درست")}<input name="replacement" dir="auto" maxlength="2000" value="${esc(p.replacement)}"></label><label class="field">${tr("Why was it wrong? (optional)", "دلیل اشتباه (اختیاری)")}<textarea name="explanation" dir="auto" maxlength="1000">${esc(p.explanation)}</textarea></label><div class="language-row-actions">${langButton("add-correction", tr("Add correction", "ثبت اصلاح"), "", "primary")}${langButton("cancel-correction", t("Cancel"))}</div></div>`
-      : "";
-    if (p) slot.querySelector("input").focus();
-  }
-  addCorrection() {
-    this.capture();
-    const p = this.active.pending;
-    if (!p?.replacement.trim())
-      throw Error("Enter the correction for the selected text.");
-    this.active.data.corrections.push(p);
-    this.active.pending = null;
-    this.renderPending();
-    this.capture();
-    this.updateEssay();
-    this.setEssayMode(true);
-  }
-  async save() {
+  async save(doneReviewed = false) {
     if (this.saving) return;
     this.capture();
     const a = this.active;
     if (!a || a.mode === "read") return;
-    if (a.pending)
-      throw Error("Finish or cancel the pending correction first.");
+    const writing = a.kind === "languageEssay" && a.essayMode !== "review";
+    if (a.kind === "languageEssay") {
+      if (doneReviewed && (writing || a.version === 0)) return;
+      if (writing) a.data.reviewed = false;
+      else if (doneReviewed) a.data.reviewed = true;
+    }
     if (a.kind === "languageVocabulary")
       a.data.words = parseWordLines(a.wordLines);
     this.saving = true;
@@ -483,12 +438,33 @@ export class LanguageController {
         a.space,
       );
       localStorage.removeItem(a.key);
-      this.active = null;
-      this.dialog.close();
+      if (writing) {
+        a.version =
+          this.callbacks.context().records.find((r) => r.id === a.id)
+            ?.version || 0;
+        if (this.callbacks.context().space !== a.space || !a.version) {
+          this.dialog.close();
+          return;
+        }
+        this.setEssayMode(true);
+        localStorage.removeItem(a.key);
+        this.status(tr("Saved", "ذخیره شد"));
+      } else {
+        this.active = null;
+        this.dialog.close();
+      }
+    } catch (error) {
+      if (doneReviewed) a.data.reviewed = false;
+      throw error;
     } finally {
       this.saving = false;
       for (const el of form.querySelectorAll("input,textarea,button"))
         el.disabled = false;
+      if (a.kind === "languageEssay")
+        this.dialog.querySelector('[data-lang-action="review-mode"]').disabled =
+          a.version === 0;
+      if (writing && this.dialog.open && a.essayMode === "review")
+        this.dialog.querySelector('[name="reviewNotes"]').focus();
     }
   }
   async importFiles(files) {

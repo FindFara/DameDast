@@ -13,6 +13,18 @@ public sealed class LanguageTests
     private static LanguageEssay Essay(Guid vocabularyId) => new(Day, "My day", "I is happy.", vocabularyId, Words, [new(Guid.NewGuid(), 2, 4, "is", "am", "Use am with I.")], true);
 
     [Fact]
+    public void ReviewNotesPersistAndOldEssaysRemainReadable()
+    {
+        var vocabulary = Vocabulary();
+        var essay = Essay(vocabulary.Id) with { ReviewNotes = "Use am with I. فارسی", Reviewed = false };
+        var saved = FinanceRules.Apply([vocabulary], Change("languageEssay", essay));
+        Assert.Equal(essay.ReviewNotes, FinanceRules.Read<LanguageEssay>(saved.Data).ReviewNotes);
+        var legacy = JsonSerializer.SerializeToElement(new { essay.Date, essay.Title, essay.Body, essay.VocabularyId, essay.AssignedWords, essay.Corrections, essay.Reviewed }, FinanceRules.Json);
+        Assert.Equal("", FinanceRules.Read<LanguageEssay>(legacy).ReviewNotes);
+        Assert.Throws<FinanceException>(() => FinanceRules.Apply([vocabulary], Change("languageEssay", essay with { ReviewNotes = new string('x', 5001) })));
+    }
+
+    [Fact]
     public void EssayAndCorrectionsRoundTripWithTheAssignedWords()
     {
         var vocabulary = Vocabulary();

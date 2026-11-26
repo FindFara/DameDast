@@ -40,6 +40,28 @@ test("daily words exist before an essay, are deterministic and can be customized
   );
   const data = essay(v);
   validateLanguage("languageEssay", data, [v], essayId);
+  validateLanguage(
+    "languageEssay",
+    { ...data, reviewNotes: "Use am with I. فارسی" },
+    [v],
+    essayId,
+  );
+  assert.throws(() =>
+    validateLanguage(
+      "languageEssay",
+      { ...data, reviewNotes: "x".repeat(5001) },
+      [v],
+      essayId,
+    ),
+  );
+  assert.throws(() =>
+    validateLanguage(
+      "languageEssay",
+      { ...data, reviewNotes: null },
+      [v],
+      essayId,
+    ),
+  );
   const saved = { id: essayId, kind: "languageEssay", version: 1, data };
   const edited = {
     ...v,

@@ -280,6 +280,7 @@ export function validateLanguage(kind, data, records = [], id = null) {
   if (
     !text(data.body, 20000) ||
     typeof data.reviewed !== "boolean" ||
+    (data.reviewNotes !== undefined && !text(data.reviewNotes, 5000, true)) ||
     !Array.isArray(data.corrections) ||
     data.corrections.length > 100
   )

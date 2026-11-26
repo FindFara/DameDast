@@ -3,7 +3,7 @@ namespace DameDast.Domain;
 public sealed record LanguageWord(string Term, string Meaning, string Example = "");
 public sealed record LanguageVocabulary(DateOnly Date, string Title, string Topic, IReadOnlyList<LanguageWord> Words, bool Read);
 public sealed record EssayCorrection(Guid Id, int? Start, int? End, string Original, string Replacement, string Explanation);
-public sealed record LanguageEssay(DateOnly Date, string Title, string Body, Guid VocabularyId, IReadOnlyList<LanguageWord> AssignedWords, IReadOnlyList<EssayCorrection> Corrections, bool Reviewed);
+public sealed record LanguageEssay(DateOnly Date, string Title, string Body, Guid VocabularyId, IReadOnlyList<LanguageWord> AssignedWords, IReadOnlyList<EssayCorrection> Corrections, bool Reviewed, string ReviewNotes = "");
 public sealed record LanguageLesson(string Title, string Markdown, string FileName);
 
 public static class LanguageRules
@@ -37,6 +37,7 @@ public static class LanguageRules
         ValidateDay(records, change, essay.Date);
         RequireText(essay.Title, 120, true);
         RequireText(essay.Body, 20000);
+        RequireText(essay.ReviewNotes, 5000, true);
         ValidateWords(essay.AssignedWords);
         var source = records.SingleOrDefault(r => !r.Deleted && r.Kind == "languageVocabulary" && r.Id == essay.VocabularyId);
         if (source is null || FinanceRules.Read<LanguageVocabulary>(source.Data).Date != essay.Date)
