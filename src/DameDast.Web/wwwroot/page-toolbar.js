@@ -4,6 +4,11 @@ import { icon } from "./ui.js";
 const add = '.page-heading [data-action="add"],.page-heading [data-action="task-add"],.page-heading [data-planner-action="new"]';
 // This allowlist defines the floating rail. Other page controls stay in the page.
 export const pageToolbarConfig = {
+  workoutPrograms: { command: add, icon: "plus" },
+  weightPlan: { command: '.page-heading [data-action="weight-add"]', icon: "plus" },
+  weeklyPlan: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
+  developmentStudy: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
+  developmentExercise: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
   languageEssays: { command: '.page-heading [data-lang-action="new-essay"]', icon: "plus" },
   languageLessons: { command: '.page-heading [data-lang-action="import"]', icon: "upload" },
   languageVocabulary: { command: '.page-heading [data-lang-action="edit-vocabulary"]', icon: "edit" },

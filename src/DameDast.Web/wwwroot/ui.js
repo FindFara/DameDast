@@ -1,3 +1,5 @@
+import { workoutProgramsPage, workoutTimerPage, weightPlanPage, exerciseFields } from "./exercise-ui.js";
+import { developmentPage, developmentFields } from "./development-ui.js";
 import { attentionCard, projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
 import { tehranParts } from "./organizer.js";
 import { transactionBoard, filterTransactions } from "./transaction-board.js";
@@ -62,6 +64,13 @@ import { connectedPage } from "./connected-ui.js";
 import { formatCardNumber } from "./account-card-number.js";
 
 export const sections = {
+  workoutPrograms: ["Workout programs", '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/>'],
+  workoutTimer: ["Stopwatch & timer", '<circle cx="12" cy="13" r="8"/><path d="M9 2h6m-3 3v8l4 2"/>'],
+  weightPlan: ["Weight plan", '<rect x="3" y="4" width="18" height="17" rx="4"/><path d="M7 8a7 7 0 0 1 10 0l-5 5Z"/>'],
+  developmentStudy: ["Personal study", '<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3Z"/>'],
+  weeklyPlan: ["Weekly plan", '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M7 2v4m10-4v4M3 10h18m-13 5 3 3 5-6"/>'],
+  developmentExercise: ["Exercise log", '<path d="M3 8v8m4-11v14m10-14v14m4-11v8M7 12h10"/>'],
+
   languageEssays: ["Daily essays", '<path d="M4 3h12l4 4v14H4Zm4 6h8m-8 4h8m-8 4h5"/>'],
   languageLessons: ["Lesson notes", '<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3Zm9 2v16"/>'],
   languageVocabulary: ["Daily vocabulary", '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m6 15 3-7 3 7m-5-2h4m4-4h3m-3 4h3"/>'],
@@ -206,6 +215,8 @@ const arrowLink = (label, hash) =>
 const actionButton = (action, label, attributes = "", style = "secondary") =>
   `<button class="${style}" data-action="${action}" ${attributes}>${t(label)}</button>`;
 const addNames = {
+  developmentEntry: "New activity",
+  workoutProgram: "New workout program", weightEntry: "Record weight", weightGoal: "Weight goal",
   transaction: "New transaction",
   account: "New account",
   budget: "New budget",
@@ -248,6 +259,8 @@ function amountCard(label, value, style = "", foot = "", context) {
 }
 export function renderPage(c) {
   const views = {
+    workoutPrograms: workoutProgramsPage, workoutTimer: workoutTimerPage, weightPlan: weightPlanPage,
+    developmentStudy: developmentPage, weeklyPlan: developmentPage, developmentExercise: developmentPage,
     workbench: (c) => workbenchPage(c, icon),
     assets: assetsPage,
     projects: projectsPage,
@@ -652,6 +665,9 @@ export function editorFields(
     note = () =>
       field("Note (optional)", "note", d.note || "", "text", 'maxlength="200"'),
     dateAttrs = 'min="2000-01-01" max="2100-12-31"';
+  if (kindName === "developmentEntry") return developmentFields(d);
+  const exerciseExtra = exerciseFields(kindName, d);
+  if (exerciseExtra !== null) return exerciseExtra;
   const productivityExtra = productivityFields(kindName, d);
   if (productivityExtra !== null) return productivityExtra;
   if (kindName === "assetPosition") return assetEditorFields(d);

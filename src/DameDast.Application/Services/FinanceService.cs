@@ -12,8 +12,24 @@ public sealed class FinanceService(IFinanceRepository repository, TimeProvider c
     public Task<Snapshot> ReadAsync(string userId, CancellationToken cancellationToken) => repository.ReadAsync(userId, cancellationToken);
     public Task<Snapshot> SyncAsync(string userId, SyncRequest request, CancellationToken cancellationToken)
     {
-        if (request.Changes.Any(change => !change.Delete && change.Kind == "habitLog" && FinanceRules.Read<HabitLog>(change.Data).Date > clock.TehranToday()))
-            throw new FinanceException("This habit date is invalid or already recorded.");
+        var today = clock.TehranToday();
+        foreach (var change in request.Changes) ValidateChangeDate(change, today);
         return repository.ApplyAsync(userId, request.Changes, cancellationToken);
     }
+
+    private static void ValidateChangeDate(Mutation change, DateOnly today)
+    {
+        if (change.Delete) return;
+        if (change.Kind == "habitLog" && FinanceRules.Read<HabitLog>(change.Data).Date > today)
+            throw new FinanceException("This habit date is invalid or already recorded.");
+        if (change.Kind == "developmentEntry")
+        {
+            var entry = FinanceRules.Read<DevelopmentEntry>(change.Data);
+            if (entry.Done && entry.Date > today)
+                throw new FinanceException("Future activities cannot be completed yet.");
+        }
+        if (change.Kind == "weightEntry" && FinanceRules.Read<WeightMeasurement>(change.Data).Date > today)
+            throw new FinanceException("Future activities cannot be completed yet.");
+    }
+
 }

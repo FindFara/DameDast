@@ -1,3 +1,9 @@
+import { validateExercise } from "./exercise.js";
+import { ExerciseClock } from "./exercise-clock.js";
+import { developmentKind, validateDevelopment, developmentWeek } from "./development.js";
+import { developmentArea, developmentFields, toggleDevelopmentFields } from "./development-ui.js";
+import { prepareDevelopmentResources } from "./development-resources.js";
+import { dailyVocabulary } from "./language-model.js";
 import { LanguageController } from "./language-controller.js";
 import { languagePages, validateLanguage } from "./language-model.js";
 import {synchronizePageToolbar} from "./page-toolbar.js";
@@ -18,7 +24,7 @@ import { isDrawingNote, toggleTask } from "./notebook.js";
 import { NotePageController, isNoteRoute } from "./keep-notes.js";
 import { DeskToolController } from "./desk-tool-controller.js";
 import { PlannerController } from "./planner-controller.js";
-import { validateCalendarEntry } from "./planner.js";
+import { validateCalendarEntry, shiftDay } from "./planner.js";
 import { preferences, savePreferences } from "./preferences.js";
 import {
   createBackup,
@@ -63,6 +69,7 @@ import {
 import {
   dateControl,
   monthOf,
+  shiftMonth,
   inMonth,
   validMonth,
   updateCalendarControl,
@@ -130,6 +137,9 @@ let assetKey = "",
   assetCurves = {},
   assetHistoryLoading = false,
   assetGeneration = 0;
+let developmentDate = today();
+let weeklyPlanDate = shiftDay(developmentWeek(today())[0], 7);
+let developmentEditorSpace = null;
 let projectId = null;
 let clipInbox = [];
 const connected = new ConnectedStore(() => {
@@ -211,6 +221,7 @@ const numInput = (value) =>
     .replace(/[,٬\s]/g, "")
     .replace(/٫/g, ".");
 const context = () => ({
+  developmentDate: page === "weeklyPlan" ? weeklyPlanDate : developmentDate,
   projectId,
   attentionOpen,
   amountsVisible: dashboardAmountsVisible,
@@ -268,6 +279,7 @@ const notePage = new NotePageController({
   save: (data, id, version, noteScope) => commit("note", data, id, false, version, noteScope),
   write: commit, refreshData: refreshWorkspace,
 });
+const exerciseClock = new ExerciseClock(showError);
 const language = new LanguageController({ context, refresh: render, error: showError, save: commit });
 const deskTools = new DeskToolController({ context, error: showError });
 
@@ -391,7 +403,7 @@ function renderChrome() {
     `<div class="nav-link-row" style="--nav-color:${navigationColor(key) || shortcutColors[key] || "#687f91"}"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
   $("#navigation").innerHTML =
     (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
-    navLink("overview") + navLink("workbench") +
+    navLink("overview") + navLink("workbench") + navLink("weeklyPlan") + navLink("developmentStudy") +
     navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" style="--nav-color:${group.color}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
     `<div class="nav-footer-links">${navLink("reports")}${navLink("settings")}</div>`;
   $("#mobile-navigation").innerHTML = [
@@ -474,6 +486,7 @@ function render() {
   if(languagePages.includes(page)) language.filterLessons();
   if(isNoteRoute(hash)) notePage.attach();
   document.querySelectorAll('.notes-grid:not(.notes-list) > .note-card').forEach(card => noteLayout.observe(card));
+  exerciseClock.attach(space);
   desk.attach();
   deskTools.attach();
   planner.attach();
@@ -499,6 +512,10 @@ function openEditor(kind, id = null, type = null, preset = null) {
     const linked = records().find(r => r.id === id)?.data.installmentId;
     if (linked) { openEditor("installment", linked); return; }
   }
+  if (kind === developmentKind) {
+    developmentEditorSpace = space;
+    preset ||= { date: developmentDate, area: developmentArea(page), title: "", notes: "", minutes: 0, done: false, resourceId: null };
+  }
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -511,10 +528,10 @@ function openEditor(kind, id = null, type = null, preset = null) {
   if (kind === "transaction")
     movementType = type || editing?.data.type || "expense";
   $("#dialog-title").textContent = editing
-    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", project: "Project", habit: "Habits", bookmark: "Saved links", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
+    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", project: "Project", habit: "Habits", developmentEntry: "New activity", workoutProgram: "Workout programs", weightEntry: "Record weight", weightGoal: "Weight goal", bookmark: "Saved links", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
     : addLabel(kind);
   $("#form-error").textContent = "";
-  $("#dialog-fields").innerHTML = editorFields(
+  $("#dialog-fields").innerHTML = kind === developmentKind ? developmentFields(editing?.data || preset, records()) : editorFields(
     kind,
     editing?.data || preset,
     ofKind("account").map((a) => [
@@ -526,6 +543,11 @@ function openEditor(kind, id = null, type = null, preset = null) {
     selectedMonth,
     categoryOptions(),
   );
+  if (kind === developmentKind) {
+    const root = $("#dialog-fields");
+    root.dataset.wordsDirty = "false";
+    toggleDevelopmentFields(root);
+  }
   if (projectKinds.includes(kind)) $("#dialog-fields").insertAdjacentHTML("beforeend", projectField(records(), editing?.data.projectId || preset?.projectId));
   formatNumericFields($("#editor"));
   updateAssetPreview();
@@ -549,6 +571,8 @@ function applyMovementType() {
     );
 }
 function validateData(kind, data, id) {
+  validateDevelopment(kind, data, today(), records());
+  validateExercise(kind, data, records(), id);
   validateLanguage(kind, data, records(), id);
   validateProductivity(kind, data, records(), id);
   if (kind === "calendarEvent") validateCalendarEntry(data);
@@ -790,8 +814,24 @@ async function submitEditor(event) {
       "total",
       "day",
       "weeklyTarget",
+      "minutes",
+      "kg",
     ])
       if (name in data) data[name] = Number(numInput(data[name]));
+    if (editorKind === developmentKind) {
+      if (space !== developmentEditorSpace) throw Error("Account changed. Reopen the note.");
+      data.done = ["essay", "vocabulary"].includes(data.area) ? false : data.done === "on";
+      data.resourceId = data.resourceId || null;
+      const form = event.target, fileInput = form.elements.developmentFile, resourceInput = form.elements.resourceId;
+      const file = fileInput.files[0], words = data.developmentWords;
+      const entryScope = developmentEditorSpace, entryRecord = editing;
+      delete data.developmentFile; delete data.developmentWords;
+      validateDevelopment(editorKind, data, today());
+      await prepareDevelopmentResources(data, { file, words, records: records(),
+        save: (kind, payload, id, remove, version) => commit(kind, payload, id, remove, version, entryScope),
+        attached: id => { resourceInput.value = id; fileInput.value = ""; } });
+      if (space !== entryScope || editing !== entryRecord || editorKind !== developmentKind || !$("#editor").open) return;
+    }
     if (projectKinds.includes(editorKind)) data.projectId = data.projectId || null;
     if (["project", "habit"].includes(editorKind)) data.name = data.name.trim();
     if (editorKind === "bookmark") { data.tags = [...new Set((data.tagsText || "").split(/[,،]/).map(x => x.trim()).filter(Boolean))]; delete data.tagsText; }
@@ -870,6 +910,7 @@ async function submitEditor(event) {
       editing?.id || (editorKind === "bookmark" ? editorPreset?.clipId : undefined),
       false,
       editing?.version ?? null,
+      editorKind === developmentKind ? developmentEditorSpace : space,
     );
     if (editorKind === "bookmark" && editorPreset?.clipId) void acknowledgeClip(editorPreset.clipId);
     if (
@@ -1293,7 +1334,7 @@ async function migrateGuest() {
             const existing = new Set(materialize(state).map((r) => r.id));
             for (const r of [
               ...source.filter(
-                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit" || r.kind === "noteLabel" || r.kind === "languageVocabulary",
+                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit" || r.kind === "noteLabel" || r.kind === "languageVocabulary" || r.kind === "languageLesson",
               ),
               ...source.filter((r) => r.kind === "monthlyExpense"),
               ...source.filter(
@@ -1307,6 +1348,7 @@ async function migrateGuest() {
                     "habit",
                     "noteLabel",
                     "languageVocabulary",
+                    "languageLesson",
                   ].includes(r.kind),
               ),
               ...source.filter((r) => r.kind === "notificationRead"),
@@ -1326,6 +1368,7 @@ async function migrateGuest() {
               if (r.kind === "note" && data.labels) data.labels=data.labels.map(id=>mapping[id]).filter(Boolean);
               if (r.kind === "habitLog") data.habitId = mapping[data.habitId];
               if (r.kind === "languageEssay") data.vocabularyId = mapping[data.vocabularyId];
+              if (r.kind === "developmentEntry" && data.resourceId) data.resourceId = mapping[data.resourceId];
               if (r.kind === "installment" && data.payment) data.payment = { ...data.payment, transactionId: mapping[data.payment.transactionId] || crypto.randomUUID(), accountId: mapping[data.payment.accountId], category: data.payment.category.startsWith("custom:") ? "custom:" + mapping[data.payment.category.slice(7)] : data.payment.category };
               if (r.kind === "workbench")
                 data.widgets = data.widgets.map((w) => ({
@@ -1543,6 +1586,39 @@ async function onAction(event) {
     return;
   }
   const { action, id, kind } = element.dataset;
+  if (action === "weight-add") {
+    const existing = ofKind("weightEntry").find(r => r.data.date === today());
+    openEditor("weightEntry", existing?.id); return;
+  }
+  if (action === "development-calendar") {
+    planner.state.date = context().developmentDate; planner.state.view = "week"; location.hash = "calendar"; return;
+  }
+  if (action === "development-add") {
+    openEditor(developmentKind, null, null, { date: element.dataset.date || context().developmentDate, area: element.dataset.area || "plan", title: "", notes: "", minutes: 0, done: false, resourceId: null }); return;
+  }
+  if (["development-day", "development-shift", "development-today", "development-month"].includes(action)) {
+    const current = context().developmentDate;
+    const next = action === "development-day" ? element.dataset.date : action === "development-today" ? (page === "weeklyPlan" ? shiftDay(developmentWeek(today())[0],7) : today())
+      : action === "development-month" ? dateInMonth(shiftMonth(monthOf(current), Number(element.dataset.delta)),1)
+      : shiftDay(current, Number(element.dataset.delta) * (page === "weeklyPlan" ? 7 : 1));
+    if (page === "weeklyPlan") weeklyPlanDate = next; else developmentDate = next;
+    render(); return;
+  }
+  if (action === "development-toggle") {
+    const record = ofKind(developmentKind).find(r => r.id === id);
+    if (!record || record.data.date > today()) return;
+    element.disabled = true;
+    try { await commit(developmentKind, { ...record.data, done: !record.data.done }, id, false, record.version); }
+    finally { if (element.isConnected) element.disabled = false; }
+    return;
+  }
+  if (action === "development-resource") {
+    const record = ofKind(developmentKind).find(r => r.id === id); if (!record) return;
+    if (record.data.area === "essay") language.openEssay(record.data.date, element);
+    else if (record.data.area === "vocabulary") { language.date = record.data.date; location.hash = "languageVocabulary"; }
+    else { const lesson = ofKind("languageLesson").find(r => r.id === record.data.resourceId); if (lesson) language.openLesson(lesson, true, element); }
+    return;
+  }
   if (action === "transaction-filters-toggle") { transactionFiltersOpen = !transactionFiltersOpen; render(); return; }
   if (action === "notifications-filter") { notificationFilter = element.dataset.filter === "all" ? "all" : "unread"; renderNotifications(); return; }
   if (action === "notifications-refresh") { await refreshWorkspace(); return; }
@@ -2082,6 +2158,17 @@ $("#theme-button").onclick = () => {
 };
 
 document.addEventListener("change", (event) => {
+  if (event.target.name === "development-day") {
+    if (page === "weeklyPlan") weeklyPlanDate = event.target.value; else developmentDate = event.target.value;
+    render(); return;
+  }
+  if (editorKind === developmentKind && event.target.closest("#editor")) {
+    const root = $("#dialog-fields"); toggleDevelopmentFields(root);
+    if (event.target.name === "date" && root.dataset.wordsDirty !== "true")
+      root.querySelector('[name="developmentWords"]').value = dailyVocabulary(records(), event.target.value).data.words.map(w => `${w.term} | ${w.meaning} | ${w.example}`).join("\n");
+    if (event.target.name === "developmentFile" && !root.querySelector('[name="title"]').value)
+      root.querySelector('[name="title"]').value = event.target.files[0]?.name.replace(/\.(md|markdown)$/i, "") || "";
+  }
   if (event.target.id === "transaction-sort") {
     transactionFilters = normalizeTransactionFilters({ ...transactionFilters, sort: event.target.value });
     render(); return;
@@ -2177,6 +2264,7 @@ document.addEventListener(
   },
   true,
 );
+document.addEventListener("input", (event) => { if (event.target.name === "developmentWords") $("#dialog-fields").dataset.wordsDirty = "true"; });
 document.addEventListener("input", (event) => {
   if (editorKind === "assetPosition" && event.target.name === "name")
     event.target.dataset.autoName = "0";

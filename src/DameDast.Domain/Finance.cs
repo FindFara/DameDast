@@ -78,6 +78,8 @@ public static class FinanceRules
 
     private static void Validate(IReadOnlyList<FinanceRecord> records, Mutation change)
     {
+        if (ExerciseRules.TryValidate(records, change)) return;
+        if (DevelopmentRules.TryValidate(records, change)) return;
         if (LanguageRules.TryValidate(records, change)) return;
         ProductivityRules.ValidateProject(records, change);
         if (ProductivityRules.TryValidate(records, change)) return;

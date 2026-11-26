@@ -1,3 +1,5 @@
+import { exerciseKinds, validateExercise } from "./exercise.js";
+import { developmentKind, validateDevelopment } from "./development.js";
 import { scopedStorageKey } from "./account-scope.js";
 import { LEGACY_BACKUP_FORMAT } from "./legacy-storage.js";
 import { readPdf, writePdf, validatePdfMetadata, base64ToBytes, bytesToBase64, MAX_NOTE_PDFS } from "./pdf-store.js";
@@ -20,6 +22,7 @@ const guid = (v) =>
   /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(v) &&
   !/^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(v);
 const kinds = new Set([
+  developmentKind, ...exerciseKinds,
   ...languageKinds,
   "account",
   "transaction",
@@ -44,7 +47,7 @@ const kinds = new Set([
   "project", "bookmark", "habit", "habitLog",
 ]);
 export const backupSections = ["all", "notes", "finance"];
-const writingKinds = new Set([...languageKinds,"note", "noteLabel", "reminder", "calendarEvent", "notificationRead", "bookmark", "habit", "habitLog"]);
+const writingKinds = new Set([...exerciseKinds,developmentKind,...languageKinds,"note", "noteLabel", "reminder", "calendarEvent", "notificationRead", "bookmark", "habit", "habitLog"]);
 export function selectBackupRecords(records, section = "all") {
   if (!backupSections.includes(section)) throw Error("Invalid backup section.");
   return records.filter((r) => !r.deleted && (section === "all" || r.kind === "project" || (section === "notes" ? writingKinds.has(r.kind) : !writingKinds.has(r.kind) && r.kind !== "workbench")));
@@ -93,6 +96,8 @@ export function validateBackup(input) {
         (!Number.isSafeInteger(r.data[key]) || Math.abs(r.data[key]) > 1e12)
       )
         throw Error("Invalid backup record.");
+    validateDevelopment(r.kind,r.data,undefined,input.records);
+    validateExercise(r.kind,r.data,input.records,r.id);
     if (languageKinds.includes(r.kind)) validateLanguage(r.kind,r.data,input.records,r.id);
     if (r.kind === "workbench") validateWorkbench(r.data);
     if (r.kind === "calendarEvent") validateCalendarEntry(r.data);

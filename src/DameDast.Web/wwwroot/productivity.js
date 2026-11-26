@@ -20,9 +20,9 @@ export function searchWorkspace(records, query, pages = []) {
   const terms = normalizeSearch(query).split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   const rows = live(records), projects = new Map(rows.filter(r => r.kind === "project").map(r => [r.id, r.data.name]));
-  return [...rows.filter(r => ["note", "calendarEvent", "transaction", "reminder", "installment", "monthlyExpense", "goal", "project", "bookmark", "habit"].includes(r.kind) && !isDrawingNote(r)).map(r => ({
+  return [...rows.filter(r => ["note", "calendarEvent", "transaction", "reminder", "installment", "monthlyExpense", "goal", "project", "bookmark", "habit", "developmentEntry", "workoutProgram"].includes(r.kind) && !isDrawingNote(r)).map(r => ({
     id: r.id, kind: r.kind, title: r.data.title || r.data.name || r.data.note || t(r.data.category),
-    detail: [r.data.body, r.data.description, r.data.excerpt, r.data.url, ...(r.data.tags || []).map(tag => tag === "Read later" ? "Read later بعداً بخوانم" : tag), ...(r.data.checklist || []).map(x => x.text), projects.get(r.data.projectId)].filter(Boolean).join(" · "), record: r,
+    detail: [r.data.body, r.data.description, r.data.notes, r.data.excerpt, r.data.url, ...(r.data.tags || []).map(tag => tag === "Read later" ? "Read later بعداً بخوانم" : tag), ...(r.data.checklist || []).map(x => x.text), projects.get(r.data.projectId)].filter(Boolean).join(" · "), record: r,
   })), ...pages.map(p => ({ ...p, kind: "page", detail: "" }))].filter(row => terms.every(term => normalizeSearch(row.title + " " + row.detail).includes(term)));
 }
 export function habitProgress(records, habit, date = today()) {

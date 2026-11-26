@@ -1,3 +1,4 @@
+import { developmentEntries } from "./development.js";
 import {
   validIso,
   jalaliParts,
@@ -177,7 +178,11 @@ export function expandCalendarEntry(record, start, end) {
   return rows;
 }
 export function plannerItems(records, start, end) {
-  const result = [];
+  const result = developmentEntries(records).filter(r => r.data.date >= start && r.data.date < end).map(r => ({
+    key: r.id, recordId: r.id, source: "developmentEntry", date: r.data.date, occurrence: r.data.date,
+    title: r.data.title, kind: "task", done: r.data.done, allDay: true, startTime: null, endTime: null,
+    color: r.data.area === "exercise" ? "#367c61" : r.data.area === "study" ? "#829bc9" : "#b78a43",
+  }));
   for (const r of records.filter((r) => !r.deleted)) {
     const d = r.data;
     if (r.kind === "calendarEvent")
