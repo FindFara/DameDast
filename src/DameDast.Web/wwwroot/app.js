@@ -1,6 +1,7 @@
 import { validateExercise } from "./exercise.js";
 import { ExerciseClock } from "./exercise-clock.js";
 import { developmentKind, validateDevelopment } from "./development.js";
+import { isTheme } from "./themes.js";
 import { developmentArea, developmentFields, toggleDevelopmentFields } from "./development-ui.js";
 import { prepareDevelopmentResources } from "./development-resources.js";
 import { dailyVocabulary } from "./language-model.js";
@@ -2293,6 +2294,7 @@ document.addEventListener("change", (event) => {
     render();
   }
   if (event.target.id === "theme-setting") {
+    savePreferences({ mainBackground: null });
     setTheme(event.target.value);
     render();
   }
@@ -2863,7 +2865,7 @@ document
                 if (["en", "fa"].includes(backup.preferences.language))
                   setLanguage(backup.preferences.language);
                 if (
-                  ["light", "dark", "system"].includes(backup.preferences.theme)
+                  isTheme(backup.preferences.theme)
                 )
                   setTheme(backup.preferences.theme);
               }

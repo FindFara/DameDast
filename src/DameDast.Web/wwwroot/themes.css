@@ -1,0 +1,94 @@
+/* Each palette uses the shared app tokens; dark component behavior stays shared. */
+:root[data-palette="dark-brown"] {
+  --bg: #1f1a17;
+  --surface: #2c2420;
+  --surface-raised: #352b25;
+  --surface-soft: #302721;
+  --ink: #f1e8dd;
+  --muted: #c3ad99;
+  --faint: #aa9788;
+  --accent: #d8ad7a;
+  --accent-hover: #e9c397;
+  --accent-soft: #453426;
+  --border: #514236;
+  --track: #453930;
+  --chart-expense: #91704c;
+  --positive: #99c7a4;
+  --negative: #f09e91;
+  --warning-bg: #3b3020;
+  --warning-ink: #e8c88e;
+  --warning-border: #635035;
+  --theme-on-accent: #21180f;
+}
+:root[data-palette="dark-blue"] {
+  --bg: #151d29;
+  --surface: #202c3c;
+  --surface-raised: #27364a;
+  --surface-soft: #253245;
+  --ink: #e9eff7;
+  --muted: #b0bfd2;
+  --faint: #91a6bf;
+  --accent: #93b7df;
+  --accent-hover: #afc9e9;
+  --accent-soft: #30455e;
+  --border: #3b4c63;
+  --track: #34465c;
+  --chart-expense: #6081aa;
+  --positive: #9bcbb1;
+  --negative: #f2a9aa;
+  --warning-bg: #3a3324;
+  --warning-ink: #ecd098;
+  --warning-border: #65583b;
+  --theme-on-accent: #172436;
+}
+:root[data-palette="gray-yellow"] {
+  --bg: #252728;
+  --surface: #323537;
+  --surface-raised: #3c3f41;
+  --surface-soft: #383b3d;
+  --ink: #f3f2e9;
+  --muted: #c4c4bc;
+  --faint: #abaca5;
+  --accent: #e9cc66;
+  --accent-hover: #f6dd86;
+  --accent-soft: #4b4530;
+  --border: #515351;
+  --track: #494c49;
+  --chart-expense: #9c8e54;
+  --positive: #9cc5a7;
+  --negative: #edaaa0;
+  --warning-bg: #49412c;
+  --warning-ink: #efdc94;
+  --warning-border: #6b5e37;
+  --theme-on-accent: #302a17;
+}
+:root[data-palette="white-yellow"] {
+  --bg: #fafaf7;
+  --surface: #fff;
+  --surface-raised: #fff;
+  --surface-soft: #f4f3ea;
+  --ink: #343326;
+  --muted: #74725f;
+  --faint: #85816a;
+  --accent: #846500;
+  --accent-hover: #715500;
+  --accent-soft: #fff2bb;
+  --border: #e5e2d4;
+  --track: #efecdf;
+  --chart-expense: #ccbb70;
+  --positive: #3c7859;
+  --negative: #a84c45;
+  --warning-bg: #faf0d2;
+  --warning-ink: #755c17;
+  --warning-border: #ead590;
+  --theme-action: #edc84b;
+  --theme-action-hover: #e2b92f;
+  --theme-on-accent: #302915;
+}
+:root:is([data-palette="dark-brown"], [data-palette="dark-blue"], [data-palette="gray-yellow"], [data-palette="white-yellow"]) .primary {
+  background: var(--theme-action, var(--accent));
+  color: var(--theme-on-accent);
+}
+:root:is([data-palette="dark-brown"], [data-palette="dark-blue"], [data-palette="gray-yellow"], [data-palette="white-yellow"]) .primary:hover {
+  background: var(--theme-action-hover, var(--accent-hover));
+}

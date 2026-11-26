@@ -1,3 +1,4 @@
+import { isTheme, resolveTheme } from "./themes.js";
 import { preferences } from "./preferences.js";
 const readPreference = (name, fallback) => {
   try {
@@ -9,7 +10,7 @@ const readPreference = (name, fallback) => {
 let language = readPreference("damdast-language", "en");
 let theme = readPreference("damdast-theme", "system");
 if (!["en", "fa"].includes(language)) language = "en";
-if (!["light", "dark", "system"].includes(theme)) theme = "system";
+if (!isTheme(theme)) theme = "system";
 
 export const getLanguage = () => language;
 export const getTheme = () => theme;
@@ -25,25 +26,22 @@ export function setLanguage(value) {
   applyPreferences();
 }
 export function setTheme(value) {
-  if (!["light", "dark", "system"].includes(value)) return;
+  if (!isTheme(value)) return;
   theme = value;
   try {
     globalThis.localStorage?.setItem("damdast-theme", value);
   } catch {}
   applyPreferences();
 }
-export function effectiveTheme() {
-  return theme === "system"
-    ? globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light"
-    : theme;
-}
+const palette = () => resolveTheme(theme, !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches);
+export const effectiveTheme = () => palette().mode;
+export const themeBackground = () => palette().background;
 export function applyPreferences() {
   if (!globalThis.document) return;
   document.documentElement.lang = language;
   document.documentElement.dir = isRtl() ? "rtl" : "ltr";
   document.documentElement.dataset.theme = effectiveTheme();
+  document.documentElement.dataset.palette = palette().id;
   document.documentElement.style.colorScheme = effectiveTheme();
   const background = preferences().mainBackground;
   if (background) {
@@ -59,7 +57,7 @@ export function applyPreferences() {
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute(
       "content",
-      background || (effectiveTheme() === "dark" ? "#141c23" : "#f5f7f6"),
+      background || themeBackground(),
     );
   document.title = isRtl()
     ? "دمِ دست"
@@ -72,6 +70,11 @@ const fa = {
   "Review budget": "بررسی بودجه",
   "Days of the week": "روزهای هفته",
   "Choose at least one weekday.": "حداقل یک روز هفته را انتخاب کن.",
+  "Dark brown": "دارک قهوه‌ای",
+  "Matte dark blue": "دارک آبی مات",
+  "Gray & yellow": "خاکستری زرد",
+  "White & yellow": "سفید زرد",
+  "Choose an app palette, or follow your device.": "تم برنامه را انتخاب کن یا با دستگاه هماهنگ نگه دار.",
   "Learning hub": "لرنینگ",
   "Learning activities": "فعالیت‌های یادگیری",
   "Personal development": "برنامه‌های شخصی",
