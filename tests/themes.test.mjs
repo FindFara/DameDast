@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { themeOptions, isTheme, resolveTheme } from '../src/DameDast.Web/wwwroot/themes.js';
 import { setTheme, getTheme, effectiveTheme, applyPreferences } from '../src/DameDast.Web/wwwroot/i18n.js';
-const custom = ['dark-green', 'dark-blue', 'gray-yellow', 'white-yellow', 'white-green'];
+const custom = ['dark-green', 'dark-blue', 'gray-yellow', 'white-yellow', 'white-green', 'dracula', 'nord', 'catppuccin-mocha', 'tokyo-night', 'gruvbox'];
 const bootstrap = fs.readFileSync(new URL('../src/DameDast.Web/wwwroot/appearance.js',import.meta.url),'utf8');
 test('all custom themes restore the same palette and light/dark behavior before and after app startup',()=>{
   assert.ok(custom.every(isTheme));
@@ -35,7 +35,7 @@ test('custom theme choices persist and apply globally while existing light/dark 
     assert.equal(document.documentElement.style.colorScheme,theme.mode);
     assert.equal(meta,theme.background);
   }
-  setTheme('unknown');assert.equal(getTheme(),'white-green');
+  setTheme('unknown');assert.equal(getTheme(),'gruvbox');
   setTheme('system');assert.equal(effectiveTheme(),'dark');
 });
 const luminance=hex=>{
@@ -57,12 +57,12 @@ test('palette text, muted labels and primary buttons have readable contrast',()=
   }
 });
 
-test('theme picker offers exactly five two-color radio choices and an explicit save action',async()=>{
+test('theme picker offers exactly ten two-color radio choices and an explicit save action',async()=>{
   const { parseHTML } = await import('linkedom');
   const { themePicker } = await import('../src/DameDast.Web/wwwroot/settings-ui.js');
   const previous = getTheme();
   const {document}=parseHTML(themePicker('dark-blue'));
-  assert.equal(document.querySelectorAll('input[type="radio"]').length,5);
+  assert.equal(document.querySelectorAll('input[type="radio"]').length,10);
   assert.equal(document.querySelector('input:checked').value,'dark-blue');
   assert.equal(document.querySelector('select'),null);
   assert.ok(document.querySelector('[data-theme-form] button[type="submit"]'));

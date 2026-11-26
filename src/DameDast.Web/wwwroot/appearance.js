@@ -9,11 +9,11 @@ try {
   const saved = localStorage.getItem("damdast-theme");
   const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
   const alias = saved === "light" ? "white-green" : ["dark", "dark-brown"].includes(saved) ? "dark-green" : saved;
-  const theme = ["dark-green", "dark-blue", "gray-yellow", "white-yellow", "white-green"].includes(alias)
+  const theme = ["dark-green", "dark-blue", "gray-yellow", "white-yellow", "white-green", "dracula", "nord", "catppuccin-mocha", "tokyo-night", "gruvbox"].includes(alias)
     ? alias : prefersDark ? "dark-green" : "white-green";
   document.documentElement.lang = language;
   document.documentElement.dir = language === "fa" ? "rtl" : "ltr";
-  const dark = theme === "dark" || theme.startsWith("dark-") || theme === "gray-yellow";
+  const dark = !["white-yellow", "white-green"].includes(theme);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   document.documentElement.dataset.palette = theme;
   const background = JSON.parse(localStorage.getItem("damdast-preferences-v2") || "{}").mainBackground;

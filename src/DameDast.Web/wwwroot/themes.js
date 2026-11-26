@@ -4,6 +4,11 @@ export const themeOptions = [
   { id: "gray-yellow", label: "Gray & yellow", mode: "dark", background: "#252728", accent: "#e9cc66" },
   { id: "white-yellow", label: "White & pastel yellow", mode: "light", background: "#fafaf7", accent: "#f3dfa0" },
   { id: "white-green", label: "Matte white & green", mode: "light", background: "#f5f6f2", accent: "#b5d9bd" },
+  { id: "dracula", label: "Dracula", mode: "dark", background: "#282a36", accent: "#bd93f9" },
+  { id: "nord", label: "Nord", mode: "dark", background: "#2e3440", accent: "#88c0d0" },
+  { id: "catppuccin-mocha", label: "Catppuccin Mocha", mode: "dark", background: "#1e1e2e", accent: "#cba6f7" },
+  { id: "tokyo-night", label: "Tokyo Night", mode: "dark", background: "#1a1b26", accent: "#7aa2f7" },
+  { id: "gruvbox", label: "Gruvbox", mode: "dark", background: "#282828", accent: "#fabd2f" },
 ];
 const legacyThemes = ["system", "light", "dark", "dark-brown"];
 export const isTheme = value => themeOptions.some(theme => theme.id === value) || legacyThemes.includes(value);
