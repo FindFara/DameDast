@@ -1,3 +1,4 @@
+import { weeklyAgendaPanel } from "./weekly-agenda-ui.js";
 import { workoutProgramsPage, workoutTimerPage, weightPlanPage, exerciseFields } from "./exercise-ui.js";
 import { developmentPage, developmentFields } from "./development-ui.js";
 import { projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
@@ -388,7 +389,7 @@ function overview(c) {
       0,
     ),
     budget = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Overview", "transaction")}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
+  return `${pageHeading(c, "Overview", "transaction")}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${weeklyAgendaPanel(c)}${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
     "Budgets",
     budget.length
       ? budget

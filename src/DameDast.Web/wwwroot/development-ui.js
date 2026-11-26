@@ -10,7 +10,6 @@ import {
 import { dailyVocabulary } from "./language-model.js";
 import {
   developmentEntries,
-  developmentWeek,
   developmentMonth,
   developmentProgress,
   learningEntries,
@@ -40,8 +39,12 @@ const add = (date, area, label = tr("Add", "افزودن")) =>
     "primary",
   );
 function entryCard(r) {
-  const d = r.data;
-  return `<article class="panel development-entry ${d.done ? "is-done" : ""}"><div class="development-entry-heading">${button(["essay", "vocabulary"].includes(d.area) ? "development-resource" : "development-toggle", d.done ? "✓" : "○", `data-id="${r.id}" aria-pressed="${d.done}" aria-label="${esc((d.done ? tr("Mark incomplete", "انجام نشده") : tr("Mark complete", "انجام شد")) + " · " + d.title)}" ${d.date > today() ? "disabled" : ""}`, "development-check")}<h3 dir="auto">${esc(d.title)}</h3><span class="badge">${areas()[d.area]}</span></div>${d.notes ? `<p dir="auto">${esc(d.notes)}</p>` : ""}<footer><span>${d.minutes ? `${n(d.minutes)} ${tr("min", "دقیقه")}` : ""}</span><div>${["essay", "vocabulary", "lesson"].includes(d.area) ? button("development-resource", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button") : ""}${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></footer></article>`;
+  const d = r.data, linked = ["essay", "vocabulary"].includes(d.area);
+  const completion = button(linked ? "development-resource" : "development-toggle",
+    linked ? (d.done ? tr("Completed", "انجام شده") : d.area === "essay" ? tr("Review", "بازبینی") : tr("Read words", "خواندن کلمات")) : d.done ? tr("Mark incomplete", "انجام نشده") : tr("Mark complete", "انجام شد"),
+    `data-id="${r.id}" ${linked ? "" : `aria-pressed="${d.done}"`} ${d.date > today() || linked && d.done ? "disabled" : ""}`,
+    "text-button development-complete");
+  return `<article class="panel development-entry ${d.done ? "is-done" : ""}"><div class="development-entry-heading"><h3 dir="auto">${esc(d.title)}</h3><span class="badge">${areas()[d.area]}</span></div>${d.notes ? `<p dir="auto">${esc(d.notes)}</p>` : ""}<footer><span>${d.minutes ? `${n(d.minutes)} ${tr("min", "دقیقه")}` : ""}</span><div>${d.area === "lesson" || linked && d.done ? button("development-resource", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button") : ""}${completion}${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></footer></article>`;
 }
 function stats(entries, exercise = false) {
   const p = developmentProgress(entries);
@@ -82,7 +85,7 @@ export function developmentPage(c) {
     ["plan", tr("Personal development", "توسعهٔ فردی")],
   ];
   const filters = isLearning
-    ? `<nav class="learning-filters" aria-label="${tr("Activity type", "نوع فعالیت")}">${categories.map(([key, label]) => button("learning-filter", label, `data-category="${key}" aria-pressed="${(c.learningCategory || "all") === key}"`, (c.learningCategory || "all") === key ? "primary" : "secondary")).join("")}${button("development-calendar", tr("Calendar", "تقویم"))}</nav>`
+    ? `<nav class="learning-filters" aria-label="${tr("Activity type", "نوع فعالیت")}">${categories.map(([key, label]) => button("learning-filter", label, `data-category="${key}" aria-pressed="${(c.learningCategory || "all") === key}"`, (c.learningCategory || "all") === key ? "primary" : "secondary")).join("")}</nav>`
     : "";
   const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${add(date, area)}</div></div>${filters}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
   let calendar;
@@ -102,9 +105,7 @@ export function developmentPage(c) {
       )
       .join("")}</div></section>`;
   } else
-    calendar = `<div class="development-week-strip">${developmentWeek(date)
-      .map((day) => dayButton(day, filtered, date))
-      .join("")}</div>${stats(dayEntries)}`;
+    calendar = stats(dayEntries);
   return (
     heading +
     calendar +
@@ -128,7 +129,7 @@ export function developmentFields(d = {}, records = []) {
     dailyVocabulary(records, d.date || today())
       .data.words.map((w) => `${w.term} | ${w.meaning} | ${w.example}`)
       .join("\n"),
-  )}</textarea></label></div><div data-development-file ${d.area === "lesson" ? "" : "hidden"}><label class="field">Markdown<input type="file" name="developmentFile" accept=".md,.markdown,text/markdown"></label>${d.resourceId ? `<small>${tr("Lesson attached", "جزوه پیوست شده")}</small>` : ""}</div><input type="hidden" name="resourceId" value="${esc(d.resourceId || "")}"><label class="development-done-field"><input name="done" type="checkbox" ${d.done ? "checked" : ""}>${tr("Completed", "انجام شد")}</label>`;
+  )}</textarea></label></div><div data-development-file ${d.area === "lesson" ? "" : "hidden"}><label class="field">Markdown<input type="file" name="developmentFile" accept=".md,.markdown,text/markdown"></label>${d.resourceId ? `<small>${tr("Lesson attached", "جزوه پیوست شده")}</small>` : ""}</div><input type="hidden" name="resourceId" value="${esc(d.resourceId || "")}">`;
 }
 
 export function toggleDevelopmentFields(root) {
@@ -139,8 +140,5 @@ export function toggleDevelopmentFields(root) {
     "vocabulary",
   ].includes(area);
   root.querySelector("[data-development-file]").hidden = area !== "lesson";
-  root.querySelector('[name="done"]').closest("label").hidden = [
-    "essay",
-    "vocabulary",
-  ].includes(area);
+
 }

@@ -159,7 +159,8 @@ test("settings groups start closed and retain an explicitly opened group", () =>
 test("dashboard checks move to reminders and the bell, sharing read state and escaping titles", () => {
   setLanguage("en");
   const records = [{ id: "task", kind: "calendarEvent", data: {
-    title: "<script>Review</script>", kind: "task", startDate: "2026-11-15", repeat: "none", done: false,
+    title: "<script>Review</script>", kind: "task", startDate: "2026-11-15", endDate: "2026-11-15",
+    description: "", allDay: true, color: "#72ab95", repeatCalendar: "persian", repeat: "none", done: false,
   } }];
   const context = { ...base, records };
   const reminders = renderPage({ ...context, page: "reminders" });

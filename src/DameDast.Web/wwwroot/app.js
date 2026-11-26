@@ -835,7 +835,7 @@ async function submitEditor(event) {
       if (name in data) data[name] = Number(numInput(data[name]));
     if (editorKind === developmentKind) {
       if (space !== developmentEditorSpace) throw Error("Account changed. Reopen the note.");
-      data.done = ["essay", "vocabulary"].includes(data.area) ? false : data.done === "on";
+      data.done = ["essay", "vocabulary"].includes(data.area) ? false : !!editing?.data.done;
       data.resourceId = data.resourceId || null;
       const form = event.target, fileInput = form.elements.developmentFile, resourceInput = form.elements.resourceId;
       const file = fileInput.files[0], words = data.developmentWords;
@@ -1606,8 +1606,21 @@ async function onAction(event) {
     const existing = ofKind("weightEntry").find(r => r.data.date === today());
     openEditor("weightEntry", existing?.id); return;
   }
-  if (action === "development-calendar") {
-    planner.state.date = context().developmentDate; planner.state.view = "week"; location.hash = "calendar"; return;
+  if (action === "weekly-item-open") {
+    const record = records().find(r => r.id === id);
+    if (!record) return;
+    if (record.kind === developmentKind) {
+      developmentDate = record.data.date;
+      learningCategory = "all";
+      location.hash = record.data.area === "exercise" ? "developmentExercise" : "learning";
+      if (record.data.area === "essay") language.openEssay(record.data.date, element);
+      else if (record.data.area === "vocabulary") { language.date = record.data.date; location.hash = "languageVocabulary"; }
+      else openEditor(developmentKind, id);
+    } else {
+      location.hash = "tasks";
+      planner.dialog(record, element.dataset.source === "noteTask" ? { taskId: element.dataset.taskId } : { occurrence: element.dataset.date });
+    }
+    return;
   }
   if (action === "development-add") {
     openEditor(developmentKind, null, null, { date: element.dataset.date || context().developmentDate, area: element.dataset.area || "plan", title: "", notes: "", minutes: 0, done: false, resourceId: null }); return;
