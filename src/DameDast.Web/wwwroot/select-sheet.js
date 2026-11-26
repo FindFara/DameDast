@@ -28,20 +28,31 @@ export function installSelectSheet() {
     const options=filterOptions([...active.options].map((option,index)=>({index,value:option.value,text:option.textContent || "—",hidden:option.hidden,disabled:option.disabled || option.parentElement?.disabled,selected:option.selected})),search.value);
     list.innerHTML=options.map(option=>`<button type="button" role="option" aria-selected="${option.selected}" data-option-index="${option.index}" ${option.disabled?'disabled':''}><span>${esc(option.text)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>`).join("") || `<p class="selection-empty">${t("No matching options")}</p>`;
   }
+  function positionCompact() {
+    const anchor = returnButton.getBoundingClientRect(), popup = dialog.getBoundingClientRect();
+    const left = getLanguage() === "fa" ? anchor.right - popup.width : anchor.left;
+    const top = anchor.bottom + 8 + popup.height <= innerHeight - 12 ? anchor.bottom + 8 : anchor.top - popup.height - 8;
+    dialog.style.left = `${Math.max(12, Math.min(innerWidth - popup.width - 12, left))}px`;
+    dialog.style.top = `${Math.max(12, Math.min(innerHeight - popup.height - 12, top))}px`;
+  }
   function open(select,error="") {
     if(select.disabled)return;
     active=select;returnButton=triggers.get(select);
+    const compact = select.hasAttribute("data-select-compact");
+    dialog.classList.toggle("is-compact", compact);
+    dialog.style.removeProperty("left");dialog.style.removeProperty("top");
     dialog.dir=getLanguage()==="fa"?"rtl":"ltr";
     dialog.querySelector("h2").textContent=labelFor(select);
     list.setAttribute("aria-label",labelFor(select));
     const notice=dialog.querySelector(".selection-error");notice.textContent=error;notice.hidden=!error;
     search.value="";
-    dialog.querySelector(".selection-search").hidden=select.options.length<8;
+    dialog.querySelector(".selection-search").hidden=compact || select.options.length<8;
     search.placeholder=t("Search options");search.setAttribute("aria-label",t("Search options"));
     dialog.querySelector("[data-selection-close]").setAttribute("aria-label",t("Close"));
     renderOptions();
     if(!dialog.open)dialog.showModal();
-    if(select.options.length>=8)search.focus();
+    if(compact)positionCompact();
+    if(!compact && select.options.length>=8)search.focus();
     else (list.querySelector('[aria-selected="true"]:not(:disabled)') || list.querySelector("button:not(:disabled)"))?.focus();
     list.querySelector('[aria-selected="true"]')?.scrollIntoView({block:"nearest"});
   }
@@ -75,6 +86,10 @@ export function installSelectSheet() {
     }
   }
   dialog.addEventListener("click",event=>{
+    if(event.target === dialog && dialog.classList.contains("is-compact")) {
+      const bounds = dialog.getBoundingClientRect();
+      if(event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {close();return;}
+    }
     if(event.target.closest("[data-selection-close]")){close();return;}
     const option=event.target.closest("[data-option-index]");
     if(!option||!active)return;

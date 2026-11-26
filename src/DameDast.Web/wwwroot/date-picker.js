@@ -54,7 +54,7 @@ export function installDatePicker() {
       }
     }
   }
-  function renderWheels(previous = null, direction = 0, dragOffset = 0, draggedPart = null) {
+  function renderWheels(previous = null, direction = 0, dragOffset = 0, draggedPart = null, followPointer = false) {
     const wheels = dialog.querySelector(".date-wheels");
     if (!wheels.children.length) wheels.innerHTML = ["day","month","year"].map(wheel).join("");
     for (const column of wheels.children) {
@@ -69,14 +69,24 @@ export function installDatePicker() {
       }
       const changed = previous && parts[part] !== previous[part];
       const drag = part === draggedPart ? dragOffset : 0;
-      moveValues(column, changed && direction ? Math.sign(direction) * 44 + drag : drag);
+      moveValues(column, changed && direction ? Math.sign(direction) * 44 + drag : drag, !followPointer);
     }
     dialog.querySelector(".date-picker-error").textContent = "";
   }
+  function updateGesture(clientY) {
+    const distance = clientY - gesture.y;
+    if (Math.abs(distance) <= 10 && !gesture.moved) return;
+    gesture.moved = true;
+    const steps = Math.round(-distance / 44);
+    parts = stepDatePart(gesture.startParts, gesture.part, steps);
+    gesture.offset = distance + steps * 44;
+    renderWheels(null, 0, gesture.offset, gesture.part, true);
+  }
   function resetGesture() {
     if (!gesture) return;
-    moveValues(gesture.track.closest('[data-date-wheel]'), gesture.offset || 0);
+    parts = gesture.startParts;
     gesture = null;
+    renderWheels();
   }
   function close() {
     resetGesture();
@@ -174,30 +184,23 @@ export function installDatePicker() {
     // Reserve dragging for the wheel, then focus editable values on an actual click.
     event.preventDefault();
     resetGesture();
-    gesture = { y: event.clientY, part: track.closest('[data-date-wheel]').dataset.dateWheel, id: event.pointerId, track, offset: 0 };
+    try { parts = readInputs(); }
+    catch { dialog.querySelector('.date-picker-error').textContent = t('Enter a valid date.'); return; }
+    gesture = { y: event.clientY, part: track.closest('[data-date-wheel]').dataset.dateWheel, id: event.pointerId, track, offset: 0, startParts: { ...parts } };
   });
   dialog.addEventListener('pointermove', event => {
     if (!gesture || event.pointerId !== gesture.id) return;
-    const distance = event.clientY - gesture.y;
-    if (Math.abs(distance) <= 10 && !gesture.moved) return;
     event.preventDefault();
-    gesture.moved = true;
-    gesture.track.setPointerCapture(event.pointerId);
-    gesture.offset = Math.max(-44, Math.min(44, distance));
-    moveValues(gesture.track.closest('[data-date-wheel]'), gesture.offset, false);
+    updateGesture(event.clientY);
+    if (gesture.moved) gesture.track.setPointerCapture(event.pointerId);
   });
   dialog.addEventListener('pointerup', event => {
     if (!gesture || event.pointerId !== gesture.id) return;
+    updateGesture(event.clientY);
     const current = gesture;
     gesture = null;
-    const delta = current.y - event.clientY;
     if (current.moved) ignoreClickUntil = performance.now() + 300;
-    if (Math.abs(delta) > 18) {
-      ignoreClickUntil = performance.now() + 300;
-      step(current.part, Math.sign(delta) * Math.min(6, Math.max(1, Math.round(Math.abs(delta) / 44))), current.offset);
-    } else {
-      moveValues(current.track.closest('[data-date-wheel]'), current.offset);
-    }
+    moveValues(current.track.closest('[data-date-wheel]'), current.offset);
   });
   dialog.addEventListener('pointercancel', resetGesture);
   dialog.addEventListener('lostpointercapture', event => {

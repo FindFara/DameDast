@@ -80,7 +80,8 @@ test('dragging follows the pointer, snaps to a valid date and cancels without ch
   const track = part('day').closest('.date-wheel-track');
   send(track,'pointerdown',{clientY:100,pointerId:1,pointerType:'touch'});
   send(track,'pointermove',{clientY:70,pointerId:1});
-  assert.equal(part('day').style.transform,'translateY(-30px)');
+  assert.equal(part('day').value,'16');
+  assert.equal(part('day').style.transform,'translateY(14px)');
   send(track,'pointerup',{clientY:70,pointerId:1});
   assert.equal(part('day').value,'16'); assert.equal(part('day').style.transform,'');
   send(track,'pointerdown',{clientY:100,pointerId:2,pointerType:'touch'});
@@ -129,4 +130,24 @@ test('losing the track capture still cancels a touch without committing a differ
   send(track,'lostpointercapture',{pointerId:1,pointerType:'touch'});
   send(track,'pointerup',{clientY:65,pointerId:1,pointerType:'touch'});
   assert.equal(input.value,'15'); assert.equal(input.style.transform,'');
+});
+
+test('long touch swipes update all wheels before release, reverse continuously and never jump on release', async context => {
+  const {document,send,part} = await pickerFixture(context, fromJalali(1405,5,15));
+  for (const name of ['day','month','year']) {
+    const input = part(name), track = input.closest('.date-wheel-track');
+    const before = Number(input.getAttribute('aria-valuenow'));
+    send(input,'pointerdown',{clientY:300,pointerId:1,pointerType:'touch',button:0});
+    send(input,'pointermove',{clientY:256,pointerId:1});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before+1);
+    send(input,'lostpointercapture',{pointerId:1});
+    send(track,'pointermove',{clientY:124,pointerId:1});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before+4);
+    send(track,'pointermove',{clientY:344,pointerId:1});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before-1);
+    const shown = input.value;
+    send(track,'pointerup',{clientY:344,pointerId:1});
+    assert.equal(input.value,shown); assert.equal(input.style.transform,'');
+  }
+  assert.equal(document.querySelector('[data-date-control] input[type=hidden]').value,fromJalali(1405,5,15));
 });
