@@ -4,11 +4,11 @@
 .date-picker-dialog::backdrop { background: #071b1766; backdrop-filter: blur(5px); }
 .date-picker-dialog .dialog-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .date-picker-dialog h2 { font-size: 18px; margin: 0; }
-.date-picker-preview { text-align: center; margin: 16px 0 20px; color: var(--accent); font-size: 16px; font-weight: 600; }
-.date-wheels { display: grid; grid-template-columns: .8fr 1.2fr 1fr; gap: 10px; }
+.date-wheels { display: grid; grid-template-columns: .8fr 1.2fr 1fr; gap: 10px; margin-block-start: 20px; }
 .date-wheel { min-width: 0; text-align: center; }
 .date-wheel h3 { color: var(--muted); font-size: 14px; font-weight: 500; margin: 0 0 12px; }
-.date-wheel-track { display: grid; grid-template-rows: repeat(3, 44px); height: 132px; overflow: hidden; border-radius: 12px; touch-action: none; user-select: none; }
+.date-wheel-track { display: grid; grid-template-rows: repeat(3, 44px); height: 132px; overflow: hidden; border-radius: 12px; touch-action: none; user-select: none; cursor: grab; }
+.date-wheel-track:active { cursor: grabbing; }
 .date-wheel-neighbor { border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 0; font: inherit; font-size: 15px; min-width: 0; }
 .date-wheel-neighbor.distance-1 { opacity: .5; transform: scale(.9); }
 .date-wheel-selection { min-width: 0; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 12px; background: var(--accent-soft); }

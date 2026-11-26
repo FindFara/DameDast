@@ -71,7 +71,6 @@ export function installDatePicker() {
       const drag = part === draggedPart ? dragOffset : 0;
       moveValues(column, changed && direction ? Math.sign(direction) * 44 + drag : drag);
     }
-    dialog.querySelector(".date-picker-preview").textContent = solarText(fromJalali(parts.year,parts.month,parts.day));
     dialog.querySelector(".date-picker-error").textContent = "";
   }
   function resetGesture() {
@@ -90,11 +89,12 @@ export function installDatePicker() {
   function open(root) {
     resetGesture();
     lastWheel = 0;
+    ignoreClickUntil = 0;
     active = root;
     const value = root.querySelector('input[type=hidden]').value;
     parts = jalaliParts(value || today());
     dialog.dir = getLanguage() === "fa" ? "rtl" : "ltr";
-    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">×</button></header><p class="date-picker-preview" aria-live="polite"></p><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer><button type="button" class="text-button" data-date-today>${t('Today')}</button>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
+    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">×</button></header><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer><button type="button" class="text-button" data-date-today>${t('Today')}</button>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
     renderWheels();
     root.querySelector('[data-date-input]').setAttribute("aria-expanded", "true");
     dialog.showModal();
@@ -148,8 +148,11 @@ export function installDatePicker() {
     if (event.target.closest('[data-date-close]')) { close(); return; }
     if (event.target.closest('[data-date-clear]')) { storeValue(''); return; }
     if (event.target.closest('[data-date-today]')) { parts=jalaliParts(today()); renderWheels(); return; }
+    if (performance.now() <= ignoreClickUntil) return;
+    const input = event.target.closest('[data-date-part]');
+    if (input && !input.readOnly) { input.focus(); input.select(); }
     const button = event.target.closest('[data-date-step]');
-    if (button && performance.now() > ignoreClickUntil) step(button.closest('[data-date-wheel]').dataset.dateWheel, Number(button.dataset.dateStep));
+    if (button) step(button.closest('[data-date-wheel]').dataset.dateWheel, Number(button.dataset.dateStep));
   });
   dialog.addEventListener('change', event => { if(event.target.matches('[data-date-part]')) applyTypedPart(event.target); });
   dialog.addEventListener('focusin', event => { if(event.target.matches('[data-date-part]') && !event.target.readOnly) event.target.select(); });
@@ -168,7 +171,9 @@ export function installDatePicker() {
   }, {passive:false});
   dialog.addEventListener('pointerdown', event => {
     const track = event.target.closest('.date-wheel-track');
-    if (!track || (event.pointerType === 'mouse' && event.target.matches('input'))) return;
+    if (!track || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    // Reserve dragging for the wheel, then focus editable values on an actual click.
+    event.preventDefault();
     resetGesture();
     gesture = { y: event.clientY, part: track.closest('[data-date-wheel]').dataset.dateWheel, id: event.pointerId, track, offset: 0 };
   });
@@ -176,6 +181,7 @@ export function installDatePicker() {
     if (!gesture || event.pointerId !== gesture.id) return;
     const distance = event.clientY - gesture.y;
     if (Math.abs(distance) <= 10 && !gesture.moved) return;
+    event.preventDefault();
     gesture.moved = true;
     gesture.track.setPointerCapture(event.pointerId);
     gesture.offset = Math.max(-44, Math.min(44, distance));

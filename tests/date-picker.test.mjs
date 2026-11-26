@@ -56,7 +56,7 @@ test('animated steps keep input nodes, handle rapid reversals and rollovers, and
   const {document,animations,send,part} = picker;
   const month = part('month'), day = part('day');
   assert.equal(document.querySelectorAll('.date-wheel-neighbor').length,6);
-  assert.equal(document.querySelectorAll('.date-wheel-arrows, .date-picker-hint, .distance-2').length,0);
+  assert.equal(document.querySelectorAll('.date-wheel-arrows, .date-picker-hint, .date-picker-preview, .distance-2').length,0);
   send(month, 'keydown', {key:'ArrowUp'});
   assert.equal(part('month'), month); assert.equal(part('day'), day);
   assert.equal(month.getAttribute('aria-valuenow'),'7');
@@ -88,4 +88,19 @@ test('dragging follows the pointer, snaps to a valid date and cancels without ch
   send(track,'pointercancel',{pointerId:2});
   assert.equal(part('day').value,'16'); assert.equal(part('day').style.transform,'');
   assert.equal(document.querySelector('[data-date-control] input[type=hidden]').value,fromJalali(1405,8,15)); // Draft only until confirmed.
+});
+
+test('the middle day, month and year values can all be dragged with a mouse in both directions', async context => {
+  const {send,part} = await pickerFixture(context, fromJalali(1405,8,15));
+  for (const name of ['day','month','year']) {
+    const input = part(name), before = Number(input.getAttribute('aria-valuenow'));
+    send(input,'pointerdown',{clientY:100,pointerId:1,pointerType:'mouse',button:0});
+    send(input,'pointermove',{clientY:65,pointerId:1});
+    send(input,'pointerup',{clientY:65,pointerId:1});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before+1);
+    send(input,'pointerdown',{clientY:100,pointerId:2,pointerType:'mouse',button:0});
+    send(input,'pointermove',{clientY:135,pointerId:2});
+    send(input,'pointerup',{clientY:135,pointerId:2});
+    assert.equal(Number(input.getAttribute('aria-valuenow')),before);
+  }
 });
