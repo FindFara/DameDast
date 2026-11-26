@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 namespace DameDast.Web.Configuration;
 
@@ -14,6 +15,7 @@ public static class GoogleAuthenticationExtensions
             options.ClientId = clientId!;
             options.ClientSecret = clientSecret!;
             options.SaveTokens = false;
+            options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
             options.UsePkce = true;
             options.Scope.Add("openid");
             options.Events.OnRedirectToAuthorizationEndpoint = context =>

@@ -408,9 +408,7 @@ function renderChrome() {
       return `<a href="#${key}" class="${active ? "active" : ""}" ${active ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(key === "settings" ? "More" : sections[key][0])}</span></a>`;
     })
     .join("");
-  profileMenu.render(session);
-  $("#profile-name").innerHTML =
-    `<bdi dir="auto">${esc(session.authenticated && space !== "demo" ? session.name || t("Google account") : t("Workspace"))}</bdi><small>${t(space === "demo" ? "Demo" : space.startsWith("google:") ? "Google account" : "Local")}</small>`;
+  profileMenu.render(session, space);
 
   document.querySelectorAll("[data-language]").forEach((button) => {
     if (button.dataset.language === "fa")

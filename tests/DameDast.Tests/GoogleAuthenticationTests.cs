@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Security.Claims;
+using DameDast.Web.Identity;
+using Microsoft.AspNetCore.Http;
 using DameDast.Web.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,6 +22,21 @@ namespace DameDast.Tests;
 
 public sealed class GoogleAuthenticationTests
 {
+    [Theory]
+    [InlineData("https://lh3.googleusercontent.com/a/avatar", true)]
+    [InlineData("http://lh3.googleusercontent.com/a/avatar", false)]
+    [InlineData("https://lh3.googleusercontent.com.evil.test/a/avatar", false)]
+    [InlineData("https://user:pass@lh3.googleusercontent.com/a/avatar", false)]
+    [InlineData("javascript:alert(1)", false)]
+    public void ProfilePhotoUsesOnlyAuthenticatedGoogleImageUrls(string picture, bool accepted)
+    {
+        var context = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("urn:google:picture", picture)], "Google")) };
+        var user = new CurrentUser(new HttpContextAccessor { HttpContext = context });
+        Assert.Equal(accepted ? picture : null, user.PictureUrl);
+        context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("urn:google:picture", picture)]));
+        Assert.Null(user.PictureUrl);
+    }
+
     [Fact]
     public void CredentialsUseCanonicalSettingsThenEnvironmentAliasesAndReportOnlyMissingNames()
     {
@@ -68,6 +86,9 @@ public sealed class GoogleAuthenticationTests
         var session = await client.GetFromJsonAsync<JsonElement>("/api/session");
         Assert.True(session.GetProperty("authenticated").GetBoolean()); Assert.True(session.GetProperty("googleConfigured").GetBoolean());
         Assert.Equal("Test Person", session.GetProperty("name").GetString());
+        Assert.Equal("https://lh3.googleusercontent.com/a/test-avatar", session.GetProperty("pictureUrl").GetString());
+        var portfolioSession = await client.GetFromJsonAsync<JsonElement>("/api/portfolio/session");
+        Assert.Equal(session.GetProperty("pictureUrl").GetString(), portfolioSession.GetProperty("pictureUrl").GetString());
         using var other = app.CreateClient(new() { BaseAddress = new("https://localhost:5000"), AllowAutoRedirect = false });
         var invalid = await other.GetAsync("/signin-google?code=test-code&state=" + Uri.EscapeDataString(state));
         Assert.Equal("/?authError=correlation", invalid.Headers.Location!.ToString());
@@ -94,7 +115,7 @@ public sealed class GoogleAuthenticationTests
         {
             var json = request.Method == HttpMethod.Post
                 ? "{\"access_token\":\"test-token\",\"token_type\":\"Bearer\",\"expires_in\":3600}"
-                : "{\"id\":\"test-google-user\",\"sub\":\"test-google-user\",\"name\":\"Test Person\",\"email\":\"person@example.test\",\"verified_email\":true}";
+                : "{\"id\":\"test-google-user\",\"sub\":\"test-google-user\",\"name\":\"Test Person\",\"email\":\"person@example.test\",\"verified_email\":true,\"picture\":\"https://lh3.googleusercontent.com/a/test-avatar\"}";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
         }
     }

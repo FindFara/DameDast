@@ -193,6 +193,7 @@ public sealed class ArchitectureTests
         public bool IsAuthenticated => authenticated;
         public string? Id => authenticated ? "alice" : null;
         public string? Name => Id;
+        public string? PictureUrl => null;
 
         public string RequireId() => Id ?? throw new UnauthorizedAccessException();
     }

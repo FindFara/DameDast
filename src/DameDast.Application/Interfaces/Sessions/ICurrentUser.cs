@@ -8,5 +8,7 @@ public interface ICurrentUser
 
     string? Name { get; }
 
+    string? PictureUrl { get; }
+
     string RequireId();
 }

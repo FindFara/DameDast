@@ -16,10 +16,11 @@ public sealed class PortfolioController(ISender sender, IAntiforgery antiforgery
 {
     [AllowAnonymous]
     [HttpGet("session")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Session(CancellationToken cancellationToken)
     {
         var session = await sender.Send(new GetSessionQuery(), cancellationToken);
-        return Ok(new { session.Authenticated, session.UserId, session.Name, syncProvider = "google", csrf = antiforgery.GetAndStoreTokens(HttpContext).RequestToken });
+        return Ok(new { session.Authenticated, session.UserId, session.Name, session.PictureUrl, syncProvider = "google", csrf = antiforgery.GetAndStoreTokens(HttpContext).RequestToken });
     }
 
     [HttpGet]
