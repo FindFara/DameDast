@@ -66,6 +66,8 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Learning hub": "لرنینگ",
+  "Learning activities": "فعالیت‌های یادگیری",
   "Personal development": "برنامه‌های شخصی",
   "Exercise": "ورزش",
   "Workout programs": "برنامه‌های بدنسازی",

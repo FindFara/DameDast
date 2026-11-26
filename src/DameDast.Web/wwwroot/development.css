@@ -361,7 +361,7 @@
 }
 .exercise-weight-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 .exercise-weight-stats small {
@@ -417,4 +417,78 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.learning-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 0 20px;
+}
+.exercise-weight-stats > .panel {
+  min-width: 0;
+}
+.exercise-weight-stat-date {
+  display: block;
+  margin-block-start: 8px;
+  font-size: 12px;
+}
+.exercise-weight-log {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+  margin-block: 20px;
+}
+.exercise-weight-log h2,
+.exercise-weight-log button[type="submit"],
+.exercise-weight-log .form-error {
+  grid-column: 1/-1;
+}
+.exercise-weight-log h2,
+.exercise-weight-history-title {
+  margin: 0;
+  font-size: 19px;
+}
+.exercise-weight-log .solar-date {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.exercise-weight-log .field {
+  min-width: 0;
+  margin: 0;
+}
+.exercise-weight-log input {
+  min-width: 0;
+  width: 100%;
+}
+.exercise-weight-log button[type="submit"] {
+  min-height: 44px;
+}
+.exercise-weight-log .form-error:empty {
+  display: none;
+}
+@media (max-width: 680px) {
+  .exercise-weight-stats {
+    gap: 8px;
+  }
+  .exercise-weight-stats > .panel {
+    padding: 12px 8px;
+  }
+  .exercise-weight-stats > .panel > small {
+    font-size: 12px;
+  }
+  .exercise-weight-stats strong {
+    font-size: clamp(18px, 5vw, 24px);
+    line-height: 1.3;
+  }
+  .exercise-weight-stats strong small {
+    display: block;
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .exercise-weight-stats .exercise-weight-stat-date {
+    font-size: 11px;
+  }
 }

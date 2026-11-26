@@ -13,32 +13,23 @@ import {
   developmentWeek,
   developmentMonth,
   developmentProgress,
+  learningEntries,
 } from "./development.js";
 const tr = (en, fa) => (getLanguage() === "fa" ? fa : en);
 const areas = () => ({
-  study: tr("Study", "مطالعه"),
+  study: tr("Specialized study", "مطالعهٔ تخصصی"),
   exercise: tr("Exercise", "ورزش"),
   essay: tr("Essay", "انشا"),
   vocabulary: tr("Vocabulary", "کلمات زبان"),
   lesson: tr("Language lesson", "جزوهٔ زبان"),
-  plan: tr("Personal plan", "برنامهٔ شخصی"),
+  plan: tr("Personal development", "توسعهٔ فردی"),
 });
-const dayName = (date) =>
-  new Intl.DateTimeFormat(getLanguage() === "fa" ? "fa-IR" : "en-US", {
-    weekday: "long",
-    timeZone: "UTC",
-  }).format(new Date(date + "T12:00:00Z"));
 const titles = {
-  developmentStudy: "Personal study",
-  weeklyPlan: "Weekly plan",
+  learning: "Learning hub",
   developmentExercise: "Exercise log",
 };
 export const developmentArea = (page) =>
-  page === "developmentStudy"
-    ? "study"
-    : page === "developmentExercise"
-      ? "exercise"
-      : "plan";
+  page === "developmentExercise" ? "exercise" : "study";
 const button = (action, label, attrs = "", cls = "secondary") =>
   `<button type="button" class="${cls}" data-action="${action}" ${attrs}>${label}</button>`;
 const add = (date, area, label = tr("Add", "افزودن")) =>
@@ -76,38 +67,24 @@ function dayButton(date, entries, selected, short = false) {
 }
 export function developmentPage(c) {
   const date = c.developmentDate || today(),
-    area = developmentArea(c.page);
-  const entries = developmentEntries(c.records),
-    filtered = developmentEntries(c.records, area);
+    isLearning = c.page === "learning";
+  const area = isLearning
+    ? { language: "essay", plan: "plan" }[c.learningCategory] || "study"
+    : "exercise";
+  const filtered = isLearning
+    ? learningEntries(c.records, c.learningCategory)
+    : developmentEntries(c.records, "exercise");
   const dayEntries = filtered.filter((r) => r.data.date === date);
-  const tabs = Object.entries(titles)
-    .map(
-      ([page, title]) =>
-        `<a href="#${page}" ${page === c.page ? 'aria-current="page"' : ""}>${t(title)}</a>`,
-    )
-    .join("");
-  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${add(date, area)}</div></div>${c.page === "weeklyPlan" ? `<nav class="development-tabs" aria-label="${t("Personal development")}">${tabs}</nav>` : ""}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${c.page === "weeklyPlan" ? tr("Previous week", "هفتهٔ قبل") : tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl(c.page === "weeklyPlan" ? "Week beginning" : "Practice date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${c.page === "weeklyPlan" ? tr("Next week", "هفتهٔ بعد") : tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
-  if (c.page === "weeklyPlan") {
-    const week = developmentWeek(date),
-      rows = entries.filter((r) => week.includes(r.data.date));
-    return (
-      heading +
-      `<div class="development-planning-links">${button("development-calendar", tr("Calendar", "تقویم"))}<a class="secondary" href="#languageLessons">${tr("Language lessons", "جزوه‌های زبان")}</a></div>` +
-      stats(rows) +
-      `<div class="development-week-plan">${week
-        .map(
-          (day) =>
-            `<section class="development-plan-day ${day === today() ? "is-today" : ""}"><header><h2>${dayName(day)} · ${dateText(day)}</h2>${add(day, "plan", "+")}</header><div class="development-plan-items">${
-              rows
-                .filter((r) => r.data.date === day)
-                .map(entryCard)
-                .join("") ||
-              `<p class="small-note">${tr("No plan", "برنامه‌ای نیست")}</p>`
-            }</div></section>`,
-        )
-        .join("")}</div></section>`
-    );
-  }
+  const categories = [
+    ["all", tr("All", "همه")],
+    ["language", tr("Language", "زبان")],
+    ["study", tr("Specialized study", "مطالعهٔ تخصصی")],
+    ["plan", tr("Personal development", "توسعهٔ فردی")],
+  ];
+  const filters = isLearning
+    ? `<nav class="learning-filters" aria-label="${tr("Activity type", "نوع فعالیت")}">${categories.map(([key, label]) => button("learning-filter", label, `data-category="${key}" aria-pressed="${(c.learningCategory || "all") === key}"`, (c.learningCategory || "all") === key ? "primary" : "secondary")).join("")}${button("development-calendar", tr("Calendar", "تقویم"))}</nav>`
+    : "";
+  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${add(date, area)}</div></div>${filters}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
   let calendar;
   if (area === "exercise") {
     const key = monthOf(date),
@@ -131,13 +108,16 @@ export function developmentPage(c) {
   return (
     heading +
     calendar +
-    `<div class="development-day-heading"><h2>${dateText(date, true)}</h2>${add(date, area, area === "study" ? tr("Study topic", "موضوع مطالعه") : tr("Training", "تمرین"))}</div><div class="development-entries">${dayEntries.map(entryCard).join("") || `<div class="panel development-empty">${tr("Nothing planned", "موردی ثبت نشده")}</div>`}</div></section>`
+    `<div class="development-day-heading"><h2>${dateText(date, true)}</h2>${add(date, area, isLearning ? tr("New activity", "فعالیت جدید") : tr("Training", "تمرین"))}</div><div class="development-entries">${dayEntries.map(entryCard).join("") || `<div class="panel development-empty">${tr("Nothing planned", "موردی ثبت نشده")}</div>`}</div></section>`
   );
 }
 export function developmentFields(d = {}, records = []) {
   return `${dateControl("Date", "date", d.date || today(), true)}<label class="field">${tr("Section", "بخش")}<select name="area">${Object.entries(
     areas(),
   )
+    .filter(([key]) =>
+      d.area === "exercise" ? key === "exercise" : key !== "exercise",
+    )
     .map(
       ([key, label]) =>
         `<option value="${key}" ${key === (d.area || "plan") ? "selected" : ""}>${label}</option>`,

@@ -1,6 +1,6 @@
 export const navigationGroups = [
   { id: "exercise", label: "Exercise", color: "#658e88", items: ["developmentExercise", "workoutPrograms", "workoutTimer", "weightPlan"] },
-  { id: "language", label: "Language", color: "#b78a43", items: ["languageEssays", "languageLessons", "languageVocabulary"] },
+  { id: "learning", label: "Learning hub", color: "#b78a43", items: ["learning", "languageEssays", "languageLessons", "languageVocabulary"] },
   {
     id: "money",
     label: "Money",
@@ -40,3 +40,5 @@ export const plannerPages = [
   "reminders",
   "goals",
 ];
+
+export const resolveLearningRoute = page => ["weeklyPlan", "developmentStudy"].includes(page) ? "learning" : page;

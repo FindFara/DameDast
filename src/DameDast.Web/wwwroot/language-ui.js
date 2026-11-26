@@ -36,6 +36,7 @@ export function renderLanguagePage(c, ui) {
       (r) => !r.deleted && r.kind === "languageEssay" && r.data.date === date,
     );
   const headings = {
+    learning: "Learning activities",
     languageEssays: "Daily essays",
     languageLessons: "Lesson notes",
     languageVocabulary: "Daily vocabulary",

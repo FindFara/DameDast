@@ -7,7 +7,16 @@ import {
   developmentEntries,
   developmentProgress,
   validateDevelopment,
+  learningEntries,
 } from "../src/DameDast.Web/wwwroot/development.js";
+import {
+  developmentPage,
+  developmentFields,
+} from "../src/DameDast.Web/wwwroot/development-ui.js";
+import {
+  navigationGroups,
+  resolveLearningRoute,
+} from "../src/DameDast.Web/wwwroot/navigation.js";
 import { prepareDevelopmentResources } from "../src/DameDast.Web/wwwroot/development-resources.js";
 import {
   validateExercise,
@@ -41,6 +50,96 @@ const row = (area = "study", date = "2026-11-26", done = false) => ({
   },
 });
 
+test("learning combines language, specialized study and personal development while preserving old links", () => {
+  const learning = navigationGroups.find((group) => group.id === "learning");
+  assert.deepEqual(learning.items, [
+    "learning",
+    "languageEssays",
+    "languageLessons",
+    "languageVocabulary",
+  ]);
+  assert.equal(
+    navigationGroups.some((group) => group.id === "language"),
+    false,
+  );
+  assert.equal(resolveLearningRoute("weeklyPlan"), "learning");
+  assert.equal(resolveLearningRoute("developmentStudy"), "learning");
+  const records = [
+    "study",
+    "plan",
+    "essay",
+    "vocabulary",
+    "lesson",
+    "exercise",
+  ].map((area) => {
+    const r = row(area);
+    r.data.title = `${area}-entry`;
+    return r;
+  });
+  assert.equal(learningEntries(records).length, 5);
+  assert.equal(learningEntries(records, "language").length, 3);
+  const all = developmentPage({
+    page: "learning",
+    records,
+    developmentDate: "2026-11-26",
+  });
+  assert.match(all, /study-entry/);
+  assert.match(all, /plan-entry/);
+  assert.match(all, /essay-entry/);
+  assert.doesNotMatch(all, /exercise-entry/);
+  const filtered = developmentPage({
+    page: "learning",
+    records,
+    developmentDate: "2026-11-26",
+    learningCategory: "plan",
+  });
+  assert.match(filtered, /plan-entry/);
+  assert.doesNotMatch(filtered, /study-entry/);
+  const { document } = parseHTML(developmentFields(row("study").data));
+  assert.equal(document.querySelectorAll('[name="area"] option').length, 5);
+  assert.equal(
+    document.querySelector('[name="area"] option[value="exercise"]'),
+    null,
+  );
+});
+test("dated weight history uses the newest measurement date even when old weights are entered later", () => {
+  const records = [
+    {
+      id: crypto.randomUUID(),
+      kind: "weightEntry",
+      data: { date: "2026-11-25", kg: 68.5 },
+    },
+    {
+      id: crypto.randomUUID(),
+      kind: "weightEntry",
+      data: { date: "2026-11-20", kg: 69 },
+    },
+    {
+      id: crypto.randomUUID(),
+      kind: "weightGoal",
+      data: { date: "2026-12-01", kg: 72 },
+    },
+  ];
+  const { document } = parseHTML(weightPlanPage({ records, space: "guest" }));
+  assert.equal(
+    document.querySelectorAll(".exercise-weight-stats > .panel").length,
+    3,
+  );
+  assert.match(
+    document.querySelector(".exercise-weight-stats > .panel").textContent,
+    /68\.5/,
+  );
+  assert.deepEqual(
+    [...document.querySelectorAll(".exercise-weight-history time")].map((e) =>
+      e.getAttribute("datetime"),
+    ),
+    ["2026-11-25", "2026-11-20"],
+  );
+  assert.ok(
+    document.querySelector('[data-weight-log-form] [name="weightDate"]'),
+  );
+  assert.ok(document.querySelector('[data-weight-log-form] [name="kg"]'));
+});
 test("weekly dates start Saturday and the next week after a Friday starts the following day", () => {
   const week = developmentWeek("2026-11-27");
   assert.equal(week[0], "2026-11-21");

@@ -3,11 +3,7 @@ import { today } from "./finance.js";
 import { shiftDay, weekday } from "./planner.js";
 
 export const developmentKind = "developmentEntry";
-export const developmentPages = [
-  "developmentStudy",
-  "weeklyPlan",
-  "developmentExercise",
-];
+export const developmentPages = ["learning", "developmentExercise"];
 export const developmentAreas = [
   "study",
   "exercise",
@@ -92,6 +88,18 @@ export function developmentEntries(records, area = null) {
       (a, b) =>
         a.data.date.localeCompare(b.data.date) || a.id.localeCompare(b.id),
     );
+}
+export function learningEntries(records, category = "all") {
+  const languageAreas = ["essay", "vocabulary", "lesson"];
+  return developmentEntries(records).filter(
+    (r) =>
+      r.data.area !== "exercise" &&
+      (category === "language"
+        ? languageAreas.includes(r.data.area)
+        : ["study", "plan"].includes(category)
+          ? r.data.area === category
+          : true),
+  );
 }
 export function developmentWeek(date) {
   const start = shiftDay(date, -((weekday(date) + 1) % 7));

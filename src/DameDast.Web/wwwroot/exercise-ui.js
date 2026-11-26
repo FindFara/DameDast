@@ -26,8 +26,8 @@ export function weightPlanPage(c) {
   const rows = weightHistory(c.records),
     latest = rows.at(-1),
     goal = c.records.find((r) => !r.deleted && r.kind === "weightGoal");
-  const stat = (label, value) =>
-    `<div class="panel"><small>${label}</small><strong>${value == null ? "—" : `${n(value, 1)} <small>${tr("kg", "کیلوگرم")}</small>`}</strong></div>`;
+  const stat = (label, value, detail = "") =>
+    `<div class="panel"><small>${label}</small><strong>${value == null ? "—" : `${n(value, 1)} <small>${tr("kg", "کیلوگرم")}</small>`}</strong>${detail ? `<small class="exercise-weight-stat-date">${detail}</small>` : ""}</div>`;
   let chart = "";
   if (rows.length > 1) {
     const low = Math.min(...rows.map((r) => r.data.kg)),
@@ -43,12 +43,12 @@ export function weightPlanPage(c) {
       .join(" ");
     chart = `<section class="panel exercise-weight-chart"><svg viewBox="0 0 600 170" role="img" aria-label="${tr("Weight history", "روند وزن")}"><path d="M20 150H580" stroke="var(--border)"/><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><div><span>${dateText(rows[0].data.date)}</span><span>${dateText(latest.data.date)}</span></div></section>`;
   }
-  return `<section class="exercise-page">${heading("Weight plan", button("weight-add", tr("Record weight", "ثبت وزن"), "", "primary"))}<div class="exercise-weight-stats">${stat(tr("Current weight", "وزن فعلی"), latest?.data.kg)}${stat(tr("Goal", "وزن هدف"), goal?.data.kg)}${stat(tr("Difference", "فاصله تا هدف"), goal && latest ? Math.round(Math.abs(goal.data.kg - latest.data.kg) * 10) / 10 : null)}</div><div class="exercise-weight-goal">${goal ? `<span>${tr("Target date", "تاریخ هدف")}: ${dateText(goal.data.date, true)}</span>${button("edit", tr("Edit goal", "ویرایش هدف"), `data-id="${goal.id}"`)}` : add("weightGoal", tr("Set goal", "تعیین هدف"))}</div>${chart}<div class="exercise-weight-history">${
+  return `<section class="exercise-page">${heading("Weight plan")}<div class="exercise-weight-stats">${stat(tr("Latest weight", "آخرین وزن"), latest?.data.kg, latest ? dateText(latest.data.date) : "")}${stat(tr("Goal", "هدف"), goal?.data.kg)}${stat(tr("Difference", "اختلاف"), goal && latest ? Math.round(Math.abs(goal.data.kg - latest.data.kg) * 10) / 10 : null)}</div><div class="exercise-weight-goal">${goal ? `<span>${tr("Target date", "تاریخ هدف")}: ${dateText(goal.data.date, true)}</span>${button("edit", tr("Edit goal", "ویرایش هدف"), `data-id="${goal.id}"`)}` : add("weightGoal", tr("Set goal", "تعیین هدف"))}</div>${chart}<form class="panel exercise-weight-log" data-weight-log-form data-space="${encodeURIComponent(c.space || "guest")}"><h2>${tr("Record weight", "ثبت وزن")}</h2>${dateControl("Date", "weightDate", today(), true)}<label class="field">${tr("Weight (kg)", "وزن (کیلوگرم)")}<input name="kg" type="number" required min="0.1" max="500" step="0.1" inputmode="decimal"></label><button type="submit" class="primary">${tr("Save", "ثبت")}</button><p class="form-error" role="status"></p></form><h2 class="exercise-weight-history-title">${tr("Weight history", "تاریخچهٔ وزن")}</h2><div class="exercise-weight-history">${
     [...rows]
       .reverse()
       .map(
         (r) =>
-          `<article class="panel"><time>${dateText(r.data.date, true)}</time><strong>${n(r.data.kg, 1)} ${tr("kg", "کیلوگرم")}</strong><div>${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></article>`,
+          `<article class="panel"><time datetime="${r.data.date}">${dateText(r.data.date, true)}</time><strong>${n(r.data.kg, 1)} ${tr("kg", "کیلوگرم")}</strong><div>${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></article>`,
       )
       .join("") ||
     `<section class="panel development-empty">${tr("No weight entries", "وزنی ثبت نشده")}</section>`

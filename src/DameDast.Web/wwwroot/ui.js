@@ -67,8 +67,7 @@ export const sections = {
   workoutPrograms: ["Workout programs", '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/>'],
   workoutTimer: ["Stopwatch & timer", '<circle cx="12" cy="13" r="8"/><path d="M9 2h6m-3 3v8l4 2"/>'],
   weightPlan: ["Weight plan", '<rect x="3" y="4" width="18" height="17" rx="4"/><path d="M7 8a7 7 0 0 1 10 0l-5 5Z"/>'],
-  developmentStudy: ["Personal study", '<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3Z"/>'],
-  weeklyPlan: ["Weekly plan", '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M7 2v4m10-4v4M3 10h18m-13 5 3 3 5-6"/>'],
+  learning: ["Learning activities", '<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3Z"/>'],
   developmentExercise: ["Exercise log", '<path d="M3 8v8m4-11v14m10-14v14m4-11v8M7 12h10"/>'],
 
   languageEssays: ["Daily essays", '<path d="M4 3h12l4 4v14H4Zm4 6h8m-8 4h8m-8 4h5"/>'],
@@ -260,7 +259,7 @@ function amountCard(label, value, style = "", foot = "", context) {
 export function renderPage(c) {
   const views = {
     workoutPrograms: workoutProgramsPage, workoutTimer: workoutTimerPage, weightPlan: weightPlanPage,
-    developmentStudy: developmentPage, weeklyPlan: developmentPage, developmentExercise: developmentPage,
+    learning: developmentPage, developmentExercise: developmentPage,
     workbench: (c) => workbenchPage(c, icon),
     assets: assetsPage,
     projects: projectsPage,

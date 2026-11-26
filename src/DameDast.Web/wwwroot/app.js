@@ -1,6 +1,6 @@
 import { validateExercise } from "./exercise.js";
 import { ExerciseClock } from "./exercise-clock.js";
-import { developmentKind, validateDevelopment, developmentWeek } from "./development.js";
+import { developmentKind, validateDevelopment } from "./development.js";
 import { developmentArea, developmentFields, toggleDevelopmentFields } from "./development-ui.js";
 import { prepareDevelopmentResources } from "./development-resources.js";
 import { dailyVocabulary } from "./language-model.js";
@@ -55,7 +55,7 @@ import {
 } from "./number-inputs.js";
 import { fromJalali, validIso } from "./calendar.js";
 import { instruments as marketInstruments } from "./market-catalog.js";
-import { navigationGroups, navigationColor, plannerPages } from "./navigation.js";
+import { navigationGroups, navigationColor, plannerPages, resolveLearningRoute } from "./navigation.js";
 import {
   organizerReport,
   notificationKey,
@@ -138,7 +138,7 @@ let assetKey = "",
   assetHistoryLoading = false,
   assetGeneration = 0;
 let developmentDate = today();
-let weeklyPlanDate = shiftDay(developmentWeek(today())[0], 7);
+let learningCategory = "all";
 let developmentEditorSpace = null;
 let projectId = null;
 let clipInbox = [];
@@ -221,7 +221,8 @@ const numInput = (value) =>
     .replace(/[,٬\s]/g, "")
     .replace(/٫/g, ".");
 const context = () => ({
-  developmentDate: page === "weeklyPlan" ? weeklyPlanDate : developmentDate,
+  developmentDate,
+  learningCategory,
   projectId,
   attentionOpen,
   amountsVisible: dashboardAmountsVisible,
@@ -403,7 +404,7 @@ function renderChrome() {
     `<div class="nav-link-row" style="--nav-color:${navigationColor(key) || shortcutColors[key] || "#687f91"}"><a href="#${key}" class="nav-item ${activePage === key ? "active" : ""}" ${activePage === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${t(sections[key][0])}</span>${key === "transactions" ? `<span class="nav-count">${money(ofKind("transaction").length)}</span>` : ""}</a>${pinnable ? `<button type="button" class="nav-pin ${navPins.includes(key) ? "is-pinned" : ""}" data-action="nav-pin" data-page="${key}" aria-pressed="${navPins.includes(key)}" aria-label="${t(navPins.includes(key) ? "Unpin menu" : "Pin menu")} · ${t(sections[key][0])}">${icon("pin")}</button>` : ""}</div>`;
   $("#navigation").innerHTML =
     (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
-    navLink("overview") + navLink("workbench") + navLink("weeklyPlan") + navLink("developmentStudy") +
+    navLink("overview") + navLink("workbench") +
     navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" style="--nav-color:${group.color}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
     `<div class="nav-footer-links">${navLink("reports")}${navLink("settings")}</div>`;
   $("#mobile-navigation").innerHTML = [
@@ -471,7 +472,7 @@ function render() {
   deskTools.capture();
   for (const group of document.querySelectorAll('#view [data-setting-group]'))
     settingsGroupsOpen[group.dataset.settingGroup] = group.open;
-  const hash = location.hash.slice(1);
+  const hash = resolveLearningRoute(location.hash.slice(1));
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
@@ -795,6 +796,22 @@ async function createSchedule(data, count) {
   });
   render();
   if (space.startsWith("google:")) void sync();
+}
+async function submitWeightLog(form) {
+  const scope = decodeURIComponent(form.dataset.space);
+  if (scope !== space) return;
+  const data = { date: form.elements.weightDate.value, kg: Number(numInput(form.elements.kg.value)) };
+  const error = form.querySelector(".form-error");
+  error.textContent = "";
+  const controls = [...form.querySelectorAll("input,button")];
+  controls.forEach(control => control.disabled = true);
+  try {
+    await commit("weightEntry", data, crypto.randomUUID(), false, 0, scope);
+    toast("Saved.");
+  } catch (failure) {
+    if (form.isConnected) error.textContent = t(failure.message);
+    else showError(failure);
+  } finally { controls.forEach(control => control.disabled = false); }
 }
 async function submitEditor(event) {
   event.preventDefault();
@@ -1586,6 +1603,7 @@ async function onAction(event) {
     return;
   }
   const { action, id, kind } = element.dataset;
+  if (action === "learning-filter") { learningCategory = ["all", "language", "study", "plan"].includes(element.dataset.category) ? element.dataset.category : "all"; render(); return; }
   if (action === "weight-add") {
     const existing = ofKind("weightEntry").find(r => r.data.date === today());
     openEditor("weightEntry", existing?.id); return;
@@ -1598,10 +1616,10 @@ async function onAction(event) {
   }
   if (["development-day", "development-shift", "development-today", "development-month"].includes(action)) {
     const current = context().developmentDate;
-    const next = action === "development-day" ? element.dataset.date : action === "development-today" ? (page === "weeklyPlan" ? shiftDay(developmentWeek(today())[0],7) : today())
+    const next = action === "development-day" ? element.dataset.date : action === "development-today" ? today()
       : action === "development-month" ? dateInMonth(shiftMonth(monthOf(current), Number(element.dataset.delta)),1)
-      : shiftDay(current, Number(element.dataset.delta) * (page === "weeklyPlan" ? 7 : 1));
-    if (page === "weeklyPlan") weeklyPlanDate = next; else developmentDate = next;
+      : shiftDay(current, Number(element.dataset.delta));
+    developmentDate = next;
     render(); return;
   }
   if (action === "development-toggle") {
@@ -2132,6 +2150,11 @@ document.addEventListener("reset", event => {
   if (event.target.id !== "transaction-filters") return;
   event.preventDefault(); transactionFilters = { sort: transactionFilters.sort }; render();
 });
+document.addEventListener("submit", event => {
+  if (!event.target.matches("[data-weight-log-form]")) return;
+  event.preventDefault();
+  void submitWeightLog(event.target);
+});
 $("#editor-form").addEventListener("submit", submitEditor);
 $("#editor-form").addEventListener(
   "invalid",
@@ -2159,7 +2182,7 @@ $("#theme-button").onclick = () => {
 
 document.addEventListener("change", (event) => {
   if (event.target.name === "development-day") {
-    if (page === "weeklyPlan") weeklyPlanDate = event.target.value; else developmentDate = event.target.value;
+    developmentDate = event.target.value;
     render(); return;
   }
   if (editorKind === developmentKind && event.target.closest("#editor")) {
