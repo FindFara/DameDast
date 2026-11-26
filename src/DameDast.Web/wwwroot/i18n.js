@@ -10,7 +10,7 @@ const readPreference = (name, fallback) => {
 let language = readPreference("damdast-language", "en");
 let theme = readPreference("damdast-theme", "system");
 if (!["en", "fa"].includes(language)) language = "en";
-if (!isTheme(theme)) theme = "system";
+theme = resolveTheme(theme, !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches).id;
 
 export const getLanguage = () => language;
 export const getTheme = () => theme;
@@ -27,9 +27,9 @@ export function setLanguage(value) {
 }
 export function setTheme(value) {
   if (!isTheme(value)) return;
-  theme = value;
+  theme = resolveTheme(value, !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches).id;
   try {
-    globalThis.localStorage?.setItem("damdast-theme", value);
+    globalThis.localStorage?.setItem("damdast-theme", theme);
   } catch {}
   applyPreferences();
 }
@@ -70,7 +70,11 @@ const fa = {
   "Review budget": "بررسی بودجه",
   "Days of the week": "روزهای هفته",
   "Choose at least one weekday.": "حداقل یک روز هفته را انتخاب کن.",
-  "Dark brown": "دارک قهوه‌ای",
+  "Dark & pastel green": "دارک سبز پاستیلی",
+  "Matte dark & blue": "دارک مات آبی",
+  "White & pastel yellow": "سفید زرد پاستیلی",
+  "Matte white & green": "سفید مات سبز",
+  "Choose a two-color theme, then save.": "تم دورنگ را انتخاب و ذخیره کن.",
   "Matte dark blue": "دارک آبی مات",
   "Gray & yellow": "خاکستری زرد",
   "White & yellow": "سفید زرد",

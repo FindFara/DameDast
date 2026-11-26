@@ -12,6 +12,9 @@ const row = (label, help, control) =>
   `<div class="setting-row"><div class="setting-label"><label>${t(label)}</label>${info(label, help)}</div><div class="setting-control">${control}</div></div>`;
 const option = (value, title, selected) =>
   `<option value="${value}" ${selected === value ? "selected" : ""}>${t(title)}</option>`;
+export function themePicker(selected = getTheme()) {
+  return `<form class="theme-picker" data-theme-form><fieldset><legend>${t("Theme")}</legend><div class="theme-palette-options">${themeOptions.map(theme => `<label class="theme-palette-option" style="--preview-bg:${theme.background};--preview-accent:${theme.accent}"><input type="radio" name="themeChoice" value="${theme.id}" ${selected === theme.id ? "checked" : ""} required><span class="theme-palette-circle" aria-hidden="true"></span><span class="theme-palette-name">${t(theme.label)}</span></label>`).join("")}</div></fieldset><div class="theme-picker-actions"><button type="submit" class="primary">${t("Save")}</button></div></form>`;
+}
 export function settingsPage(c, { icon, actionButton, pageHeading }) {
   const p = preferences(), notes = readNoteSettings(c.space),
     button = (action, label) => actionButton(action, label, "", "secondary");
@@ -21,7 +24,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
   return `<div class="settings-page">${pageHeading(c, "Settings")}<div class="settings-layout settings-v2">${workspaces.length ? `${startGroup("workspace", "Workspace", "settings-workspace")}${row("Workspace", "Restore creates a separate local workspace. Switch here to return to your other records.", `<select id="workspace-setting" aria-label="${t("Workspace")}">${c.session.authenticated ? `<option value="google" ${c.space.startsWith("google:") ? "selected" : ""}>${t("Google account")}</option>` : ""}${!c.session.authenticated ? `<option value="guest" ${c.space === "guest" ? "selected" : ""}>${t("Local")}</option>` : ""}${workspaces.map((w) => `<option value="${w.scope}" ${c.space === w.scope ? "selected" : ""}>${esc(w.name)}</option>`).join("")}</select>`)}${endGroup}` : ""}
  ${startGroup("appearance", "Appearance")}
  ${row("Language", "Changes the app language and reading direction.", `<select id="language-setting" aria-label="${t("Language")}">${option("en", "English", getLanguage())}${option("fa", getLanguage() === "en" ? "Fa" : "فارسی", getLanguage())}</select>`)}
- ${row("Theme", "Choose an app palette, or follow your device.", `<select id="theme-setting" aria-label="${t("Theme")}">${themeOptions.map(({id, label}) => option(id, label, getTheme())).join("")}</select>`)}
+ <div class="setting-row theme-setting-row"><div class="setting-label"><label>${t("Theme")}</label>${info("Theme", "Choose a two-color theme, then save.")}</div><div class="setting-control">${themePicker(c.themeDraft || getTheme())}</div></div>
  ${row("App background", "Changes the background of every page, including the workbench.", `<div class="app-background-controls"><input type="color" id="app-background-setting" value="${p.mainBackground || themeBackground()}" aria-label="${t("App background")}"><button type="button" class="secondary" data-action="reset-app-background">${t("Use theme background")}</button></div>`)}
  ${endGroup}${startGroup("notes", "Notes settings")}
  ${row("Default notes view", "Choose the initial layout for your notes.", `<select data-note-preference="view" aria-label="${t("Default notes view")}">${option("grid","Grid",notes.view)}${option("list","List",notes.view)}</select>`)}

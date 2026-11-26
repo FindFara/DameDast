@@ -6,14 +6,11 @@ try {
     localStorage.setItem("damdast-language", requested);
   const language =
     localStorage.getItem("damdast-language") === "fa" ? "fa" : "en";
-  const saved = localStorage.getItem("damdast-theme") || "system";
-  const setting = ["system", "light", "dark", "dark-brown", "dark-blue", "gray-yellow", "white-yellow"].includes(saved) ? saved : "system";
-  const theme =
-    setting === "system"
-      ? matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : setting;
+  const saved = localStorage.getItem("damdast-theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const alias = saved === "light" ? "white-green" : ["dark", "dark-brown"].includes(saved) ? "dark-green" : saved;
+  const theme = ["dark-green", "dark-blue", "gray-yellow", "white-yellow", "white-green"].includes(alias)
+    ? alias : prefersDark ? "dark-green" : "white-green";
   document.documentElement.lang = language;
   document.documentElement.dir = language === "fa" ? "rtl" : "ltr";
   const dark = theme === "dark" || theme.startsWith("dark-") || theme === "gray-yellow";

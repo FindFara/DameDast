@@ -168,6 +168,7 @@ let navPins = readPins(pinnablePages);
 let notesView = "grid";
 try { if (localStorage.getItem(scopedStorageKey("damedast-notes-view")) === "list") notesView = "list"; } catch {}
 const settingsGroupsOpen = {};
+let themeDraft = null;
 const noteLayout = new ResizeObserver(entries => {
   for (const { target } of entries) {
     const gap = parseFloat(getComputedStyle(target).marginBottom) || 0;
@@ -226,6 +227,7 @@ const context = () => ({
   projectId,
   amountsVisible: dashboardAmountsVisible,
   settingsGroupsOpen,
+  themeDraft,
   notesView,
   workbenchEditing: desk.editing,
   planner: planner.state,
@@ -2178,6 +2180,17 @@ document.addEventListener("submit", event => {
   event.preventDefault();
   void submitWeightLog(event.target);
 });
+document.addEventListener("submit", event => {
+  if (!event.target.matches("[data-theme-form]")) return;
+  event.preventDefault();
+  const selected = new FormData(event.target).get("themeChoice");
+  if (!isTheme(selected)) return;
+  savePreferences({ mainBackground: null });
+  setTheme(selected);
+  themeDraft = null;
+  render();
+  toast("Saved.");
+});
 $("#editor-form").addEventListener("submit", submitEditor);
 $("#editor-form").addEventListener(
   "invalid",
@@ -2199,7 +2212,8 @@ $("#cancel-button").onclick = () => $("#editor").close();
 $("#google-button").onclick = googleLogin;
 $("#sync-button").onclick = () => void refreshWorkspace();
 $("#theme-button").onclick = () => {
-  setTheme(effectiveTheme() === "dark" ? "light" : "dark");
+  settingsGroupsOpen.appearance = true;
+  location.hash = "settings";
   render();
 };
 
@@ -2293,11 +2307,7 @@ document.addEventListener("change", (event) => {
     savePreferences({mainBackground:event.target.value});
     render();
   }
-  if (event.target.id === "theme-setting") {
-    savePreferences({ mainBackground: null });
-    setTheme(event.target.value);
-    render();
-  }
+  if (event.target.name === "themeChoice") themeDraft = event.target.value;
 });
 document.addEventListener(
   "toggle",

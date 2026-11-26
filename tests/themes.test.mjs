@@ -4,12 +4,12 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { themeOptions, isTheme, resolveTheme } from '../src/DameDast.Web/wwwroot/themes.js';
 import { setTheme, getTheme, effectiveTheme, applyPreferences } from '../src/DameDast.Web/wwwroot/i18n.js';
-const custom = ['dark-brown', 'dark-blue', 'gray-yellow', 'white-yellow'];
+const custom = ['dark-green', 'dark-blue', 'gray-yellow', 'white-yellow', 'white-green'];
 const bootstrap = fs.readFileSync(new URL('../src/DameDast.Web/wwwroot/appearance.js',import.meta.url),'utf8');
 test('all custom themes restore the same palette and light/dark behavior before and after app startup',()=>{
   assert.ok(custom.every(isTheme));
   assert.equal(isTheme('unknown'),false);
-  for(const id of [...themeOptions.map(theme=>theme.id),'unknown']) for(const dark of [false,true]){
+  for(const id of [...themeOptions.map(theme=>theme.id),'light','dark','dark-brown','system','unknown']) for(const dark of [false,true]){
     const root={dataset:{},style:{setProperty(){}}};
     vm.runInNewContext(bootstrap,{URLSearchParams,location:{search:''},localStorage:{getItem:key=>key==='damdast-theme'?id:null},matchMedia:()=>({matches:dark}),document:{documentElement:root}});
     const expected=resolveTheme(id,dark);
@@ -35,7 +35,7 @@ test('custom theme choices persist and apply globally while existing light/dark 
     assert.equal(document.documentElement.style.colorScheme,theme.mode);
     assert.equal(meta,theme.background);
   }
-  setTheme('unknown');assert.equal(getTheme(),'white-yellow');
+  setTheme('unknown');assert.equal(getTheme(),'white-green');
   setTheme('system');assert.equal(effectiveTheme(),'dark');
 });
 const luminance=hex=>{
@@ -55,4 +55,21 @@ test('palette text, muted labels and primary buttons have readable contrast',()=
     assert.ok(contrast(tokens['theme-on-accent'],tokens['theme-action']||tokens.accent)>=4.5,id+' button');
     assert.ok(contrast(tokens.accent,tokens.surface)>=4.5,id+' accent text');
   }
+});
+
+test('theme picker offers exactly five two-color radio choices and an explicit save action',async()=>{
+  const { parseHTML } = await import('linkedom');
+  const { themePicker } = await import('../src/DameDast.Web/wwwroot/settings-ui.js');
+  const previous = getTheme();
+  const {document}=parseHTML(themePicker('dark-blue'));
+  assert.equal(document.querySelectorAll('input[type="radio"]').length,5);
+  assert.equal(document.querySelector('input:checked').value,'dark-blue');
+  assert.equal(document.querySelector('select'),null);
+  assert.ok(document.querySelector('[data-theme-form] button[type="submit"]'));
+  assert.equal(getTheme(),previous);
+  assert.deepEqual(themeOptions.map(t=>t.id),custom);
+  assert.ok(themeOptions.every(t=>/^#[0-9a-f]{6}$/.test(t.background)&&/^#[0-9a-f]{6}$/.test(t.accent)));
+  assert.equal(resolveTheme('light').id,'white-green');
+  assert.equal(resolveTheme('dark').id,'dark-green');
+  assert.equal(resolveTheme('dark-brown').id,'dark-green');
 });
