@@ -1,4 +1,5 @@
 export const navigationGroups = [
+  { id: "language", label: "Language", color: "#b78a43", items: ["languageEssays", "languageLessons", "languageVocabulary"] },
   {
     id: "money",
     label: "Money",

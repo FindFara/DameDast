@@ -1,3 +1,5 @@
+import { LanguageController } from "./language-controller.js";
+import { languagePages, validateLanguage } from "./language-model.js";
 import {synchronizePageToolbar} from "./page-toolbar.js";
 import {saveNoteSettings} from "./keep-preferences.js";
 import {validateNote,checkLabelName} from "./keep-model.js";
@@ -266,6 +268,7 @@ const notePage = new NotePageController({
   save: (data, id, version, noteScope) => commit("note", data, id, false, version, noteScope),
   write: commit, refreshData: refreshWorkspace,
 });
+const language = new LanguageController({ context, refresh: render, error: showError, save: commit });
 const deskTools = new DeskToolController({ context, error: showError });
 
 async function saveWorkbenchLayout(layout, base) {
@@ -454,6 +457,7 @@ function renderChrome() {
 function render() {
   if (!state || accountReloading) return;
   notePage.capture();
+  language.capture();
   deskTools.capture();
   for (const group of document.querySelectorAll('#view [data-setting-group]'))
     settingsGroupsOpen[group.dataset.settingGroup] = group.open;
@@ -468,7 +472,8 @@ function render() {
   if (!isNoteRoute(hash)) notePage.deactivate();
   document.body.classList.toggle("notes-workspace",isNoteRoute(hash));
   if(isNoteRoute(hash) && document.querySelector(".keep-app")?.dataset.scope===space) notePage.update();
-  else $("#view").innerHTML = isNoteRoute(hash) ? notePage.render(context()) : renderPage(context());
+  else $("#view").innerHTML = isNoteRoute(hash) ? notePage.render(context()) : languagePages.includes(page) ? language.render(context()) : renderPage(context());
+  if(languagePages.includes(page)) language.filterLessons();
   if(isNoteRoute(hash)) notePage.attach();
   document.querySelectorAll('.notes-grid:not(.notes-list) > .note-card').forEach(card => noteLayout.observe(card));
   desk.attach();
@@ -546,6 +551,7 @@ function applyMovementType() {
     );
 }
 function validateData(kind, data, id) {
+  validateLanguage(kind, data, records(), id);
   validateProductivity(kind, data, records(), id);
   if (kind === "calendarEvent") validateCalendarEntry(data);
   if (kind === "installment" && data.payment) {
@@ -1289,7 +1295,7 @@ async function migrateGuest() {
             const existing = new Set(materialize(state).map((r) => r.id));
             for (const r of [
               ...source.filter(
-                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit" || r.kind === "noteLabel",
+                (r) => r.kind === "account" || r.kind === "category" || r.kind === "project" || r.kind === "habit" || r.kind === "noteLabel" || r.kind === "languageVocabulary",
               ),
               ...source.filter((r) => r.kind === "monthlyExpense"),
               ...source.filter(
@@ -1302,6 +1308,7 @@ async function migrateGuest() {
                     "project",
                     "habit",
                     "noteLabel",
+                    "languageVocabulary",
                   ].includes(r.kind),
               ),
               ...source.filter((r) => r.kind === "notificationRead"),
@@ -1320,6 +1327,7 @@ async function migrateGuest() {
               if (data.projectId) data.projectId = mapping[data.projectId] || null;
               if (r.kind === "note" && data.labels) data.labels=data.labels.map(id=>mapping[id]).filter(Boolean);
               if (r.kind === "habitLog") data.habitId = mapping[data.habitId];
+              if (r.kind === "languageEssay") data.vocabularyId = mapping[data.vocabularyId];
               if (r.kind === "installment" && data.payment) data.payment = { ...data.payment, transactionId: mapping[data.payment.transactionId] || crypto.randomUUID(), accountId: mapping[data.payment.accountId], category: data.payment.category.startsWith("custom:") ? "custom:" + mapping[data.payment.category.slice(7)] : data.payment.category };
               if (r.kind === "workbench")
                 data.widgets = data.widgets.map((w) => ({

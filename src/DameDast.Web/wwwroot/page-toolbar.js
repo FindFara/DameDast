@@ -4,6 +4,9 @@ import { icon } from "./ui.js";
 const add = '.page-heading [data-action="add"],.page-heading [data-action="task-add"],.page-heading [data-planner-action="new"]';
 // This allowlist defines the floating rail. Other page controls stay in the page.
 export const pageToolbarConfig = {
+  languageEssays: { command: '.page-heading [data-lang-action="new-essay"]', icon: "plus" },
+  languageLessons: { command: '.page-heading [data-lang-action="import"]', icon: "upload" },
+  languageVocabulary: { command: '.page-heading [data-lang-action="edit-vocabulary"]', icon: "edit" },
   overview: { inline: ".overview-heading .dashboard-controls" },
   notes: { inline: ".keep-app .heading-actions" },
   transactions: { command: '[data-action="csv"]', icon: "download" },
@@ -71,7 +74,7 @@ export class PageToolbarController {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "icon-button page-toolbar-command";
-    button.dataset.pageCommand = source.dataset.action || source.dataset.plannerAction;
+    button.dataset.pageCommand = source.dataset.action || source.dataset.plannerAction || source.dataset.langAction;
     button.setAttribute("aria-label", label);
     button.title = label;
     button.innerHTML = icon(glyph);

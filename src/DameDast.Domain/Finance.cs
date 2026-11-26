@@ -48,6 +48,8 @@ public static class FinanceRules
                 throw new FinanceException("Move records out of this project before deleting it.");
             if (change.Kind == "category" && records.Any(r => PlanningRules.ReferencesCategory(r, "custom:" + change.Id)))
                 throw new FinanceException("Move records using this category before deleting it.");
+            if (change.Kind == "languageVocabulary" && records.Any(r => !r.Deleted && r.Kind == "languageEssay" && Read<LanguageEssay>(r.Data).VocabularyId == change.Id))
+                throw new FinanceException("The daily words are used by an essay.");
             if (change.Kind == "account" && records.Where(x => x.Kind == "transaction" && !x.Deleted).Select(x => Read<Movement>(x.Data)).Any(x => x.AccountId == change.Id || x.DestinationId == change.Id))
                 throw new FinanceException("Remove or move the transactions in this account first.");
             return current with
@@ -76,6 +78,7 @@ public static class FinanceRules
 
     private static void Validate(IReadOnlyList<FinanceRecord> records, Mutation change)
     {
+        if (LanguageRules.TryValidate(records, change)) return;
         ProductivityRules.ValidateProject(records, change);
         if (ProductivityRules.TryValidate(records, change)) return;
         if (OrganizerRules.TryValidate(records, change))

@@ -62,6 +62,9 @@ import { connectedPage } from "./connected-ui.js";
 import { formatCardNumber } from "./account-card-number.js";
 
 export const sections = {
+  languageEssays: ["Daily essays", '<path d="M4 3h12l4 4v14H4Zm4 6h8m-8 4h8m-8 4h5"/>'],
+  languageLessons: ["Lesson notes", '<path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3Zm9 2v16"/>'],
+  languageVocabulary: ["Daily vocabulary", '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m6 15 3-7 3 7m-5-2h4m4-4h3m-3 4h3"/>'],
   calendar:["Calendar",'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 5h3m4 0h1"/>'],
   workbench: [
     "Workbench",
