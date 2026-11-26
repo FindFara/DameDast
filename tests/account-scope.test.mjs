@@ -26,15 +26,15 @@ test('preferences, navigation pins and restored backups stay with their owning a
  const storage=globalThis.localStorage,values=new Map();
  globalThis.localStorage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)};
  t.after(()=>{setAccountScope(null);if(storage===undefined)delete globalThis.localStorage;else globalThis.localStorage=storage;});
- savePreferences({mainBackground:'#ffdf00'});savePins(['notes']);
- setAccountScope(alice);assert.equal(preferences().mainBackground,null);assert.deepEqual(readPins(['notes','tasks']),[]);
- savePreferences({mainBackground:'#4338ca'});savePins(['tasks']);
+ savePreferences({weekStart:0});savePins(['notes']);
+ setAccountScope(alice);assert.equal(preferences().weekStart,6);assert.deepEqual(readPins(['notes','tasks']),[]);
+ savePreferences({weekStart:1});savePins(['tasks']);
  const scope='restore:'+crypto.randomUUID();rememberRestoredWorkspace(scope,'Alice backup');
  assert.equal(initialSpace(alice,scope,restoredWorkspaces()),scope);
- setAccountScope(bob);assert.equal(preferences().mainBackground,null);assert.deepEqual(restoredWorkspaces(),[]);assert.deepEqual(readPins(['notes','tasks']),[]);
+ setAccountScope(bob);assert.equal(preferences().weekStart,6);assert.deepEqual(restoredWorkspaces(),[]);assert.deepEqual(readPins(['notes','tasks']),[]);
  assert.equal(initialSpace(bob,scope,restoredWorkspaces()),'google:bob');
- setAccountScope(alice);assert.equal(preferences().mainBackground,'#4338ca');assert.deepEqual(readPins(['notes','tasks']),['tasks']);assert.equal(restoredWorkspaces()[0].name,'Alice backup');
- setAccountScope(null);assert.equal(scopedStorageKey('key'),'key');assert.equal(preferences().mainBackground,'#ffdf00');assert.deepEqual(restoredWorkspaces(),[]);
+ setAccountScope(alice);assert.equal(preferences().weekStart,1);assert.deepEqual(readPins(['notes','tasks']),['tasks']);assert.equal(restoredWorkspaces()[0].name,'Alice backup');
+ setAccountScope(null);assert.equal(scopedStorageKey('key'),'key');assert.equal(preferences().weekStart,0);assert.deepEqual(restoredWorkspaces(),[]);
 });
 
 test('account dropdown offers Google login or personal workspace/logout and escapes account names',()=>{

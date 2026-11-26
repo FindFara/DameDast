@@ -255,7 +255,7 @@ html[dir="rtl"] select {
 @media(max-width:680px){
  .mobile-page-header{position:fixed;inset-block-start:12px;inset-inline:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;z-index:65;pointer-events:none}
  .mobile-page-context{display:flex;flex:1;min-width:0;align-items:center;justify-content:space-between;gap:8px;pointer-events:auto}
- #mobile-page-title{font-family:var(--font-body);font-size:18px;line-height:1.4;font-weight:700;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--app-background-ink,var(--ink))}
+ #mobile-page-title{font-family:var(--font-body);font-size:18px;line-height:1.4;font-weight:700;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
  .mobile-page-header>.shell-tools{position:static;inset:auto;order:-1;flex:0 0 auto;pointer-events:auto;gap:3px;padding:4px}
  .mobile-page-header .shell-tools #app-menu-button,.mobile-page-header .shell-tools>.icon-button{width:38px;min-width:38px;height:40px}
  #page-toolbar-actions{flex:0 0 auto;min-width:0}

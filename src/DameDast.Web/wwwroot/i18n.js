@@ -1,5 +1,4 @@
 import { isTheme, resolveTheme } from "./themes.js";
-import { preferences } from "./preferences.js";
 const readPreference = (name, fallback) => {
   try {
     return globalThis.localStorage?.getItem(name) || fallback;
@@ -43,21 +42,14 @@ export function applyPreferences() {
   document.documentElement.dataset.theme = effectiveTheme();
   document.documentElement.dataset.palette = palette().id;
   document.documentElement.style.colorScheme = effectiveTheme();
-  const background = preferences().mainBackground;
-  if (background) {
-    document.documentElement.style.setProperty?.("--bg", background);
-    const rgb = [1,3,5].map(index=>parseInt(background.slice(index,index+2),16));
-    const light = rgb[0]*.299+rgb[1]*.587+rgb[2]*.114 > 145;
-    document.documentElement.style.setProperty?.("--app-background-ink", light ? "#18392e" : "#f2f6f3");
-  } else {
-    document.documentElement.style.removeProperty?.("--bg");
-    document.documentElement.style.removeProperty?.("--app-background-ink");
-  }
+  // Clear overrides left by older cached appearance scripts.
+  document.documentElement.style.removeProperty?.("--bg");
+  document.documentElement.style.removeProperty?.("--app-background-ink");
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute(
       "content",
-      background || themeBackground(),
+      themeBackground(),
     );
   document.title = isRtl()
     ? "دمِ دست"

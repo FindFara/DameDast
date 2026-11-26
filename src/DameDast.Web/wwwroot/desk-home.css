@@ -96,9 +96,7 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
   .desk-home .desk-web-search input { font-size:13px; }
 }
 
-.app-background-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-.app-background-controls input { width:52px; min-width:52px; height:40px; padding:3px; cursor:pointer; }
-#view .page-heading, #view > .transaction-filters { color:var(--app-background-ink,var(--ink)); }
+#view .page-heading, #view > .transaction-filters { color:var(--ink); }
 .desk-home .desk-calendar-grid .is-today, .desk-custom-color .desk-web-search button, .desk-custom-color button.primary { color:var(--desk-card-bg,var(--surface)); }
 .desk-custom-color .desk-link-mark { background:color-mix(in srgb,var(--ink) 12%,transparent); }
 .desk-home .desk-card.desk-custom-color .desk-pet-scene { background:transparent; }

@@ -1722,7 +1722,6 @@ async function onAction(event) {
     $('[data-action="notes-view"]')?.focus();
     return;
   }
-  if (action === "reset-app-background") { savePreferences({mainBackground:null}); render(); return; }
   if (action === "dashboard-privacy") {
     dashboardAmountsVisible = !dashboardAmountsVisible;
     render();
@@ -2185,7 +2184,6 @@ document.addEventListener("submit", event => {
   event.preventDefault();
   const selected = new FormData(event.target).get("themeChoice");
   if (!isTheme(selected)) return;
-  savePreferences({ mainBackground: null });
   setTheme(selected);
   themeDraft = null;
   render();
@@ -2303,10 +2301,6 @@ document.addEventListener("change", (event) => {
   }
   if (event.target.id === "language-setting")
     void changeLanguage(event.target.value);
-  if (event.target.id === "app-background-setting") {
-    savePreferences({mainBackground:event.target.value});
-    render();
-  }
   if (event.target.name === "themeChoice") themeDraft = event.target.value;
 });
 document.addEventListener(

@@ -13,7 +13,6 @@ const defaults = {
   weekend: "friday",
   holidays: true,
   workbenchEditing: false,
-  mainBackground: null,
   calendarItems: calendarVisibilityOptions.map(([kind]) => kind),
 };
 export function preferences() {
@@ -35,7 +34,6 @@ export function validatePreferences(value) {
     typeof value.holidays !== "boolean" ||
     (value.workbenchEditing !== undefined &&
       typeof value.workbenchEditing !== "boolean") ||
-    (value.mainBackground != null && !/^#[0-9a-f]{6}$/i.test(value.mainBackground)) ||
     (value.calendarItems !== undefined &&
       (!Array.isArray(value.calendarItems) ||
         value.calendarItems.some((kind) =>
@@ -43,7 +41,9 @@ export function validatePreferences(value) {
         new Set(value.calendarItems).size !== value.calendarItems.length))
   )
     throw Error("Invalid preferences.");
-  return value;
+  const current = { ...value };
+  delete current.mainBackground; // Ignore the retired background override in old settings and backups.
+  return current;
 }
 export function savePreferences(value) {
   const next = validatePreferences({ ...preferences(), ...value });

@@ -16,8 +16,6 @@ try {
   const dark = !["white-yellow", "white-green"].includes(theme);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   document.documentElement.dataset.palette = theme;
-  const background = JSON.parse(localStorage.getItem("damdast-preferences-v2") || "{}").mainBackground;
-  if (typeof background === "string" && /^#[0-9a-f]{6}$/i.test(background)) document.documentElement.style.setProperty("--bg", background);
   document.documentElement.style.colorScheme =
     dark ? "dark" : "light";
 } catch {}
