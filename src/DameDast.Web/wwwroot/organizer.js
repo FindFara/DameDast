@@ -1,4 +1,5 @@
-import { validIso, addSolarMonths, monthOf } from "./calendar.js";
+import { validIso, addSolarMonths, monthOf, dateInMonth } from "./calendar.js";
+import { attentionReport } from "./productivity.js";
 const dayMs = 86400000,
   minuteMs = 60000;
 const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -155,10 +156,10 @@ export function organizerReport(records, now = new Date()) {
         .map((r) => notificationKey(r.data)),
     ),
     notifications = [];
-  const add = (r, occurrence, title, kind, url, dueAt, itemKey = null) => {
-    const n = { sourceId: r.id, occurrence, title, kind, url, dueAt, itemKey };
+  const add = (r, occurrence, title, kind, url, dueAt, itemKey = null, details = {}) => {
+    const n = { sourceId: r.id, occurrence, title, kind, url, dueAt, itemKey, ...details };
     n.read = reads.has(notificationKey(n));
-    notifications.push(n);
+    if (!notifications.some(existing => notificationKey(existing) === notificationKey(n))) notifications.push(n);
   };
   const due = (date, days = 3) => {
     const gap = Math.round(
@@ -214,6 +215,33 @@ export function organizerReport(records, now = new Date()) {
         "/#goals",
         new Date(tehranInstant(d.deadline, "00:00")).toISOString(),
       );
+  }
+  // Checks share the same occurrence identities and read receipts as reminders.
+  const checks = attentionReport(active, now);
+  for (const increase of checks.increases) {
+    const source = active.filter(r => r.kind === "transaction" && r.data.type === "expense" &&
+      r.data.category === increase.category && monthOf(r.data.date) === checks.month && r.data.date <= today)
+      .sort((a, b) => a.id.localeCompare(b.id))[0];
+    if (!source) continue;
+    const date = dateInMonth(checks.month, 1);
+    add(source, date + "T00:00", increase.category, "check", "/#budgets",
+      new Date(tehranInstant(date, "00:00")).toISOString(), "check:spending", {
+        checkType: "spending", category: increase.category, increase: increase.increase,
+        month: checks.month, budgetId: increase.budget?.id,
+      });
+  }
+  for (const task of checks.overdue) {
+    const url = task.source === "noteTask" ? `/#note/${task.record.id}` :
+      task.source === "developmentEntry" ? (task.record.data.area === "exercise" ? "/#developmentExercise" : "/#learning") : "/#tasks";
+    add(task.record, task.date + "T00:00", task.title, "task", url,
+      new Date(tehranInstant(task.date, "00:00")).toISOString(), `check:task:${task.id}`, {
+        checkType: "task", date: task.date, taskId: task.id,
+      });
+  }
+  for (const payment of checks.payments) {
+    add(payment, payment.dueDate + "T00:00", payment.data.title, "installment",
+      payment.kind === "monthlyExpense" ? "/#monthlyExpenses" : "/#installments",
+      new Date(tehranInstant(payment.dueDate, "00:00")).toISOString());
   }
   const pinned = active.filter(
       (r) => ["note", "goal", "reminder"].includes(r.kind) && r.data.pinned && !["archived","trashed"].includes(r.data.status),

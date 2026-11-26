@@ -155,3 +155,21 @@ test("settings groups start closed and retain an explicitly opened group", () =>
   assert.match(opened, /data-setting-group="calendar" open/);
   assert.doesNotMatch(opened, /data-setting-group="appearance" open/);
 });
+
+test("dashboard checks move to reminders and the bell, sharing read state and escaping titles", () => {
+  setLanguage("en");
+  const records = [{ id: "task", kind: "calendarEvent", data: {
+    title: "<script>Review</script>", kind: "task", startDate: "2026-11-15", repeat: "none", done: false,
+  } }];
+  const context = { ...base, records };
+  const reminders = renderPage({ ...context, page: "reminders" });
+  assert.match(reminders, /Follow-ups/);
+  assert.match(reminders, /&lt;script&gt;Review&lt;\/script&gt;/);
+  assert.match(reminders, /data-action="notification-open"/);
+  assert.match(notificationsMarkup(context), /Overdue tasks/);
+  assert.doesNotMatch(renderPage({ ...context, page: "overview" }), /attention-card|Needs your attention|due-callout/);
+  const notification = organizerReport(records, base.now).notifications[0];
+  records.push({ id: "read", kind: "notificationRead", data: notification });
+  assert.doesNotMatch(renderPage({ ...context, page: "reminders" }), /reminder-checks/);
+  assert.match(notificationsMarkup({ ...context, notificationFilter: "all" }), /notification-card read/);
+});

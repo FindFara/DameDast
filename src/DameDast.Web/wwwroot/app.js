@@ -131,7 +131,6 @@ const $ = (selector) => document.querySelector(selector);
 const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
 let dashboardAmountsVisible = false;
-let attentionOpen = false;
 let assetKey = "",
   assetPeriod = 30,
   assetCurves = {},
@@ -224,7 +223,6 @@ const context = () => ({
   developmentDate,
   learningCategory,
   projectId,
-  attentionOpen,
   amountsVisible: dashboardAmountsVisible,
   settingsGroupsOpen,
   notesView,
@@ -1661,10 +1659,6 @@ async function onAction(event) {
     return;
   }
   if (action === "project-detach") { await moveToProject(id, null); return; }
-  if (action === "attention-budget") {
-    openEditor("budget", id || null, null, { category: element.dataset.category, month: element.dataset.month, calendar: "persian" });
-    return;
-  }
   if (action === "habit-toggle") {
     const habit = ofKind("habit").find(r => r.id === id), date = element.dataset.date;
     if (!habit || date > today() || date < habit.data.startDate) return;
@@ -1803,7 +1797,13 @@ async function onAction(event) {
         $("#notification-center").close();
         location.hash = n.url.split("#")[1];
         const record = records().find(record=>record.id===n.sourceId);
-        if (record && ["reminder","goal","installment"].includes(record.kind)) openEditor(record.kind,record.id);
+        if (n.checkType === "spending") {
+          openEditor("budget", n.budgetId || null, null, { category: n.category, month: n.month, calendar: "persian" });
+        } else if (record?.kind === "calendarEvent") {
+          planner.dialog(record, { occurrence: n.date });
+        } else if (record && ["reminder", "goal", "installment", "monthlyExpense", "developmentEntry"].includes(record.kind)) {
+          openEditor(record.kind, record.id);
+        }
       }
     }
     return;
@@ -2279,7 +2279,6 @@ document.addEventListener(
   "toggle",
   (event) => {
     const group = event.target;
-    if (group.matches?.("[data-attention-card]") && group.isConnected) attentionOpen = group.open;
     if (group.matches?.("[data-nav-group]") && group.isConnected) {
       navGroupsOpen[group.dataset.navGroup] = group.open;
 

@@ -1,6 +1,6 @@
 import { workoutProgramsPage, workoutTimerPage, weightPlanPage, exerciseFields } from "./exercise-ui.js";
 import { developmentPage, developmentFields } from "./development-ui.js";
-import { attentionCard, projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
+import { projectsPage, habitsPage, bookmarksPage, productivityFields } from "./productivity-ui.js";
 import { tehranParts } from "./organizer.js";
 import { transactionBoard, filterTransactions } from "./transaction-board.js";
 import { amountText, amountsHidden } from "./privacy.js";
@@ -381,16 +381,6 @@ function progress(c, b) {
     percent = (spent / b.data.limit) * 100;
   return `<div class="budget-progress"><div class="progress-heading"><strong>${esc(categoryTitle(c, b.data.category))}</strong>${pct(percent)}</div><div class="progress-track"><div class="progress-fill ${percent > 100 ? "over" : ""}" style="width:${Math.min(percent, 100)}%"></div></div><div class="progress-detail"><span>${number(spent, 0, c)}</span><span>${number(b.data.limit, 0, c)} ${t("toman")}</span></div></div>`;
 }
-function dueBanner(c) {
-  const list = kind(c, "installment")
-    .filter(
-      (r) => !r.data.paid && dueDays(r.data.dueDate) <= r.data.reminderDays,
-    )
-    .sort((a, b) => a.data.dueDate.localeCompare(b.data.dueDate));
-  return list.length
-    ? `<a class="due-callout" href="#installments"><span class="due-icon">${icon("bell")}</span><span><strong>${isRtl() ? `${money(list.length)} قسط نیاز به بررسی دارد` : `${money(list.length)} installments to review`}</strong><small><bdi dir="auto">${dataText(c, list[0].data.title)}</bdi> · ${dueText(dueDays(list[0].data.dueDate))}</small></span>${icon("arrow", "directional")}</a>`
-    : "";
-}
 function overview(c) {
   const total = totals(monthly(c)),
     balanceTotal = kind(c, "account").reduce(
@@ -398,7 +388,7 @@ function overview(c) {
       0,
     ),
     budget = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Overview", "transaction")}${attentionCard(c)}${dueBanner(c)}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
+  return `${pageHeading(c, "Overview", "transaction")}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
     "Budgets",
     budget.length
       ? budget

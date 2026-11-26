@@ -1,3 +1,4 @@
+import { developmentEntries } from "./development.js";
 import { t } from "./i18n.js";
 import { today } from "./finance.js";
 import { validIso, inMonth, monthOf, shiftMonth } from "./calendar.js";
@@ -44,6 +45,9 @@ export function attentionReport(records, now = new Date()) {
     const missed = expandCalendarEntry(r, shiftDay(date, -7), date).filter(item => !item.done && item.date === item.occurrence);
     for (const item of missed) overdue.push({ record: r, id: r.id, title: item.title, date: item.date, occurrence: item.occurrence, source: "calendarEvent" });
   }
+  overdue.push(...developmentEntries(rows).filter(r => !r.data.done && r.data.date < date).map(r => ({
+    record: r, id: r.id, title: r.data.title, date: r.data.date, source: "developmentEntry",
+  })));
   overdue.sort((a, b) => a.date.localeCompare(b.date));
   const weekStart = shiftDay(date, 7 - ((weekday(date) + 1) % 7)), weekEnd = shiftDay(weekStart, 7);
   const payments = rows.filter(r => r.kind === "installment" && !r.data.paid && r.data.dueDate >= weekStart && r.data.dueDate < weekEnd).map(r => ({ ...r, dueDate: r.data.dueDate }));

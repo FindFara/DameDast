@@ -35,16 +35,25 @@ public static class OrganizerRules
         {
             var receipt = FinanceRules.Read<NotificationRead>(change.Data);
             var source = records.FirstOrDefault(x => x.Id == receipt.SourceId);
-            if (source is null || source.Kind is not ("reminder" or "installment" or "externalSnapshot" or "goal" or "note")
+            if (source is null || !IsNotificationSource(source.Kind)
                 || !DateTime.TryParseExact(receipt.Occurrence, "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out _)
                 || receipt.ItemKey is { Length: > 128 }
-                || source.Kind != "externalSnapshot" && receipt.ItemKey is not null)
+                || source.Kind != "externalSnapshot" && receipt.ItemKey is not null &&
+                    !IsCheckReceipt(source.Kind, receipt.ItemKey))
                 throw new FinanceException("Invalid notification receipt.");
             return true;
         }
         return false;
     }
+
+    private static bool IsNotificationSource(string kind) => kind is
+        "reminder" or "installment" or "externalSnapshot" or "goal" or "note" or
+        "transaction" or "calendarEvent" or "monthlyExpense" or "developmentEntry";
+
+    private static bool IsCheckReceipt(string kind, string key) =>
+        kind == "transaction" && key == "check:spending" ||
+        kind is "note" or "calendarEvent" or "developmentEntry" && key.StartsWith("check:task:", StringComparison.Ordinal);
 
     public static void Validate(PersonalReminder reminder)
     {

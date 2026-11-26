@@ -145,3 +145,26 @@ test("paid installments and unknown imported statuses do not become unread alert
   ];
   assert.equal(organizerReport(records, now).unread, 1);
 });
+test("checks use persistent reminder receipts, resolve with their sources and deduplicate payments", () => {
+  const clock = "2026-11-26T10:00:00Z";
+  const records = [
+    row("expense", "transaction", { type: "expense", category: "Home", amount: 900, date: "2026-11-24" }),
+    row("task", "calendarEvent", { title: "Pending review", kind: "task", startDate: "2026-11-25", repeat: "none", done: false }),
+    row("payment", "installment", { title: "Next payment", dueDate: "2026-11-28", paid: false, reminderDays: 5 }),
+    row("development", "developmentEntry", { title: "Read a chapter", area: "study", date: "2026-11-25", minutes: 15, done: false }),
+  ];
+  const report = organizerReport(records, clock);
+  assert.equal(report.notifications.filter(n => n.sourceId === "payment").length, 1);
+  assert.deepEqual(new Set(report.notifications.map(n => n.kind)), new Set(["check", "task", "installment"]));
+  const receipts = report.notifications.map((n, i) => row("read-" + i, "notificationRead", {
+    sourceId: n.sourceId, occurrence: n.occurrence, itemKey: n.itemKey,
+  }));
+  assert.equal(organizerReport([...records, ...receipts], clock).unread, 0);
+  assert.equal(organizerReport([...records, ...receipts], "2026-11-27T10:00:00Z").unread, 0);
+  records[1].data.done = true;
+  records[2].data.paid = true;
+  records[3].data.done = true;
+  assert.deepEqual(organizerReport(records, clock).notifications.map(n => n.sourceId), ["expense"]);
+  records[0].deleted = true;
+  assert.equal(organizerReport(records, clock).notifications.length, 0);
+});

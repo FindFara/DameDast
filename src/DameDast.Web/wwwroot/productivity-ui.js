@@ -1,10 +1,9 @@
 import { t, localizedNumber } from "./i18n.js";
-import { escapeHtml as esc, today, categories } from "./finance.js";
-import { dateControl, monthControl, monthBounds, monthLabel, monthOf, shiftMonth, solarText, jalaliParts } from "./calendar.js";
+import { escapeHtml as esc, today } from "./finance.js";
+import { dateControl, monthControl, monthBounds, monthLabel, solarText, jalaliParts } from "./calendar.js";
 import { amountText } from "./privacy.js";
-import { categoryInfo } from "./planning.js";
 import { shiftDay, weekday } from "./planner.js";
-import { attentionReport, habitProgress, habitColors, projectKinds, searchWorkspace } from "./productivity.js";
+import { habitProgress, habitColors, projectKinds, searchWorkspace } from "./productivity.js";
 import { isDrawingNote } from "./notebook.js";
 
 const button = (action, label, attrs = "", style = "secondary") => `<button type="button" class="${style}" data-action="${action}" ${attrs}>${t(label)}</button>`;
@@ -21,33 +20,6 @@ export function productivityFields(kind, d) {
   if (kind === "bookmark") return field("Title", "title", d.title, 'required maxlength="200"') + field("Website address", "url", d.url, 'type="url" required maxlength="2000" dir="ltr"') + area("Selected excerpt", "excerpt", d.excerpt) + field("Tags (comma separated)", "tagsText", d.tagsText ?? d.tags?.join(", ") ?? "Read later", 'maxlength="500"');
   if (kind === "habit") return field("Habit name", "name", d.name, 'required maxlength="80"') + field("Times per week", "weeklyTarget", d.weeklyTarget || 3, 'type="number" min="1" max="7" required') + dateControl("Start date", "startDate", d.startDate || today(), true) + `<label class="field">${t("Color")}<select name="color">${habitColors.map((color, i) => `<option value="${color}" ${color === d.color ? "selected" : ""}>${t(["Sage", "Blue", "Purple", "Rose"][i])}</option>`).join("")}</select></label>`;
   return null;
-}
-const attentionIcon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${{
-  alert: '<path d="M12 8v5m0 3h.01M10 3 2 18a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3L14 3a2 2 0 0 0-4 0Z"/>',
-  trend: '<path d="m3 16 6-6 4 4 8-9m-6 0h6v6"/>',
-  task: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8 12 3 3 5-6"/>',
-  payment: '<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 10h18m-5 5h2"/>',
-  check: '<path d="m5 12 4 4L19 6"/>',
-  chevron: '<path d="m8 10 4 4 4-4"/>',
-  arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
-}[name]}</svg>`;
-export function attentionCard(c) {
-  const r = attentionReport(c.records, c.now);
-  const count = r.increases.length + r.overdue.length + r.payments.length;
-  const cat = id => { const value = categoryInfo(c.records, categories, id); return esc(value.builtin ? t(value.name) : value.name); };
-  const money = value => `<bdi dir="ltr">${amountText(value, c)}</bdi> ${t("toman")}`;
-  const shortMonth = key => monthLabel(key).split(" ").slice(0, -1).join(" ");
-  const date = day => `<time datetime="${day}">${solarText(day, false)}</time>`;
-  const empty = label => `<p class="attention-empty">${attentionIcon("check")}<span>${t(label)}</span></p>`;
-  const group = (kind, label, total, description, content, href) => `<section class="attention-group attention-${kind}"><header><span class="attention-group-icon">${attentionIcon(kind)}</span><h3>${t(label)}</h3><span class="attention-group-count">${localizedNumber(total)}</span></header><p class="attention-group-description">${description}</p><div class="attention-items">${content}</div>${total ? `<a class="text-link attention-view-all" href="#${href}">${t("View all")}${attentionIcon("arrow")}</a>` : ""}</section>`;
-  const increases = r.increases.slice(0, 3).map(row => `<article class="attention-row"><div class="attention-row-heading"><strong>${cat(row.category)}</strong><span class="attention-amount">+${money(row.increase)}</span></div><div class="attention-row-actions">${button("attention-budget", row.budget ? "Adjust budget" : "Set budget", `data-category="${esc(row.category)}" data-id="${row.budget?.id || ""}" data-month="${r.month}"`, "attention-action")}</div></article>`).join("");
-  const tasks = r.overdue.slice(0, 3).map(task => `<article class="attention-row"><strong dir="auto">${esc(task.title)}</strong><div class="attention-row-meta"><span class="attention-overdue-label">${t("Overdue")}</span>${date(task.date)}</div><div class="attention-row-actions"><button type="button" class="attention-action" data-planner-action="${task.source === "calendarEvent" ? "open" : "schedule-task"}" data-id="${task.record.id}" data-source="${task.source}" data-task-id="${task.id}" data-date="${task.occurrence || task.date}">${t("Change due date")}</button></div></article>`).join("");
-  const payments = r.payments.slice(0, 4).map(p => `<article class="attention-row"><div class="attention-row-heading"><strong dir="auto">${esc(p.data.title)}</strong></div><div class="attention-row-meta">${date(p.dueDate)}<span class="attention-amount">${money(p.data.amount)}</span></div><div class="attention-row-actions">${button(p.kind === "installment" ? "paid" : "recurring-pay", "Record payment", `data-id="${p.id}" data-month="${monthOf(p.dueDate)}"`, "attention-action")}${button("edit", "Change due date", `data-id="${p.id}"`, "attention-action attention-action-secondary")}</div></article>`).join("");
-  const chips = [["trend", "Spending increased", r.increases.length], ["task", "Overdue tasks", r.overdue.length], ["payment", "Next week payments", r.payments.length]];
-  return `<details class="panel attention-card${count > 1 ? " has-multiple" : ""}" data-attention-card data-attention-count="${count}" ${c.attentionOpen ? "open" : ""}>
-    <summary class="attention-summary"><span class="attention-symbol">${attentionIcon(count ? "alert" : "check")}</span><span class="attention-heading"><strong>${t("Needs your attention")}</strong><small>${count ? `${localizedNumber(count)} ${t("items to review")}` : t("Everything is up to date.")}</small></span><span class="attention-summary-count">${localizedNumber(count)}</span><span class="attention-chips">${chips.filter(([, , total]) => total).map(([kind, label, total]) => `<span title="${t(label)}" class="attention-chip attention-${kind}" aria-label="${t(label)}: ${localizedNumber(total)}">${attentionIcon(kind)}<b>${localizedNumber(total)}</b></span>`).join("")}</span><span class="attention-chevron">${attentionIcon("chevron")}</span></summary>
-    <div class="attention-columns">${group("trend", "Spending increased", r.increases.length, `${shortMonth(r.month)} · ${t("Compared with")} ${shortMonth(r.previous)}`, increases || empty("No spending increases."), "transactions")}${group("task", "Overdue tasks", r.overdue.length, t("Reschedule or complete your tasks"), tasks || empty("No overdue tasks."), "tasks")}${group("payment", "Next week payments", r.payments.length, `${solarText(r.weekStart, false)} — ${solarText(shiftDay(r.weekEnd, -1), false)}`, payments || empty("No payments next week."), "installments")}</div>
-  </details>`;
 }
 export function searchResults(c, query, pages) {
   const rows = searchWorkspace(c.records, query, pages);

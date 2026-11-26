@@ -79,6 +79,22 @@ public sealed class OrganizerTests
         Assert.Throws<FinanceException>(() => FinanceRules.Apply([record], Change("notificationRead", new NotificationRead(record.Id, first.Occurrence, "not-an-import"))));
     }
 
+    [Theory]
+    [InlineData("transaction", "check:spending")]
+    [InlineData("calendarEvent", "check:task:entry")]
+    [InlineData("developmentEntry", "check:task:entry")]
+    [InlineData("note", "check:task:entry")]
+    [InlineData("monthlyExpense", null)]
+    public void CheckReceiptsPersistOnlyForExistingSupportedSources(string kind, string? key)
+    {
+        var record = new FinanceRecord(Guid.NewGuid(), kind, 1, false, JsonSerializer.SerializeToElement(new { }));
+        var change = Change("notificationRead", new NotificationRead(record.Id, "2026-11-26T00:00", key));
+        Assert.True(OrganizerRules.TryValidate([record], change));
+        Assert.Throws<FinanceException>(() => OrganizerRules.TryValidate([], change));
+        var invalid = Change("notificationRead", new NotificationRead(record.Id, "2026-11-26T00:00", "unrelated-key"));
+        Assert.Throws<FinanceException>(() => OrganizerRules.TryValidate([record], invalid));
+    }
+
     [Fact]
     public async Task OrganizerControllerCombinesServicesAndKeepsPerUserIsolationAndCsrf()
     {
