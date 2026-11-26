@@ -130,3 +130,7 @@ html[dir="ltr"] .dashboard-controls .solar-month { order: -1; }
 .habit-weekday-options input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
 .habit-schedule-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 12px; }
 .habit-schedule-chips span { color: color-mix(in srgb, var(--habit-color) 70%, var(--ink)); background: color-mix(in srgb, var(--habit-color) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--habit-color) 40%, var(--border)); border-radius: 7px; padding: 4px 7px; font-size: 12px; }
+
+.goal-card .goal-pin { width: 44px; height: 44px; }
+.goal-card .goal-pin svg { width: 17px; height: 17px; }
+.goal-card .goal-pin.is-pinned { color: var(--accent); background: var(--accent-soft); }

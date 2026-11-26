@@ -90,7 +90,7 @@ test("notes, projects, habits, tasks and reminders are independent pages and kee
   assert.ok(!html.includes('name="pinned"'));
   setLanguage("en");
 });
-test("every pinned item appears on the dashboard, and notification times are Persian dates", () => {
+test("note pins stay in Notes while goal pins appear on the dashboard, and notification times are Persian dates", () => {
   const pins = Array.from({ length: 8 }, (_, i) => ({
     id: "n" + i,
     kind: "note",
@@ -104,7 +104,7 @@ test("every pinned item appears on the dashboard, and notification times are Per
   assert.equal(
     (pinnedPanel({ ...base, records: pins }).match(/class="pin-card/g) || [])
       .length,
-    8,
+    0,
   );
   setLanguage("fa");
   const reminder = {
@@ -173,4 +173,23 @@ test("dashboard checks move to reminders and the bell, sharing read state and es
   records.push({ id: "read", kind: "notificationRead", data: notification });
   assert.doesNotMatch(renderPage({ ...context, page: "reminders" }), /reminder-checks/);
   assert.match(notificationsMarkup({ ...context, notificationFilter: "all" }), /notification-card read/);
+});
+
+test("goals can be pinned after creation with an icon next to delete; note pins remain in Notes", async () => {
+  const { parseHTML } = await import('linkedom');
+  const { editorFields } = await import('../src/DameDast.Web/wwwroot/ui.js');
+  setLanguage('en');
+  const goal = { id:'goal',kind:'goal',data:{name:'Trip',target:100,saved:20,pinned:true,deadline:null} };
+  const note = { id:'note',kind:'note',data:{title:'Pinned note',body:'Content',pinned:true,updatedOn:'2026-11-26'} };
+  const { document } = parseHTML(renderPage({...base,page:'goals',records:[goal,note]}));
+  const pin = document.querySelector('.goal-card .goal-pin');
+  assert.equal(pin.getAttribute('data-action'),'organizer-pin');
+  assert.equal(pin.getAttribute('aria-pressed'),'true');
+  assert.equal(pin.nextElementSibling.getAttribute('data-action'),'delete');
+  assert.equal(document.querySelector('.goal-card .card-heading [data-action="organizer-pin"]'),null);
+  assert.doesNotMatch(editorFields('goal',goal.data,[],'',true,base.month,[]),/name="pinned"/);
+  const pinned = pinnedPanel({...base,records:[goal,note]});
+  assert.match(pinned,/Trip/);
+  assert.doesNotMatch(pinned,/Pinned note|pin-note/);
+  assert.match(renderPage({...base,page:'notes',records:[goal,note]}),/Pinned note/);
 });

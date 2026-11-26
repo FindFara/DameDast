@@ -440,7 +440,7 @@ function goals(c, embedded = false) {
   )
     .map(
       (g) =>
-        `<article class="panel goal-card"><div class="card-heading"><span class="feature-icon">${icon("goals")}</span><span class="badge">${pct((g.data.saved / g.data.target) * 100)}</span><button type="button" class="text-button" data-action="organizer-pin" data-id="${g.id}">${t(g.data.pinned ? "Unpin" : "Pin")}</button></div><h2 dir="auto">${dataText(c, g.data.name)}</h2><div class="amount">${number(g.data.saved)}${unit()}</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min((g.data.saved / g.data.target) * 100, 100)}%"></div></div><div class="progress-detail"><span>${t("Target amount (toman)")}</span>${number(g.data.target)}</div><div class="card-foot"><span>${g.data.deadline ? dateText(g.data.deadline, true) : ""}</span><div class="row-actions"><button class="icon-button" data-action="edit" data-id="${g.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${g.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></div></article>`,
+        `<article class="panel goal-card"><div class="card-heading"><span class="feature-icon">${icon("goals")}</span><span class="badge">${pct((g.data.saved / g.data.target) * 100)}</span></div><h2 dir="auto">${dataText(c, g.data.name)}</h2><div class="amount">${number(g.data.saved)}${unit()}</div><div class="progress-track"><div class="progress-fill" style="width:${Math.min((g.data.saved / g.data.target) * 100, 100)}%"></div></div><div class="progress-detail"><span>${t("Target amount (toman)")}</span>${number(g.data.target)}</div><div class="card-foot"><span>${g.data.deadline ? dateText(g.data.deadline, true) : ""}</span><div class="row-actions"><button class="icon-button" data-action="edit" data-id="${g.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button type="button" class="icon-button goal-pin ${g.data.pinned ? "is-pinned" : ""}" data-action="organizer-pin" data-id="${g.id}" aria-pressed="${!!g.data.pinned}" aria-label="${t(g.data.pinned ? "Unpin" : "Pin")}" title="${t(g.data.pinned ? "Unpin" : "Pin")}">${icon("pin")}</button><button class="icon-button" data-action="delete" data-id="${g.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></div></article>`,
     )
     .join(
       "",
@@ -766,8 +766,7 @@ export function editorFields(
         d.deadline || "",
         "date",
         dateAttrs,
-      ) +
-      `<label class="checkbox-field"><input name="pinned" type="checkbox" ${d.pinned ? "checked" : ""}>${t("Pin to dashboard")}</label>`
+      )
     );
   if (kindName === "installment")
     return (

@@ -96,12 +96,12 @@ export function organizerPage(c, renderGoals) {
   return `<section class="independent-section section-${tab}"><div class="page-heading"><h1>${t(headings[tab])}</h1>${add}</div>${content}</section>`;
 }
 export function pinnedPanel(c) {
-  const pins = organizerReport(c.records, c.now).pinned.filter(record => !isDrawingNote(record));
+  const pins = organizerReport(c.records, c.now).pinned.filter(record => ["goal", "reminder"].includes(record.kind));
   if (!pins.length) return "";
   return `<section class="panel dashboard-pins"><div class="panel-head"><h2>${t("Pinned to your dashboard")}</h2><a class="text-link" href="#organizer">${t("Planner")} ↗</a></div><div class="pin-grid">${pins
     .map((r) => {
       const d = r.data;
-      return `<article class="pin-card pin-${r.kind}"><div>${badge(r.kind === "note" ? "Note" : r.kind === "goal" ? "Savings goals" : "Reminders")}${r.kind === "note" ? "" : pinnedButton(r)}</div><button type="button" class="pin-title" data-action="edit" data-id="${r.id}" dir="auto">${title(c, d.title || d.name)}</button>${r.kind === "goal" ? `<p><bdi dir="ltr">${amountText(d.saved, c)}</bdi> / <bdi dir="ltr">${amountText(d.target, c)}</bdi> ${t("toman")}</p>` : r.kind === "note" ? `<p dir="auto">${title(c, d.body.slice(0, 160))}</p>` : `<p>${d.times.map(esc).join(" · ")}</p><small>${t(d.completed ? "Completed" : "Reminders")}</small>`}</article>`;
+      return `<article class="pin-card pin-${r.kind}"><div>${badge(r.kind === "goal" ? "Savings goals" : "Reminders")}${pinnedButton(r)}</div><button type="button" class="pin-title" data-action="edit" data-id="${r.id}" dir="auto">${title(c, d.title || d.name)}</button>${r.kind === "goal" ? `<p><bdi dir="ltr">${amountText(d.saved, c)}</bdi> / <bdi dir="ltr">${amountText(d.target, c)}</bdi> ${t("toman")}</p>` : `<p>${d.times.map(esc).join(" · ")}</p><small>${t(d.completed ? "Completed" : "Reminders")}</small>`}</article>`;
     })
     .join("")}</div></section>`;
 }

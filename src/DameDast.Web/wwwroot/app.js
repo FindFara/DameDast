@@ -909,7 +909,7 @@ async function submitEditor(event) {
     }
     if (editorKind === "goal") {
       data.deadline = data.deadline || null;
-      data.pinned = !!data.pinned;
+      data.pinned = !!editing?.data.pinned;
     }
     if (editorKind === "receivable") data.dueDate = data.dueDate || null;
     if (editorKind === "locked") data.releaseDate = data.releaseDate || null;
@@ -1528,7 +1528,6 @@ async function changeLanguage(value) {
       values.pinned = !!values.pinned;
       values.completed = !!values.completed;
     }
-    if (editorKind === "goal") values.pinned = !!values.pinned;
     if (editorKind === "habit") values.days = new FormData($("#editor-form")).getAll("habitDays").map(Number);
     if (editorKind === "allocationPlan")
       values.rows = [...document.querySelectorAll("[data-plan-row]")].map(
