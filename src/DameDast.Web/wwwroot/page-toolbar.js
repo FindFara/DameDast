@@ -1,3 +1,4 @@
+import { chevronIcon } from "./ui-icons.js";
 import { t } from "./i18n.js";
 import { icon } from "./ui.js";
 
@@ -143,7 +144,7 @@ export class PageToolbarController {
     this.trigger.setAttribute("aria-expanded", "false");
     this.trigger.setAttribute("aria-controls", "page-toolbar-panel");
     this.trigger.title = t("Page actions");
-    this.trigger.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 7-5 5 5 5"/></svg>';
+    this.trigger.innerHTML = chevronIcon;
     this.trigger.onclick = () => this.expanded ? this.close() : this.open();
     this.panel = document.createElement("div");
     this.panel.id = "page-toolbar-panel";

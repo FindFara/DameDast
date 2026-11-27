@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v108";
+const CACHE = "damedast-shell-v110";
 const SHELL = [
   "/notification-preferences.js", "/ui-icons.js",
   "/dashboard-layout.js", "/dashboard-settings-ui.js", "/dashboard-layout.css",

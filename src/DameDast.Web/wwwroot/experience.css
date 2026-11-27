@@ -25,14 +25,14 @@
   background: var(--surface-soft);
   color: var(--ink);
 }
-.nav-chevron {
+.nav-group > summary .disclosure-chevron {
   width: 14px;
   height: 14px;
   transform: rotate(0deg);
   transition: transform 0.18s;
 }
-.nav-group[open] > summary .nav-chevron {
-  transform: rotate(90deg);
+.nav-group[open] > summary .disclosure-chevron {
+  transform: rotate(-90deg);
 }
 .nav-group-items {
   display: flex;
@@ -674,3 +674,7 @@ html[lang="fa"] .nav-group > summary {
 [data-theme="dark"] .task-checkbox[aria-checked="true"] {
   color: #102c23;
 }
+
+html[dir="ltr"] .nav-group > summary .disclosure-chevron { transform: rotate(180deg); }
+html[dir="ltr"] .nav-group[open] > summary .disclosure-chevron { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .nav-group > summary .disclosure-chevron { transition: none; } }

@@ -1,3 +1,4 @@
+import { chevronIcon } from "./ui-icons.js";
 import { notificationOptions } from "./notification-preferences.js";
 import { dashboardSettings } from "./dashboard-settings-ui.js";
 import { themeOptions } from "./themes.js";
@@ -21,7 +22,7 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
   const p = preferences(), notes = readNoteSettings(c.space),
     button = (action, label) => actionButton(action, label, "", "secondary");
   const workspaces = restoredWorkspaces();
-  const startGroup = (id, label, style = "") => `<details class="panel setting-group ${style}" data-setting-group="${id}" ${c.settingsGroupsOpen?.[id] ? "open" : ""}><summary><span>${t(label)}</span>${icon("arrow")}</summary><div class="setting-group-content">`;
+  const startGroup = (id, label, style = "") => `<details class="panel setting-group ${style}" data-setting-group="${id}" ${c.settingsGroupsOpen?.[id] ? "open" : ""}><summary><span>${t(label)}</span>${chevronIcon}</summary><div class="setting-group-content">`;
   const endGroup = `</div></details>`;
   return `<div class="settings-page">${pageHeading(c, "Settings")}<div class="settings-layout settings-v2">${workspaces.length ? `${startGroup("workspace", "Workspace", "settings-workspace")}${row("Workspace", "Restore creates a separate local workspace. Switch here to return to your other records.", `<select id="workspace-setting" aria-label="${t("Workspace")}">${c.session.authenticated ? `<option value="google" ${c.space.startsWith("google:") ? "selected" : ""}>${t("Google account")}</option>` : ""}${!c.session.authenticated ? `<option value="guest" ${c.space === "guest" ? "selected" : ""}>${t("Local")}</option>` : ""}${workspaces.map((w) => `<option value="${w.scope}" ${c.space === w.scope ? "selected" : ""}>${esc(w.name)}</option>`).join("")}</select>`)}${endGroup}` : ""}
  ${startGroup("appearance", "Appearance")}
@@ -31,7 +32,6 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${endGroup}${startGroup("dashboard", "Dashboard layout")}
  ${dashboardSettings(c.dashboardLayoutDraft || p.dashboardLayout, !!c.dashboardLayoutDraft, icon)}
  ${endGroup}${startGroup("notifications", "Notification settings")}
- <p class="small-note">${t("Choose notifications for this device. Disabled types also stay out of the bell count.")}</p>
  <div class="notification-setting-options">${notificationOptions.map(([id,label]) => `<label class="notification-setting-option"><span>${t(label)}</span><input type="checkbox" role="switch" data-notification-kind="${id}" ${p.notificationKinds.includes(id) ? 'checked' : ''} aria-label="${t(label)}"></label>`).join('')}</div>
  ${endGroup}${startGroup("notes", "Notes settings")}
  ${row("Default notes view", "Choose the initial layout for your notes.", `<select data-note-preference="view" aria-label="${t("Default notes view")}">${option("grid","Grid",notes.view)}${option("list","List",notes.view)}</select>`)}

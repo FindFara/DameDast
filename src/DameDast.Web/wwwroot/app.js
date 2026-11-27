@@ -1,5 +1,5 @@
 import { enabledNotificationReport } from "./notification-preferences.js";
-import { closeIcon } from "./ui-icons.js";
+import { closeIcon, chevronIcon } from "./ui-icons.js";
 import { defaultDashboardLayout, moveDashboardSection, toggleDashboardSection } from "./dashboard-layout.js";
 import { validateExercise } from "./exercise.js";
 import { ExerciseClock } from "./exercise-clock.js";
@@ -409,7 +409,7 @@ function renderChrome() {
   $("#navigation").innerHTML =
     (navPins.length ? `<section class="nav-pins" aria-label="${t("Pinned menus")}"><header><strong>${t("Pinned menus")}</strong><small>${localizedNumber(navPins.length)}</small></header>${navPins.map(key => navLink(key)).join("")}</section>` : "") +
     navLink("overview") + navLink("workbench") +
-    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" style="--nav-color:${group.color}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${icon("arrow", "nav-chevron")}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
+    navigationGroups.map(group => `<details class="nav-group" data-nav-group="${group.id}" style="--nav-color:${group.color}" ${navGroupsOpen[group.id] ? "open" : ""}><summary class="${group.items.includes(activePage) ? "has-active" : ""}"><span>${t(group.label)}</span>${chevronIcon}</summary><div class="nav-group-items">${group.items.map(key => navLink(key, true)).join("")}</div></details>`).join("") +
     `<div class="nav-footer-links">${navLink("reports")}${navLink("settings")}</div>`;
   $("#mobile-navigation").innerHTML = [
     "overview",
