@@ -1,3 +1,4 @@
+import { notificationOptions } from "./notification-preferences.js";
 import { dashboardSettings } from "./dashboard-settings-ui.js";
 import { themeOptions } from "./themes.js";
 import {readNoteSettings} from "./keep-preferences.js";
@@ -29,6 +30,9 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
 
  ${endGroup}${startGroup("dashboard", "Dashboard layout")}
  ${dashboardSettings(c.dashboardLayoutDraft || p.dashboardLayout, !!c.dashboardLayoutDraft, icon)}
+ ${endGroup}${startGroup("notifications", "Notification settings")}
+ <p class="small-note">${t("Choose notifications for this device. Disabled types also stay out of the bell count.")}</p>
+ <div class="notification-setting-options">${notificationOptions.map(([id,label]) => `<label class="notification-setting-option"><span>${t(label)}</span><input type="checkbox" role="switch" data-notification-kind="${id}" ${p.notificationKinds.includes(id) ? 'checked' : ''} aria-label="${t(label)}"></label>`).join('')}</div>
  ${endGroup}${startGroup("notes", "Notes settings")}
  ${row("Default notes view", "Choose the initial layout for your notes.", `<select data-note-preference="view" aria-label="${t("Default notes view")}">${option("grid","Grid",notes.view)}${option("list","List",notes.view)}</select>`)}
  ${row("Text link previews", "Show a compact text preview for links in notes.", `<label class="switch-control"><input type="checkbox" data-note-preference="linkPreviews" ${notes.linkPreviews ? "checked" : ""} aria-label="${t("Text link previews")}"><span></span></label>`)}

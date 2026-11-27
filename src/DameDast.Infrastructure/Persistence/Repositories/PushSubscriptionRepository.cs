@@ -15,11 +15,12 @@ public sealed class PushSubscriptionRepository(IDbContextFactory<FinanceDb> fact
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var id = EndpointId(registration.Endpoint);
         await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO "Subscriptions" ("Id", "UserId", "Endpoint", "Auth", "P256dh", "Language")
-            VALUES ({id}, {userId}, {registration.Endpoint}, {registration.Keys.Auth}, {registration.Keys.P256dh}, {registration.Language})
+            INSERT INTO "Subscriptions" ("Id", "UserId", "Endpoint", "Auth", "P256dh", "Language", "RemindersEnabled", "InstallmentsEnabled")
+            VALUES ({id}, {userId}, {registration.Endpoint}, {registration.Keys.Auth}, {registration.Keys.P256dh}, {registration.Language}, {registration.RemindersEnabled}, {registration.InstallmentsEnabled})
             ON CONFLICT ("Id") DO UPDATE SET
                 "UserId" = EXCLUDED."UserId", "Endpoint" = EXCLUDED."Endpoint",
-                "Auth" = EXCLUDED."Auth", "P256dh" = EXCLUDED."P256dh", "Language" = EXCLUDED."Language"
+                "Auth" = EXCLUDED."Auth", "P256dh" = EXCLUDED."P256dh", "Language" = EXCLUDED."Language",
+                "RemindersEnabled" = EXCLUDED."RemindersEnabled", "InstallmentsEnabled" = EXCLUDED."InstallmentsEnabled"
             """, cancellationToken);
     }
 
@@ -33,7 +34,7 @@ public sealed class PushSubscriptionRepository(IDbContextFactory<FinanceDb> fact
     public async Task<IReadOnlyList<PushDevice>> ReadAllAsync(CancellationToken cancellationToken)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        return await db.Subscriptions.AsNoTracking().Select(x => new PushDevice(x.Id, x.UserId, x.Endpoint, x.P256dh, x.Auth, x.Language)).ToListAsync(cancellationToken);
+        return await db.Subscriptions.AsNoTracking().Select(x => new PushDevice(x.Id, x.UserId, x.Endpoint, x.P256dh, x.Auth, x.Language, x.RemindersEnabled, x.InstallmentsEnabled)).ToListAsync(cancellationToken);
     }
 
     private static string EndpointId(string endpoint) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(endpoint)));

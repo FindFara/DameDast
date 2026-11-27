@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { assetEntries, assetHistory, decimalText } from "./assets.js";
 import { instruments } from "./market-catalog.js";
 import { t, localizedNumber, getLanguage } from "./i18n.js";
@@ -100,7 +101,7 @@ export function assetLotRow(
     boughtOn: today(),
   },
 ) {
-  return `<div class="asset-lot-row" data-asset-lot data-lot-id="${esc(lot.id)}"><label class="field">${t("Quantity")} <span data-quantity-unit></span><input data-lot-quantity value="${esc(lot.quantity)}" inputmode="decimal" required dir="ltr"></label><label class="field">${t("Total purchase cost (toman)")} · ${t("Optional")}<input data-lot-cost value="${esc(lot.costToman ?? "")}" inputmode="decimal" dir="ltr"></label>${dateControl("Purchase date", "lot-date-" + lot.id, lot.boughtOn, true)}<button type="button" class="icon-button" data-action="asset-lot-remove" aria-label="${t("Remove purchase")}">×</button></div>`;
+  return `<div class="asset-lot-row" data-asset-lot data-lot-id="${esc(lot.id)}"><label class="field">${t("Quantity")} <span data-quantity-unit></span><input data-lot-quantity value="${esc(lot.quantity)}" inputmode="decimal" required dir="ltr"></label><label class="field">${t("Total purchase cost (toman)")} · ${t("Optional")}<input data-lot-cost value="${esc(lot.costToman ?? "")}" inputmode="decimal" dir="ltr"></label>${dateControl("Purchase date", "lot-date-" + lot.id, lot.boughtOn, true)}<button type="button" class="icon-button" data-action="asset-lot-remove" aria-label="${t("Remove purchase")}">${closeIcon}</button></div>`;
 }
 export function assetEditorFields(
   p = {

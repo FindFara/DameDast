@@ -1,3 +1,5 @@
+import { enabledNotificationReport } from "./notification-preferences.js";
+import { closeIcon } from "./ui-icons.js";
 import { defaultDashboardLayout, moveDashboardSection, toggleDashboardSection } from "./dashboard-layout.js";
 import { validateExercise } from "./exercise.js";
 import { ExerciseClock } from "./exercise-clock.js";
@@ -469,6 +471,7 @@ function renderChrome() {
 }
 function render() {
   if (!state || accountReloading) return;
+  void syncNotificationPreferences();
   notePage.capture();
   language.capture();
   deskTools.capture();
@@ -1268,10 +1271,15 @@ async function pushRegistration(subscription) {
       "Content-Type": "application/json",
       "X-CSRF-TOKEN": session.csrf,
     },
-    body: JSON.stringify({ ...subscription.toJSON(), language: getLanguage() }),
+    body: JSON.stringify({ ...subscription.toJSON(), language: getLanguage(), remindersEnabled: preferences().notificationKinds.includes("reminders"), installmentsEnabled: preferences().notificationKinds.includes("installments") }),
   });
 }
-async function updatePushLanguage() {
+let pushPreferenceSync = Promise.resolve();
+function updatePushLanguage() {
+  pushPreferenceSync = pushPreferenceSync.catch(() => {}).then(syncPushPreferences);
+  return pushPreferenceSync;
+}
+async function syncPushPreferences() {
   if (
     !session.authenticated ||
     !("serviceWorker" in navigator) ||
@@ -1853,7 +1861,7 @@ async function onAction(event) {
   }
   if (action === "notifications-read-all") {
     await markNotificationsRead(
-      organizerReport(records(), context().now).notifications.filter(
+      enabledNotificationReport(organizerReport(records(), context().now), preferences().notificationKinds).notifications.filter(
         (n) => !n.read,
       ),
     );
@@ -2493,7 +2501,7 @@ async function boot() {
     render();
     void connected.initialize(session).catch(() => {});
     if ("serviceWorker" in navigator)
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker.register("/sw.js").then(() => syncNotificationPreferences()).catch(() => {});
     void sync();
     if (page === "market") void loadHistory();
     if (page === "assets") void loadAssetHistory();
@@ -2675,12 +2683,24 @@ async function importBenchmarkPrices() {
   );
 }
 
+let lastNotificationPreferences = "";
+async function syncNotificationPreferences() {
+  if (!("serviceWorker" in navigator)) return;
+  const kinds = preferences().notificationKinds;
+  const key = JSON.stringify([accountSpace(session), kinds]);
+  if (key === lastNotificationPreferences) return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    registration.active?.postMessage({ type: "notification-preferences", kinds });
+    if (registration.active) lastNotificationPreferences = key;
+  } catch {}
+}
 function updateNotificationBell() {
   if (!state) return;
-  const report = organizerReport(
+  const report = enabledNotificationReport(organizerReport(
       records(),
       new Date(Date.now() + serverClockSkew),
-    ),
+    ), preferences().notificationKinds),
     button = $("#notifications-button");
   if (!button) return;
   button.classList.toggle("has-unread", report.unread > 0);
@@ -2927,6 +2947,17 @@ document
   });
 document.addEventListener("change", async (event) => {
   const el = event.target;
+  if (el.matches("[data-notification-kind]")) {
+    const kinds = new Set(preferences().notificationKinds);
+    if (el.checked) kinds.add(el.dataset.notificationKind); else kinds.delete(el.dataset.notificationKind);
+    try {
+      savePreferences({ notificationKinds: [...kinds] });
+      render();
+      void syncNotificationPreferences(); void updatePushLanguage();
+      document.querySelector(`[data-notification-kind="${el.dataset.notificationKind}"]`)?.focus({preventScroll:true});
+    } catch (error) { showError(error); }
+    return;
+  }
   if (el.matches("[data-preference]")) {
     const key = el.dataset.preference;
     savePreferences({
@@ -2997,7 +3028,7 @@ async function installmentPayment(id) {
   }
   const accounts = ofKind("account"); if (!accounts.length) { toast("Create an account first."); openEditor("account"); return; }
   const scope = space, dialog = $("#payment-dialog");
-  dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t("Record payment")}</h2><button type="button" class="icon-button" data-payment-close aria-label="${t("Close")}">×</button></div><p dir="auto">${esc(record.data.title)} · ${money(record.data.amount)} ${t("toman")}</p><label class="field">${t("Account")}<select name="accountId" required><option value="">${t("Choose account")}</option>${accounts.map(r => `<option value="${r.id}">${esc(r.data.name)}</option>`).join("")}</select></label><label class="field">${t("Category")}<select name="category">${categoryOptions().map(([value, label]) => `<option value="${esc(value)}" ${value === "Other" ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label>${dateControl("Payment date", "paymentDate", today(), true)}<p class="small-note">${t("This settles the installment and records one account expense.")}</p><p class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" data-payment-close>${t("Cancel")}</button><button type="submit" class="primary">${t("Mark paid")}</button></div></form>`;
+  dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t("Record payment")}</h2><button type="button" class="icon-button" data-payment-close aria-label="${t("Close")}">${closeIcon}</button></div><p dir="auto">${esc(record.data.title)} · ${money(record.data.amount)} ${t("toman")}</p><label class="field">${t("Account")}<select name="accountId" required><option value="">${t("Choose account")}</option>${accounts.map(r => `<option value="${r.id}">${esc(r.data.name)}</option>`).join("")}</select></label><label class="field">${t("Category")}<select name="category">${categoryOptions().map(([value, label]) => `<option value="${esc(value)}" ${value === "Other" ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label>${dateControl("Payment date", "paymentDate", today(), true)}<p class="small-note">${t("This settles the installment and records one account expense.")}</p><p class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" data-payment-close>${t("Cancel")}</button><button type="submit" class="primary">${t("Mark paid")}</button></div></form>`;
   dialog.querySelectorAll("[data-payment-close]").forEach(button => button.onclick = () => dialog.close());
   const transactionId = crypto.randomUUID();
   dialog.querySelector("form").onsubmit = async event => {
@@ -3011,3 +3042,5 @@ async function installmentPayment(id) {
   };
   dialog.showModal();
 }
+
+window.addEventListener("online", () => void updatePushLanguage());

@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { t } from "./i18n.js";
 import { today, escapeHtml as esc } from "./finance.js";
 import { shiftDay } from "./planner.js";
@@ -342,7 +343,7 @@ export class LanguageController {
     }
     this.active = a;
     this.opener = opener;
-    this.dialog.innerHTML = `<form data-language-form><header class="dialog-heading"><h2 id="language-dialog-title" dir="auto">${esc(title)}</h2>${langButton("close", "×", `aria-label="${t("Close")}"`, "icon-button")}</header><div class="language-dialog-body">${content}</div><footer class="language-dialog-footer"><span class="language-save-status" role="status"></span><div class="language-row-actions">${a.mode === "read" ? langButton("download-lesson", tr("Download Markdown", "دریافت Markdown"), `data-id="${a.id}"`) : `<button type="submit" class="primary">${t("Save")}</button>${a.kind === "languageEssay" ? langButton("done-reviewed", tr("Done reviewed", "بازبینی تمام شد"), "hidden", "primary") : ""}`}${langButton("close", t("Close"), "", "secondary")}</div></footer></form>`;
+    this.dialog.innerHTML = `<form data-language-form><header class="dialog-heading"><h2 id="language-dialog-title" dir="auto">${esc(title)}</h2>${langButton("close", closeIcon, `aria-label="${t("Close")}"`, "icon-button")}</header><div class="language-dialog-body">${content}</div><footer class="language-dialog-footer"><span class="language-save-status" role="status"></span><div class="language-row-actions">${a.mode === "read" ? langButton("download-lesson", tr("Download Markdown", "دریافت Markdown"), `data-id="${a.id}"`) : `<button type="submit" class="primary">${t("Save")}</button>${a.kind === "languageEssay" ? langButton("done-reviewed", tr("Done reviewed", "بازبینی تمام شد"), "hidden", "primary") : ""}`}${langButton("close", t("Close"), "", "secondary")}</div></footer></form>`;
     if (!this.dialog.open) this.dialog.showModal();
   }
   status(message, error = false) {

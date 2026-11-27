@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { t, getLanguage } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
 
@@ -13,7 +14,7 @@ export function installSelectSheet() {
   dialog.id="selection-sheet";
   dialog.className="selection-sheet";
   dialog.setAttribute("aria-labelledby","selection-sheet-title");
-  dialog.innerHTML=`<header><h2 id="selection-sheet-title"></h2><button type="button" class="icon-button" data-selection-close aria-label="${t("Close")}">×</button></header><label class="selection-search"><span class="sr-only">${t("Search options")}</span><input type="search" autocomplete="off" placeholder="${t("Search options")}" aria-label="${t("Search options")}"></label><p class="selection-error" role="alert" hidden></p><div class="selection-options" role="listbox"></div>`;
+  dialog.innerHTML=`<header><h2 id="selection-sheet-title"></h2><button type="button" class="icon-button" data-selection-close aria-label="${t("Close")}">${closeIcon}</button></header><label class="selection-search"><span class="sr-only">${t("Search options")}</span><input type="search" autocomplete="off" placeholder="${t("Search options")}" aria-label="${t("Search options")}"></label><p class="selection-error" role="alert" hidden></p><div class="selection-options" role="listbox"></div>`;
   document.body.append(dialog);
   const search=dialog.querySelector("input"), list=dialog.querySelector("[role=listbox]");
   const labelFor=select=>select.getAttribute("aria-label") || (select.labels?.[0] ? [...select.labels[0].childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join("").trim() : "") || select.closest("fieldset")?.querySelector("legend")?.textContent || t("Choose an option");

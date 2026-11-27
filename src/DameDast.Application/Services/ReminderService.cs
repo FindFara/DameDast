@@ -17,7 +17,8 @@ public sealed class ReminderService(IFinanceRepository finance, IPushSubscriptio
         foreach (var device in await subscriptions.ReadAllAsync(cancellationToken))
         {
             var snapshot = await finance.ReadAsync(device.UserId, cancellationToken);
-            if (!await SendPersonalAsync(device, snapshot.Records, cancellationToken)) continue;
+            if (device.RemindersEnabled && !await SendPersonalAsync(device, snapshot.Records, cancellationToken)) continue;
+            if (!device.InstallmentsEnabled) continue;
             if (clock.TehranNow().Hour is < 9 or >= 21) continue;
             var manualDue = snapshot.Records.Where(x => !x.Deleted && x.Kind == "installment").Select(x => FinanceRules.Read<Installment>(x.Data)).Any(x => InstallmentReminderRules.IsDue(x, today));
             if (!manualDue && !InstallmentReminderRules.HasImportedDue(snapshot.Records, today))

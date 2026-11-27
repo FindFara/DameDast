@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { escapeHtml as esc, today } from "./finance.js";
 import { t } from "./i18n.js";
 import { textNotes, plainNoteDraft, notePayload } from "./notebook.js";
@@ -63,7 +64,7 @@ export class NotePageController {
     if (!this.tabs.some(tab => tab.id === this.route)) this.tabs.push({ id: this.route, pinned: false });
     this.tabs = this.tabs.filter(tab => tab.id === "new" || this.drafts.has(tab.id) || textNotes(c.records).some(r => r.id === tab.id)); this.persistTabs();
     const tabs = [...this.tabs].sort((a, b) => Number(b.pinned) - Number(a.pinned));
-    return `<section class="note-workspace"><header class="note-workspace-toolbar"><a class="secondary" href="#notes">← ${t("Back to notes")}</a></header><nav class="note-tabs" aria-label="${t("Note tabs")}">${tabs.map(tab => `<div class="note-tab ${tab.id === this.route ? "active" : ""}"><button type="button" data-note-tab="${tab.id}" aria-current="${tab.id === this.route ? "page" : "false"}">${esc(this.drafts.get(tab.id)?.title || c.records.find(r => r.id === tab.id)?.data.title || t("New note"))}</button><button type="button" data-note-tab-pin="${tab.id}" aria-pressed="${tab.pinned}" aria-label="${t(tab.pinned ? "Unpin tab" : "Pin tab")}">${tab.pinned ? "●" : "○"}</button>${tab.pinned ? "" : `<button type="button" data-note-tab-close="${tab.id}" aria-label="${t("Close tab")}">×</button>`}</div>`).join("")}</nav><div class="note-panes">${this.pane(this.route, d, "main")}</div></section>`;
+    return `<section class="note-workspace"><header class="note-workspace-toolbar"><a class="secondary" href="#notes">← ${t("Back to notes")}</a></header><nav class="note-tabs" aria-label="${t("Note tabs")}">${tabs.map(tab => `<div class="note-tab ${tab.id === this.route ? "active" : ""}"><button type="button" data-note-tab="${tab.id}" aria-current="${tab.id === this.route ? "page" : "false"}">${esc(this.drafts.get(tab.id)?.title || c.records.find(r => r.id === tab.id)?.data.title || t("New note"))}</button><button type="button" data-note-tab-pin="${tab.id}" aria-pressed="${tab.pinned}" aria-label="${t(tab.pinned ? "Unpin tab" : "Pin tab")}">${tab.pinned ? "●" : "○"}</button>${tab.pinned ? "" : `<button type="button" data-note-tab-close="${tab.id}" aria-label="${t("Close tab")}">${closeIcon}</button>`}</div>`).join("")}</nav><div class="note-panes">${this.pane(this.route, d, "main")}</div></section>`;
   }
   pane(route, d, slot) {
     const preview = this.previews.has(route);

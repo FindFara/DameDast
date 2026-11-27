@@ -1,5 +1,6 @@
-const CACHE = "damedast-shell-v107";
+const CACHE = "damedast-shell-v108";
 const SHELL = [
+  "/notification-preferences.js", "/ui-icons.js",
   "/dashboard-layout.js", "/dashboard-settings-ui.js", "/dashboard-layout.css",
   "/themes.js", "/themes.css",
   "/weekly-agenda.js", "/weekly-agenda-ui.js",
@@ -156,6 +157,27 @@ self.addEventListener("fetch", (event) => {
     return response;
   })());
 });
+const notificationSettingsCache = "damedast-notification-settings";
+const notificationSettingsUrl = new URL("/__notification-preferences", self.location.origin).href;
+self.addEventListener("message", event => {
+  if (event.data?.type !== "notification-preferences" || !Array.isArray(event.data.kinds)) return;
+  const known = ["reminders", "tasks", "installments", "goals", "checks"];
+  const kinds = known.filter(kind => event.data.kinds.includes(kind));
+  event.waitUntil(caches.open(notificationSettingsCache).then(cache => cache.put(notificationSettingsUrl, new Response(JSON.stringify(kinds)))));
+});
+async function showEnabledNotification(data) {
+  try {
+    const cache = await caches.open(notificationSettingsCache), saved = await cache.match(notificationSettingsUrl);
+    const kinds = saved ? await saved.json() : null;
+    const kind = data.tag?.startsWith("damdast-personal-") ? "reminders" : "installments";
+    if (Array.isArray(kinds) && !kinds.includes(kind)) return;
+  } catch {}
+  return self.registration.showNotification(data.title, {
+    body: data.body, lang: data.lang || "en", dir: data.dir === "rtl" ? "rtl" : "ltr",
+    icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", tag: data.tag,
+    data: { url: ["/#connected", "/#organizer", "/#reminders"].includes(data.url) ? data.url : "/#installments" },
+  });
+}
 self.addEventListener("push", (event) => {
   let data = {
     title: "DameDast",
@@ -166,21 +188,7 @@ self.addEventListener("push", (event) => {
   try {
     data = { ...data, ...event.data.json() };
   } catch {}
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      lang: data.lang || "en",
-      dir: data.dir === "rtl" ? "rtl" : "ltr",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      tag: data.tag,
-      data: {
-        url: ["/#connected", "/#organizer", "/#reminders"].includes(data.url)
-          ? data.url
-          : "/#installments",
-      },
-    }),
-  );
+  event.waitUntil(showEnabledNotification(data));
 });
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

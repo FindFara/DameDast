@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { workbenchRecord, defaultWorkbench, standardWorkbench, packStandardWidgets, standardSize, resizeWorkbenchWidget, validateWorkbench, deskColors } from "./workbench.js";
 import { addWidgetFields, widgetSettings } from "./workbench-ui.js";
 import { t } from "./i18n.js";
@@ -91,7 +92,7 @@ export class WorkbenchController {
   openDialog(mode,id) {
     const base=this.current(),widget=base.layout.widgets.find(widget=>widget.id===id),dialog=document.querySelector("#workbench-dialog");
     if(mode==="configure"&&!widget)return;
-    dialog.innerHTML=`<form id="desk-form"><div class="dialog-heading"><h2>${t(mode==="add"?"Add component":"Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">×</button></div><div class="desk-dialog-fields">${mode==="add"?addWidgetFields(this.callbacks.icon):widgetSettings(widget,base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode==="configure"?`<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>`:""}<button type="submit" class="primary">${t(mode==="add"?"Add component":"Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
+    dialog.innerHTML=`<form id="desk-form"><div class="dialog-heading"><h2>${t(mode==="add"?"Add component":"Card settings")}</h2><button type="button" class="icon-button" data-desk-dialog-close aria-label="${t("Close")}">${closeIcon}</button></div><div class="desk-dialog-fields">${mode==="add"?addWidgetFields(this.callbacks.icon):widgetSettings(widget,base.context)}</div><p id="desk-form-error" role="alert"></p><div class="dialog-actions">${mode==="configure"?`<button type="button" class="text-button negative" data-desk-remove>${t("Remove card")}</button>`:""}<button type="submit" class="primary">${t(mode==="add"?"Add component":"Save")}</button><button type="button" class="secondary" data-desk-dialog-close>${t("Cancel")}</button></div></form>`;
     const form=dialog.querySelector("form");let imageData=widget?.options?.imageData||null,imagePromise=null,generation=0;
     form.addEventListener("click",event=>{
       const tab=event.target.closest("[data-component-category]");if(!tab)return;

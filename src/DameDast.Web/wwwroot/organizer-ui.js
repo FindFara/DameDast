@@ -1,3 +1,6 @@
+import { preferences } from "./preferences.js";
+import { enabledNotificationReport } from "./notification-preferences.js";
+import { closeIcon } from "./ui-icons.js";
 import { categoryInfo } from "./planning.js";
 import { amountText } from "./privacy.js";
 import { isDrawingNote, textNotes, taskEntries } from "./notebook.js";
@@ -106,8 +109,8 @@ export function pinnedPanel(c) {
     .join("")}</div></section>`;
 }
 export function notificationsMarkup(c) {
-  const visible = organizerReport(c.records, c.now).notifications.filter(n => !n.read).slice(0, 100);
-  return `<div class="dialog-heading"><h2>${t("Notifications")}</h2><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">×</button></div>
+  const visible = enabledNotificationReport(organizerReport(c.records, c.now), preferences().notificationKinds).notifications.filter(n => !n.read).slice(0, 100);
+  return `<div class="dialog-heading"><h2>${t("Notifications")}</h2><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">${closeIcon}</button></div>
     <div class="notification-toolbar"><button type="button" class="text-button" data-action="notifications-refresh" ${c.refreshInProgress ? 'disabled' : ''}>${t(c.refreshInProgress ? "Refreshing…" : "Refresh")}</button><button type="button" class="text-button" data-action="notifications-read-all" ${visible.length ? '' : 'disabled'}>${t("Mark all read")}</button></div>
     <div class="notification-list">${visible.map(n => notificationCard(c, n)).join('') || `<div class="notification-empty">${notificationGlyph('reminder')}<h3>${t("You are all caught up.")}</h3></div>`}</div>`;
 }

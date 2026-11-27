@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import {t,getLanguage,localizedNumber,percentage} from './i18n.js';
 import {categories,money,escapeHtml as esc,today} from './finance.js';
 import {monthControl,monthLabel,dateControl,solarText,monthOf,shiftMonth} from './calendar.js';
@@ -19,7 +20,7 @@ export function monthlyExpensesPage(c){const list=recurringForMonth(c.records,c.
 const input=(label,name,value='',attrs='')=>`<label class="field">${t(label)}<input name="${name}" value="${esc(value)}" ${attrs}></label>`;
 const select=(label,name,values,value)=>`<label class="field">${t(label)}<select name="${name}">${values.map(([v,s])=>`<option value="${esc(v)}" ${v===value?'selected':''}>${esc(s)}</option>`).join('')}</select></label>`;
 const amount=(label,name,value='',optional=false)=>input(label,name,value,`inputmode="numeric" class="money-input" ${optional?'':'required'}`);
-export function planEditorRow(row,options){return `<div class="plan-editor-row" data-plan-row><label>${t('Category')}<select data-plan-category required>${options.map(([id,name])=>`<option value="${esc(id)}" ${id===row.category?'selected':''}>${esc(name)}</option>`).join('')}</select></label><label>${t('Percent')}<input data-plan-percent inputmode="decimal" value="${esc(row.percentText??row.basisPoints/100)}" required></label><button type="button" class="icon-button" data-action="plan-row-remove" aria-label="${t('Remove category')}">×</button></div>`;}
+export function planEditorRow(row,options){return `<div class="plan-editor-row" data-plan-row><label>${t('Category')}<select data-plan-category required>${options.map(([id,name])=>`<option value="${esc(id)}" ${id===row.category?'selected':''}>${esc(name)}</option>`).join('')}</select></label><label>${t('Percent')}<input data-plan-percent inputmode="decimal" value="${esc(row.percentText??row.basisPoints/100)}" required></label><button type="button" class="icon-button" data-action="plan-row-remove" aria-label="${t('Remove category')}">${closeIcon}</button></div>`;}
 export function planningEditorFields(kind,d,month,accounts,options){
  if(kind==='category')return input('Category name','name',d.name||'','required maxlength="50"')+select('Color','color',categoryColors.map((v,i)=>[v,t('Color')+' '+localizedNumber(i+1)]),d.color||categoryColors[0]);
  if(kind==='note')return input('Title','title',d.title||'','required maxlength="80"')+`<label class="field">${t('Content')}<textarea name="body" rows="7" maxlength="4000" dir="auto">${esc(d.body||'')}</textarea></label>`;

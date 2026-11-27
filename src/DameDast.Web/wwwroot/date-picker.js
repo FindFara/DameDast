@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { jalaliParts, fromJalali, daysInMonth, faMonths, enMonths, solarText } from "./calendar.js";
 import { today } from "./finance.js";
 import { shiftDay } from "./planner.js";
@@ -104,7 +105,7 @@ export function installDatePicker() {
     const value = root.querySelector('input[type=hidden]').value;
     parts = jalaliParts(value || today());
     dialog.dir = getLanguage() === "fa" ? "rtl" : "ltr";
-    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">×</button></header><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
+    dialog.innerHTML = `<form><header class="dialog-heading"><h2 id="date-picker-title">${root.querySelector('legend').textContent}</h2><button type="button" class="icon-button" data-date-close aria-label="${t('Close')}">${closeIcon}</button></header><div class="date-wheels"></div><p class="date-picker-error" role="alert"></p><footer>${root.dataset.required?'':`<button type="button" class="text-button" data-date-clear>${t('Clear')}</button>`}<button type="submit" class="primary">${t('Select date')}</button></footer></form>`;
     renderWheels();
     root.querySelector('[data-date-input]').setAttribute("aria-expanded", "true");
     dialog.showModal();

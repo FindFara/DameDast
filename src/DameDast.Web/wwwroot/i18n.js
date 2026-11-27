@@ -779,6 +779,11 @@ Object.assign(fa, {
 });
 Object.assign(fa, {
   "Dashboard layout": "چیدمان داشبورد",
+  "Notification settings": "تنظیمات اعلان‌ها",
+  "Personal reminders": "یادآورهای شخصی",
+  "Dated tasks": "کارهای تاریخ‌دار",
+  "Financial checks": "بررسی‌های مالی",
+  "Choose notifications for this device. Disabled types also stay out of the bell count.": "نوع اعلان‌های این دستگاه را انتخاب کن؛ موارد خاموش در فهرست و عدد زنگوله هم نمی‌آیند.",
   "Review": "بررسی",
   "Financial summary": "خلاصهٔ مالی",
   "Live prices": "قیمت‌های روز",

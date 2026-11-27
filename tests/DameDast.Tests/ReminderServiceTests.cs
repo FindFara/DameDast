@@ -58,6 +58,27 @@ public sealed class ReminderServiceTests
         Assert.DoesNotContain("Private", gateway.Message.Body);
     }
 
+    [Theory]
+    [InlineData(false, false, 0)]
+    [InlineData(false, true, 1)]
+    [InlineData(true, false, 1)]
+    [InlineData(true, true, 2)]
+    public async Task DeviceCategoryPreferencesControlDeliveriesAndReceipts(bool reminders, bool installments, int expected)
+    {
+        var device = new PushDevice("device", "alice", "https://fcm.googleapis.com/test", "key", "auth", "en", reminders, installments);
+        var reminder = new PersonalReminder("Title", "Body", new DateOnly(2026, 11, 16), ["09:00"], "once");
+        var records = new[] {
+            new FinanceRecord(Guid.NewGuid(), "reminder", 1, false, JsonSerializer.SerializeToElement(reminder, FinanceRules.Json)),
+            new FinanceRecord(Guid.NewGuid(), "installment", 1, false, JsonSerializer.SerializeToElement(new Installment("Loan", 100, new DateOnly(2026, 11, 16), false, 3), FinanceRules.Json))
+        };
+        var gateway = new RecordingGateway(PushDeliveryResult.Delivered);
+        var receipts = new ReceiptRepository();
+        var service = new ReminderService(new FinanceRepository(records), new SubscriptionRepository(device), receipts, gateway, new Clock(), new PersonalReminderService());
+        await service.SendDueAsync(CancellationToken.None);
+        Assert.Equal(expected, gateway.Sends);
+        Assert.Equal(expected, receipts.Count);
+    }
+
     private sealed class MutableClock : TimeProvider
     {
         public DateTimeOffset Now { get; set; } = new(2026, 11, 16, 8, 0, 0, TimeSpan.Zero);

@@ -36,6 +36,9 @@ namespace DameDast.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("RemindersEnabled").HasColumnType("boolean");
+                    b.Property<bool>("InstallmentsEnabled").HasColumnType("boolean");
+
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasMaxLength(8)

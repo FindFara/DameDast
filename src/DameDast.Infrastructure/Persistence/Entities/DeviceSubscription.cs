@@ -7,5 +7,7 @@ public sealed class DeviceSubscription
     public string Endpoint { get; set; } = "";
     public string P256dh { get; set; } = "";
     public string Auth { get; set; } = "";
+    public bool RemindersEnabled { get; set; } = true;
+    public bool InstallmentsEnabled { get; set; } = true;
     public string Language { get; set; } = "en";
 }

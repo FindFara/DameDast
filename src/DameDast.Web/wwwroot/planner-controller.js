@@ -1,3 +1,4 @@
+import { closeIcon } from "./ui-icons.js";
 import { projectField } from "./productivity-ui.js";
 import { calendarEditorFields } from "./calendar-editor-ui.js";
 import { preferences, savePreferences } from "./preferences.js";
@@ -149,7 +150,7 @@ export class PlannerController {
       ...d,
       completedForEditor: d.repeat === "none" ? d.done : d.completedDates?.includes(preset.occurrence),
     }, dateField, !!task);
-    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">×</button></div><div class="calendar-fields">${fields}${!jump && !task ? projectField(this.callbacks.context().records, d.projectId) : ""}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
+    dialog.innerHTML = `<form><div class="dialog-heading"><h2>${t(jump ? "Go to date" : record ? "Edit calendar item" : "Create calendar item")}</h2><button type="button" class="icon-button" data-close aria-label="${t("Close")}">${closeIcon}</button></div><div class="calendar-fields">${fields}${!jump && !task ? projectField(this.callbacks.context().records, d.projectId) : ""}</div><p class="form-error" role="alert"></p><div class="dialog-actions">${record?.kind === "calendarEvent" ? `<button type="button" class="text-button negative" data-remove>${t("Delete series")}</button>` : ""}<button type="button" class="secondary" data-close>${t("Cancel")}</button><button type="submit" class="primary">${t(jump ? "Go" : "Save")}</button></div></form>`;
     const form = dialog.querySelector("form"),
       toggle = () => {
         if (jump) return;
