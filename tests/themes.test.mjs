@@ -4,14 +4,14 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { themeOptions, isTheme, resolveTheme } from '../src/DameDast.Web/wwwroot/themes.js';
 import { setTheme, getTheme, effectiveTheme, applyPreferences } from '../src/DameDast.Web/wwwroot/i18n.js';
-const custom = ['dark-green', 'dark-blue', 'gray-yellow', 'white-yellow', 'white-green', 'dracula', 'nord', 'catppuccin-mocha', 'tokyo-night', 'gruvbox'];
+const custom = ['azki-blue', 'dark-green', 'dark-blue', 'gray-yellow', 'white-yellow', 'white-green', 'dracula', 'nord', 'catppuccin-mocha', 'tokyo-night', 'gruvbox'];
 const bootstrap = fs.readFileSync(new URL('../src/DameDast.Web/wwwroot/appearance.js',import.meta.url),'utf8');
 test('all custom themes restore the same palette and light/dark behavior before and after app startup',()=>{
   assert.ok(custom.every(isTheme));
   assert.equal(isTheme('unknown'),false);
   for(const id of [...themeOptions.map(theme=>theme.id),'light','dark','dark-brown','system','unknown']) for(const dark of [false,true]){
     const root={dataset:{},style:{setProperty(){}}};
-    vm.runInNewContext(bootstrap,{URLSearchParams,location:{search:''},localStorage:{getItem:key=>key==='damdast-theme'?id:null},matchMedia:()=>({matches:dark}),document:{documentElement:root}});
+    vm.runInNewContext(bootstrap,{URLSearchParams,location:{search:''},localStorage:{getItem:key=>key==='damdast-azki-theme'?id:null},matchMedia:()=>({matches:dark}),document:{documentElement:root}});
     const expected=resolveTheme(id,dark);
     assert.equal(root.dataset.palette,expected.id);
     assert.equal(root.dataset.theme,expected.mode);
@@ -20,7 +20,7 @@ test('all custom themes restore the same palette and light/dark behavior before 
 });
 test('custom theme choices persist and apply globally while existing light/dark consumers retain valid modes',context=>{
   const old={localStorage:globalThis.localStorage,document:globalThis.document,matchMedia:globalThis.matchMedia};
-  const values=new Map(),styles=new Map(); let meta;
+  const values=new Map([['damdast-theme','dracula']]),styles=new Map(); let meta;
   globalThis.localStorage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)};
   globalThis.document={documentElement:{dataset:{},style:{setProperty:(key,value)=>styles.set(key,value),removeProperty:key=>styles.delete(key)}},querySelector:()=>({setAttribute:(_,value)=>meta=value})};
   globalThis.matchMedia=()=>({matches:true});
@@ -29,12 +29,13 @@ test('custom theme choices persist and apply globally while existing light/dark 
     setTheme(id);applyPreferences();
     const theme=resolveTheme(id);
     assert.equal(getTheme(),id);
-    assert.equal(values.get('damdast-theme'),id);
+    assert.equal(values.get('damdast-azki-theme'),id);
     assert.equal(document.documentElement.dataset.palette,id);
     assert.equal(effectiveTheme(),theme.mode);
     assert.equal(document.documentElement.style.colorScheme,theme.mode);
     assert.equal(meta,theme.background);
   }
+  assert.equal(values.get('damdast-theme'),'dracula');
   setTheme('unknown');assert.equal(getTheme(),'gruvbox');
   setTheme('system');assert.equal(effectiveTheme(),'dark');
 });
@@ -57,12 +58,12 @@ test('palette text, muted labels and primary buttons have readable contrast',()=
   }
 });
 
-test('theme picker offers exactly ten two-color radio choices and an explicit save action',async()=>{
+test('theme picker offers eleven two-color radio choices and an explicit save action',async()=>{
   const { parseHTML } = await import('linkedom');
   const { themePicker } = await import('../src/DameDast.Web/wwwroot/settings-ui.js');
   const previous = getTheme();
   const {document}=parseHTML(themePicker('dark-blue'));
-  assert.equal(document.querySelectorAll('input[type="radio"]').length,10);
+  assert.equal(document.querySelectorAll('input[type="radio"]').length,11);
   assert.equal(document.querySelector('input:checked').value,'dark-blue');
   assert.equal(document.querySelector('select'),null);
   assert.ok(document.querySelector('[data-theme-form] button[type="submit"]'));

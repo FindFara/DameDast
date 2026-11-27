@@ -1,3 +1,27 @@
+/* Azki branch: a blue-and-white default, with the other saved palettes still available. */
+:root[data-palette="azki-blue"] {
+  --bg: #f6fbff;
+  --surface: #fff;
+  --surface-raised: #fff;
+  --surface-soft: #f0f8ff;
+  --ink: #252b32;
+  --muted: #64717d;
+  --faint: #71808e;
+  --accent: #0071c9;
+  --accent-hover: #0060ad;
+  --accent-soft: #e9f6ff;
+  --border: #e4edf3;
+  --track: #edf3f8;
+  --chart-expense: #91cfff;
+  --positive: #16714f;
+  --negative: #bb3c4b;
+  --warning-bg: #fff8e8;
+  --warning-ink: #80601d;
+  --warning-border: #f1dda3;
+  --theme-action: #0076d6;
+  --theme-action-hover: #0065bd;
+  --theme-on-accent: #fff;
+}
 /* Each palette uses the shared app tokens; dark component behavior stays shared. */
 :root[data-palette="dark-green"] {
   --bg: #181f1d;

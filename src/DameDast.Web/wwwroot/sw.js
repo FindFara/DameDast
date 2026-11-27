@@ -1,5 +1,6 @@
-const CACHE = "damedast-shell-v113";
+const CACHE = "damedast-shell-azki-v115";
 const SHELL = [
+  "/azki.css", "/azki-ui.js", "/azki-shell.js",
   "/notification-preferences.js", "/ui-icons.js",
   "/dashboard-layout.js", "/dashboard-settings-ui.js", "/dashboard-layout.css",
   "/themes.js", "/themes.css",

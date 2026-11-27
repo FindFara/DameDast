@@ -7,7 +7,7 @@ const readPreference = (name, fallback) => {
   }
 };
 let language = readPreference("damdast-language", "en");
-let theme = readPreference("damdast-theme", "system");
+let theme = readPreference("damdast-azki-theme", "azki-blue");
 if (!["en", "fa"].includes(language)) language = "en";
 theme = resolveTheme(theme, !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches).id;
 
@@ -28,7 +28,7 @@ export function setTheme(value) {
   if (!isTheme(value)) return;
   theme = resolveTheme(value, !!globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches).id;
   try {
-    globalThis.localStorage?.setItem("damdast-theme", theme);
+    globalThis.localStorage?.setItem("damdast-azki-theme", theme);
   } catch {}
   applyPreferences();
 }
@@ -56,6 +56,7 @@ export function applyPreferences() {
     : "DameDast";
 }
 const fa = {
+  "Azki blue": "آبی ازکی",
   "Follow-ups": "پیگیری‌ها",
   "Checks": "بررسی‌ها",
   "Review task": "بررسی کار",

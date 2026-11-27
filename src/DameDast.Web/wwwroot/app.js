@@ -1,3 +1,4 @@
+import { azkiHeader } from "./azki-ui.js";
 import { learningWeekChanges, learningWeekDays } from "./learning-week.js";
 import { LearningWeekController } from "./learning-week-controller.js";
 import { enabledNotificationReport } from "./notification-preferences.js";
@@ -394,6 +395,7 @@ new CreateMenuController({
   },
 });
 function renderChrome() {
+  if ($("#azki-header")) $("#azki-header").innerHTML = azkiHeader(page, icon, sections);
   applyPreferences();
   $(".shell-tools").setAttribute("aria-label", t("Quick actions"));
   $("#global-create").innerHTML = page === "workbench" ? deskFloatingActions(preferences().workbenchEditing,icon) : createLauncher();
@@ -2432,7 +2434,7 @@ window.addEventListener("storage", (event) => {
     setLanguage(event.newValue);
     render();
   }
-  if (event.key === "damdast-theme") {
+  if (event.key === "damdast-azki-theme") {
     setTheme(event.newValue);
     render();
   }

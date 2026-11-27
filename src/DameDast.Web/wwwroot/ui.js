@@ -1,3 +1,4 @@
+import { azkiDashboard } from "./azki-ui.js";
 import { renderDashboardLayout } from "./dashboard-layout.js";
 import { preferences } from "./preferences.js";
 import { weeklyAgendaPanel } from "./weekly-agenda-ui.js";
@@ -402,7 +403,7 @@ function overview(c) {
     transactions: () => panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions")),
     budgets: () => panel("Budgets", budget.length ? budget.slice(0, 3).map(b => progress(c, b)).join("") : empty("No budgets", "budget"), arrowLink("Manage", "budgets")),
   });
-  return `${pageHeading(c, "Overview", "transaction")}${layout || `<div class="panel dashboard-empty">${icon('overview')}<h2>${t('A little room for your priorities')}</h2><p>${t('Choose the sections you want to see here.')}</p><button type="button" class="primary" data-action="dashboard-customize">${t('Dashboard layout')}</button></div>`}`;
+  return `${pageHeading(c, "Overview", "transaction")}${azkiDashboard(c, icon)}${layout || `<div class="panel dashboard-empty">${icon('overview')}<h2>${t('A little room for your priorities')}</h2><p>${t('Choose the sections you want to see here.')}</p><button type="button" class="primary" data-action="dashboard-customize">${t('Dashboard layout')}</button></div>`}`;
 }
 function transactions(c) {
   const filters = c.transactionFilters || {};

@@ -22,7 +22,7 @@ test('settings provide theme choices and Save without a custom background picker
  const html=renderPage({page:'settings',records:[],space:'guest',session:{authenticated:false},settingsGroupsOpen:{appearance:true}});
  assert.doesNotMatch(html,/app-background-setting|reset-app-background|type="color"/);
  assert.match(html,/data-theme-form/);
- assert.equal((html.match(/name="themeChoice"/g)||[]).length,10);
+ assert.equal((html.match(/name="themeChoice"/g)||[]).length,11);
 });
 test('legacy desk background metadata never creates a separate workbench background',()=>{
  const layout=defaultWorkbench();layout.background='#ffdf00';

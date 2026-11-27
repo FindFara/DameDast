@@ -1,4 +1,5 @@
 export const themeOptions = [
+  { id: "azki-blue", label: "Azki blue", mode: "light", background: "#f6fbff", accent: "#008fff" },
   { id: "dark-green", label: "Dark & pastel green", mode: "dark", background: "#181f1d", accent: "#a7d5b6" },
   { id: "dark-blue", label: "Matte dark & blue", mode: "dark", background: "#151d29", accent: "#93b7df" },
   { id: "gray-yellow", label: "Gray & yellow", mode: "dark", background: "#252728", accent: "#e9cc66" },
