@@ -86,7 +86,7 @@ export const sections = {
     '<path d="M3 20h18M5 16l4-5 4 3 6-10M15 4h4v4"/>',
   ],
   projects: ["Projects", '<rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 10h18M3 6V3h7l3 3"/>'],
-  habits: ["Habits", '<path d="m4 12 5 5L20 6"/><circle cx="12" cy="12" r="10"/>'],
+  habits: ["Routines", '<path d="m4 12 5 5L20 6"/><circle cx="12" cy="12" r="10"/>'],
   bookmarks: ["Saved links", '<path d="M6 3h12v18l-6-4-6 4Z"/>'],
   organizer: ["Planner", '<path d="M5 3h14v18H5Zm4 5h6m-6 4h6m-6 4h4"/>'],
   tasks: [
@@ -165,6 +165,7 @@ const extraIcons = {
   pet: '<path d="M5 12V4l6 4 8-4v8a7 7 0 0 1-14 0ZM8 13h1m6 0h1m-6 4h4"/>',
   pin: '<path d="m9 3 6 0-1 6 4 4v2h-5v6l-2-3v-3H6v-2l4-4Z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  calendarPlus: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-9 3v5m-2.5-2.5h5"/>',
   eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
   eyeOff: '<path d="m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.4 4.4M6.2 6.2A21 21 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"/>',
@@ -233,7 +234,7 @@ const addNames = {
   allocationPlan: "Create plan",
   monthlyExpense: "New monthly expense",
   investmentStep: "New investment step",
-  project: "New project", habit: "New habit", bookmark: "Save link",
+  project: "New project", habit: "New routine", bookmark: "Save link",
 };
 export const addLabel = (kind) => t(addNames[kind] || "Add");
 export const monthText = monthLabel;

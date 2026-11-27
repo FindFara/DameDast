@@ -1395,11 +1395,11 @@ Object.assign(fa, {
   'This project is empty.':'هنوز موردی در این پروژه نیست.',
   'Choose an existing project.':'یک پروژهٔ موجود انتخاب کن.', 'Enter a valid description.':'توضیح معتبر وارد کن.',
   'Move records out of this project before deleting it.':'پیش از حذف پروژه، موارد آن را به پروژهٔ دیگر یا خارج از پروژه منتقل کن.',
-  'Habits':'عادت‌ها', 'New habit':'عادت جدید', 'Habit name':'نام عادت', 'Times per week':'چند بار در هفته',
+  'Routines':'روتین‌ها', 'New routine':'روتین جدید', 'Routine name':'نام روتین', 'Times per week':'چند بار در هفته',
   'this week':'در این هفته', 'Weekly progress':'درصد تحقق هفتگی', 'Log today':'ثبت امروز', 'Undo today':'لغو ثبت امروز',
   'Set a weekly goal for exercise, language or reading.':'برای ورزش، زبان یا مطالعه هدف هفتگی تعیین کن.',
   'Choose a weekly target from 1 to 7.':'هدف هفتگی را بین ۱ تا ۷ انتخاب کن.',
-  'This habit date is invalid or already recorded.':'این تاریخ برای عادت معتبر نیست یا قبلاً ثبت شده است.',
+  'This habit date is invalid or already recorded.':'این تاریخ برای روتین معتبر نیست یا قبلاً ثبت شده است.',
   'Saved links':'لینک‌های ذخیره‌شده', 'Save link':'ذخیرهٔ لینک', 'Selected excerpt':'بخش انتخاب‌شده',
   'Tags (comma separated)':'تگ‌ها (با ویرگول جدا کن)', 'Read later':'بعداً بخوانم',
   'Save a link and an excerpt for later.':'لینک و بخشی از مقاله را برای بعد ذخیره کن.',
@@ -1428,13 +1428,13 @@ Object.assign(fa, {
   'Sat':'ش', 'Sun':'ی', 'Mon':'د', 'Tue':'س', 'Wed':'چ', 'Thu':'پ', 'Fri':'ج',
 });
 
-Object.assign(fa, {"Start date must include the existing habit history.":"تاریخ شروع باید سابقهٔ ثبت‌شدهٔ عادت را هم پوشش دهد.","This also deletes the habit history.":"سابقهٔ ثبت روزانهٔ این عادت هم حذف می‌شود."});
+Object.assign(fa, {"Start date must include the existing habit history.":"تاریخ شروع باید سابقهٔ ثبت‌شدهٔ روتین را هم پوشش دهد.","This also deletes the habit history.":"سابقهٔ ثبت روزانهٔ این روتین هم حذف می‌شود."});
 
 Object.assign(fa, {
   "items to review": "مورد نیاز به بررسی",
   "Everything is up to date.": "همه چیز مرتب است.",
   "Reschedule or complete your tasks": "موعد کارها را تغییر بده یا انجامشان بده",
-  "Includes notes, tasks, projects, habits, saved links and reminders.": "یادداشت‌ها، تسک‌ها، پروژه‌ها، عادت‌ها، لینک‌های ذخیره‌شده و یادآوری‌ها را شامل می‌شود.",
+  "Includes notes, tasks, projects, habits, saved links and reminders.": "یادداشت‌ها، تسک‌ها، پروژه‌ها، روتین‌ها، لینک‌های ذخیره‌شده و یادآوری‌ها را شامل می‌شود.",
 });
 
 Object.assign(fa, {

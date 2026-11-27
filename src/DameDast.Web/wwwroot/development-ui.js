@@ -38,13 +38,13 @@ const add = (date, area, label = tr("Add", "افزودن")) =>
     `data-date="${date}" data-area="${area}"`,
     "primary",
   );
-function entryCard(r) {
+function entryCard(r, learning = false) {
   const d = r.data, linked = ["essay", "vocabulary"].includes(d.area);
   const completion = button(linked ? "development-resource" : "development-toggle",
     linked ? (d.done ? tr("Completed", "انجام شده") : d.area === "essay" ? tr("Review", "بازبینی") : tr("Read words", "خواندن کلمات")) : d.done ? tr("Mark incomplete", "انجام نشده") : tr("Mark complete", "انجام شد"),
     `data-id="${r.id}" ${linked ? "" : `aria-pressed="${d.done}"`} ${d.date > today() || linked && d.done ? "disabled" : ""}`,
     "text-button development-complete");
-  return `<article class="panel development-entry ${d.done ? "is-done" : ""}"><div class="development-entry-heading"><h3 dir="auto">${esc(d.title)}</h3><span class="badge">${areas()[d.area]}</span></div>${d.notes ? `<p dir="auto">${esc(d.notes)}</p>` : ""}<footer><span>${d.minutes ? `${n(d.minutes)} ${tr("min", "دقیقه")}` : ""}</span><div>${d.area === "lesson" || linked && d.done ? button("development-resource", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button") : ""}${completion}${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></footer></article>`;
+  return `<article class="panel development-entry ${d.done ? "is-done" : ""}"><div class="development-entry-heading"><h3 dir="auto">${esc(d.title)}</h3><span class="badge">${areas()[d.area]}</span></div>${d.notes ? `<p dir="auto">${esc(d.notes)}</p>` : ""}<footer><span>${learning ? `<time datetime="${d.date}">${dateText(d.date, true)}</time>` : d.minutes ? `${n(d.minutes)} ${tr("min", "دقیقه")}` : ""}</span><div>${d.area === "lesson" || linked && d.done ? button("development-resource", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button") : ""}${completion}${button("edit", tr("Edit", "ویرایش"), `data-id="${r.id}"`, "text-button")}${button("delete", tr("Delete", "حذف"), `data-id="${r.id}"`, "text-button danger")}</div></footer></article>`;
 }
 function stats(entries, exercise = false) {
   const p = developmentProgress(entries);
@@ -86,7 +86,15 @@ export function developmentPage(c) {
   const filters = isLearning
     ? `<nav class="learning-filters" aria-label="${tr("Activity type", "نوع فعالیت")}">${categories.map(([key, label]) => button("learning-filter", label, `data-category="${key}" aria-pressed="${(c.learningCategory || "all") === key}"`, (c.learningCategory || "all") === key ? "primary" : "secondary")).join("")}</nav>`
     : "";
-  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${isLearning ? button("learning-week-add", tr("Add week", "ثبت هفتگی"), "", "primary") : ""}${add(date, area)}</div></div>${filters}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
+  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${isLearning ? button("learning-week-add", tr("Add week", "ثبت هفتگی"), "", "primary") : ""}${add(date, area, isLearning ? tr("New activity", "فعالیت جدید") : tr("Add", "افزودن"))}</div></div>${filters}`;
+  if (isLearning) {
+    const rows = [...filtered].sort((a,b) => {
+      const pastA = a.data.date < today(), pastB = b.data.date < today();
+      return Number(pastA) - Number(pastB) || (pastA ? b.data.date.localeCompare(a.data.date) : a.data.date.localeCompare(b.data.date)) || a.id.localeCompare(b.id);
+    });
+    return heading + `<div class="development-entries">${rows.map(row => entryCard(row, true)).join("") || `<div class="panel development-empty">${tr("Nothing planned", "موردی ثبت نشده")}</div>`}</div></section>`;
+  }
+  const datebar = `<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
   let calendar;
   if (area === "exercise") {
     const key = monthOf(date),
@@ -106,9 +114,9 @@ export function developmentPage(c) {
   } else
     calendar = stats(dayEntries);
   return (
-    heading +
+    heading + datebar +
     calendar +
-    `<div class="development-day-heading"><h2>${dateText(date, true)}</h2>${add(date, area, isLearning ? tr("New activity", "فعالیت جدید") : tr("Training", "تمرین"))}</div><div class="development-entries">${dayEntries.map(entryCard).join("") || `<div class="panel development-empty">${tr("Nothing planned", "موردی ثبت نشده")}</div>`}</div></section>`
+    `<div class="development-day-heading"><h2>${dateText(date, true)}</h2>${add(date, area, isLearning ? tr("New activity", "فعالیت جدید") : tr("Training", "تمرین"))}</div><div class="development-entries">${dayEntries.map(row => entryCard(row)).join("") || `<div class="panel development-empty">${tr("Nothing planned", "موردی ثبت نشده")}</div>`}</div></section>`
   );
 }
 export function developmentFields(d = {}, records = []) {

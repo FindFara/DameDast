@@ -6,7 +6,10 @@ const add = '.page-heading [data-action="add"],.page-heading [data-action="task-
 // This allowlist defines the floating rail. Other page controls stay in the page.
 export const pageToolbarConfig = {
   workoutPrograms: { command: add, icon: "plus" },
-  learning: { command: '.page-heading [data-action="learning-week-add"]', icon: "plus" },
+  learning: { commands: [
+    { command: '.page-heading [data-action="development-add"]', icon: "plus" },
+    { command: '.page-heading [data-action="learning-week-add"]', icon: "calendarPlus" },
+  ] },
   developmentExercise: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
   languageEssays: { command: '.page-heading [data-lang-action="new-essay"]', icon: "plus" },
   languageLessons: { command: '.page-heading [data-lang-action="import"]', icon: "upload" },
@@ -134,9 +137,11 @@ export class PageToolbarController {
     title.title = title.textContent;
     const config = pageToolbarConfig[page];
     if (!config) return;
-    const inline = config.inline && view.querySelector(config.inline),
-      source = config.command && view.querySelector(config.command);
-    if (!inline && !source) return;
+    const inline = config.inline && view.querySelector(config.inline);
+    const commands = (config.commands || (config.command ? [config] : []))
+      .map(command => ({source: view.querySelector(command.command), icon: command.icon}))
+      .filter(command => command.source);
+    if (!inline && !commands.length) return;
     this.trigger = document.createElement("button");
     this.trigger.type = "button";
     this.trigger.className = "icon-button page-toolbar-toggle";
@@ -155,7 +160,7 @@ export class PageToolbarController {
     // RTL rail order keeps the trigger at the moving, physical left edge.
     holder.append(this.panel, this.trigger);
     if (inline) this.move(inline, contents);
-    if (source) contents.append(this.command(source, config.icon));
+    for (const {source, icon} of commands) contents.append(this.command(source, icon));
     for (const heading of view.querySelectorAll(".page-heading")) {
       if (!heading.querySelector('button:not(.page-toolbar-source),a,input:not([type="hidden"]),select'))
         heading.classList.add("page-toolbar-heading-empty");

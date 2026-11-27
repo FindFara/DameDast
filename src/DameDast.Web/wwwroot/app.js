@@ -537,7 +537,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
   if (kind === "transaction")
     movementType = type || editing?.data.type || "expense";
   $("#dialog-title").textContent = editing
-    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", project: "Project", habit: "Habits", developmentEntry: "New activity", workoutProgram: "Workout programs", weightEntry: "Record weight", weightGoal: "Weight goal", bookmark: "Saved links", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
+    ? `${t("Edit")} · ${t({ account: "Account", transaction: "Transaction", budget: "Budget", goal: "Goal", installment: "Installment", receivable: "Loan", locked: "Locked asset", reminder: "Reminder", assetPosition: "Asset", note: "Note", project: "Project", habit: "Routines", developmentEntry: "New activity", workoutProgram: "Workout programs", weightEntry: "Record weight", weightGoal: "Weight goal", bookmark: "Saved links", category: "Category", allocationPlan: "Monthly plan", monthlyExpense: "Monthly expense", investmentStep: "Investment step" }[kind])}`
     : addLabel(kind);
   $("#form-error").textContent = "";
   $("#dialog-fields").innerHTML = kind === developmentKind ? developmentFields(editing?.data || preset, records()) : editorFields(

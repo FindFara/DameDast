@@ -15,7 +15,7 @@ export function weeklyAgendaPanel(c) {
     vocabulary: fa ? "کلمات زبان" : "Vocabulary",
     lesson: fa ? "جزوهٔ زبان" : "Language lesson",
     plan: fa ? "توسعهٔ فردی" : "Personal development",
-    habit: t("Habits"),
+    habit: t("Routines"),
     todo: fa ? "تودو" : "To-do",
   };
   const states = { done: t("Completed"), overdue: t("Overdue"), planned: fa ? "برنامه‌ریزی‌شده" : "Planned" };

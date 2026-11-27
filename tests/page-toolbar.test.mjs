@@ -103,3 +103,21 @@ test("Escape collapses the rail and removes its actions from keyboard navigation
   assert.equal(f.controller.panel.inert, true);
   assert.equal(f.controller.trigger.getAttribute("aria-expanded"), "false");
 });
+
+test("learning exposes separate regular and weekly actions with different icons and routes both to their handlers", t => {
+  const f = fixture(t);
+  f.view.innerHTML = '<div class="page-heading"><h1>Learning</h1><div class="heading-actions"><button data-action="development-add">New activity</button><button data-action="learning-week-add">Add week</button></div></div>';
+  const called = [];
+  f.view.querySelectorAll('[data-action]').forEach(source => source.onclick = () => called.push(source.dataset.action));
+  f.controller.update('learning','Learning');
+  const actions = [...f.holder.querySelectorAll('[data-page-command]')];
+  assert.deepEqual(actions.map(button => button.dataset.pageCommand), ['development-add','learning-week-add']);
+  assert.notEqual(actions[0].innerHTML, actions[1].innerHTML);
+  assert.equal(actions[0].getAttribute('aria-label'),'New activity');
+  assert.equal(actions[1].getAttribute('aria-label'),'Add week');
+  assert.equal(f.view.querySelectorAll('button:not(.page-toolbar-source)').length,0);
+  f.controller.open(); actions.forEach(button => button.click());
+  assert.deepEqual(called,['development-add','learning-week-add']);
+  f.controller.update('learning','Learning');
+  assert.equal(f.holder.querySelectorAll('[data-page-command]').length,2);
+});

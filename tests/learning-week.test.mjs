@@ -88,3 +88,16 @@ test('weekly drafts survive week switches and reopening; failed saves keep title
   assert.equal(values.has(ui.key()),false);
   c.space='google:another-user';ui.open('2026-11-27');assert.equal(ui.dialog.querySelector('[data-week-title="0"]').value,'');
 });
+
+test('learning has no day picker or completion/minutes summary, and dated activities remain reachable across all days',async()=>{
+  const {developmentPage}=await import('../src/DameDast.Web/wwwroot/development-ui.js');
+  setLanguage('en');
+  const records=learningWeekChanges('2026-11-27',titles,ids()).map(change=>({...change,version:1}));
+  const {document}=parseHTML(developmentPage({page:'learning',records,developmentDate:'2026-11-23'}));
+  assert.equal(document.querySelector('.development-datebar,.development-stats,.development-day-heading'),null);
+  assert.equal(document.querySelectorAll('.development-entry').length,4);
+  assert.equal(document.querySelectorAll('[data-action="development-add"]').length,1);
+  assert.equal(document.querySelector('[data-action="development-add"]').closest('.heading-actions')!==null,true);
+  assert.equal(document.querySelectorAll('.development-entry footer time').length,4);
+  assert.equal(document.querySelectorAll('.development-entry [data-action="development-toggle"]').length,4);
+});
