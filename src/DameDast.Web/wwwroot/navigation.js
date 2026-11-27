@@ -1,6 +1,7 @@
 export const navigationGroups = [
   { id: "exercise", label: "Exercise", color: "#658e88", items: ["developmentExercise", "workoutPrograms", "workoutTimer", "weightPlan"] },
-  { id: "learning", label: "Learning hub", color: "#b78a43", items: ["learning", "languageEssays", "languageLessons", "languageVocabulary"] },
+  { id: "learning", label: "Learning hub", color: "#b78a43", items: ["learning"] },
+  { id: "language", label: "Language", color: "#a47bc4", items: ["languageEssays", "languageLessons", "languageVocabulary"] },
   {
     id: "money",
     label: "Money",

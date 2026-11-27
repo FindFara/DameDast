@@ -1,3 +1,5 @@
+import { learningWeekChanges, learningWeekDays } from "./learning-week.js";
+import { LearningWeekController } from "./learning-week-controller.js";
 import { enabledNotificationReport } from "./notification-preferences.js";
 import { closeIcon, chevronIcon } from "./ui-icons.js";
 import { defaultDashboardLayout, moveDashboardSection, toggleDashboardSection } from "./dashboard-layout.js";
@@ -285,6 +287,7 @@ const notePage = new NotePageController({
   write: commit, refreshData: refreshWorkspace,
 });
 const exerciseClock = new ExerciseClock(showError);
+const learningWeek = new LearningWeekController({ context, save: saveLearningWeek, saved: () => toast("Saved.") });
 const language = new LanguageController({ context, refresh: render, error: showError, save: commit });
 const deskTools = new DeskToolController({ context, error: showError });
 
@@ -774,6 +777,23 @@ async function commit(
     await persist();
   });
   if(space !== expectedSpace) return;
+  render();
+  if (space.startsWith("google:")) void sync();
+}
+async function saveLearningWeek(date, titles, ids, expectedSpace) {
+  await withLock(async () => {
+    if (space !== expectedSpace) throw Error("Account changed. Reopen the note.");
+    const next = await loadSpace(expectedSpace);
+    if (space !== expectedSpace) throw Error("Account changed. Reopen the note.");
+    const changes = learningWeekChanges(date, titles, ids, materialize(next));
+    next.pending.push(...changes);
+    await saveSpace(expectedSpace, next);
+    if (space !== expectedSpace) return;
+    state = next;
+    channel?.postMessage({space: expectedSpace});
+  });
+  if (space !== expectedSpace) return;
+  developmentDate = learningWeekDays(date)[0]; learningCategory = "all";
   render();
   if (space.startsWith("google:")) void sync();
 }
@@ -1638,7 +1658,8 @@ async function onAction(event) {
     render(); document.querySelector('[data-action="dashboard-layout-reset"]')?.focus({preventScroll:true}); return;
   }
 
-  if (action === "learning-filter") { learningCategory = ["all", "language", "study", "plan"].includes(element.dataset.category) ? element.dataset.category : "all"; render(); return; }
+  if (action === "learning-week-add") { learningWeek.open(developmentDate, element); return; }
+  if (action === "learning-filter") { learningCategory = ["all", "study", "plan"].includes(element.dataset.category) ? element.dataset.category : "all"; render(); return; }
   if (action === "weight-add") {
     const existing = ofKind("weightEntry").find(r => r.data.date === today());
     openEditor("weightEntry", existing?.id); return;

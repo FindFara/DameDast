@@ -537,3 +537,17 @@
 .weekly-agenda-item.is-habit { border-inline-start: 4px solid var(--agenda-habit-color); }
 .weekly-agenda-item.is-habit.is-planned { background: color-mix(in srgb, var(--agenda-habit-color) 12%, var(--surface)); }
 .weekly-agenda-item.is-habit .weekly-agenda-kind::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-inline-end: 5px; background: var(--agenda-habit-color); }
+
+#learning-week-dialog { width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 24px); padding: 20px; overflow-y: auto; }
+#learning-week-dialog fieldset { margin: 0; padding: 0; min-width: 0; border: 0; }
+.learning-week-picker { display: flex; align-items: end; gap: 8px; margin-block: 14px 18px; }
+.learning-week-picker .solar-date { flex: 1; min-width: 0; }
+.learning-week-picker .icon-button { flex: 0 0 44px; width: 44px; height: 46px; }
+.learning-week-picker svg { width: 18px; height: 18px; }
+.learning-week-picker [data-week-shift="1"] svg { transform: rotate(180deg); }
+.learning-week-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.learning-week-fields .field { margin: 0; min-width: 0; }
+.learning-week-fields input { width: 100%; min-width: 0; }
+.learning-week-day { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px; }
+.learning-week-day time { font-size: 12px; font-weight: 400; color: var(--muted); }
+@media (max-width: 420px) { .learning-week-fields { grid-template-columns: minmax(0, 1fr); gap: 10px; } #learning-week-dialog { padding: 16px; } }

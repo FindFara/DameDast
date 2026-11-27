@@ -72,6 +72,8 @@ const fa = {
   "White & yellow": "سفید زرد",
   "Choose an app palette, or follow your device.": "تم برنامه را انتخاب کن یا با دستگاه هماهنگ نگه دار.",
   "Learning hub": "لرنینگ",
+  "Enter at least one title.": "حداقل یک عنوان بنویس.",
+  "Enter up to 120 characters per title.": "هر عنوان حداکثر ۱۲۰ کاراکتر باشد.",
   "Learning activities": "فعالیت‌های یادگیری",
   "Personal development": "برنامه‌های شخصی",
   "Exercise": "ورزش",

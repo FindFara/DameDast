@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   dailyVocabulary,
-  vocabularyPacks,
   usedWords,
   validateLanguage,
   reviewedEssay,
@@ -16,7 +15,10 @@ import {
 } from "../src/DameDast.Web/wwwroot/backup.js";
 const id = "11111111-1111-4111-8111-111111111111",
   essayId = "22222222-2222-4222-8222-222222222222";
-const pack = () => ({ ...dailyVocabulary([], "2026-11-26"), id });
+const pack = () => ({ id, kind: "languageVocabulary", version: 1, data: {
+  date: "2026-11-26", title: "My words", topic: "Daily routine", read: false,
+  words: [{term:"usually",meaning:"معمولاً",example:"I usually work at home."},{term:"work",meaning:"کار",example:"I work at home."}],
+}});
 const essay = (v) => ({
   date: v.data.date,
   title: "Practice",
@@ -26,14 +28,13 @@ const essay = (v) => ({
   corrections: [],
   reviewed: false,
 });
-test("daily words exist before an essay, are deterministic and can be customized without changing previous assignments", () => {
-  assert.equal(vocabularyPacks.length, 7);
-  assert.equal(
-    vocabularyPacks.reduce((n, p) => n + p.words.length, 0),
-    56,
-  );
+test("daily vocabulary starts empty and only returns user records while preserving previous essay assignments", () => {
+  assert.deepEqual(dailyVocabulary([], "2026-11-26").data.words, []);
+  assert.equal(dailyVocabulary([], "2026-11-26").id, null);
   const v = pack();
   validateLanguage(v.kind, v.data, [], id);
+  assert.equal(dailyVocabulary([v], v.data.date), v);
+  assert.deepEqual(dailyVocabulary([{...v,deleted:true}], v.data.date).data.words, []);
   assert.deepEqual(
     dailyVocabulary([], v.data.date),
     dailyVocabulary([], v.data.date),

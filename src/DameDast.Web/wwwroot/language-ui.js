@@ -36,7 +36,6 @@ export function renderLanguagePage(c, ui) {
       (r) => !r.deleted && r.kind === "languageEssay" && r.data.date === date,
     );
   const headings = {
-    learning: "Learning activities",
     languageEssays: "Daily essays",
     languageLessons: "Lesson notes",
     languageVocabulary: "Daily vocabulary",
@@ -52,7 +51,7 @@ export function renderLanguagePage(c, ui) {
       : page === "languageVocabulary"
         ? langButton(
             "edit-vocabulary",
-            tr("Edit daily words", "ویرایش کلمات روز"),
+            tr(pack.id ? "Edit daily words" : "Add words", pack.id ? "ویرایش کلمات روز" : "افزودن کلمات"),
             "",
             "primary",
           )
@@ -82,11 +81,13 @@ export function renderLanguagePage(c, ui) {
     );
   }
   const daybar = `<div class="language-daybar">${langButton("previous-day", "‹", `aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Practice date", "language-day", date, true)}${langButton("next-day", "›", `aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${langButton("today", tr("Today", "امروز"), "", "text-button")}</div>`;
+  if (page === "languageVocabulary" && !pack.id)
+    return heading + daybar + `<section class="panel language-empty"><p>${tr("No words entered yet.", "هنوز کلمه‌ای وارد نشده.")}</p>${langButton("edit-vocabulary", tr("Add words", "افزودن کلمات"), "", "primary")}</section></section>`;
   if (page === "languageVocabulary")
     return (
       heading +
       daybar +
-      `<section class="panel language-assignment"><div><h2 dir="ltr">${esc(pack.data.title)}</h2><p dir="ltr">${esc(pack.data.topic)}</p></div><div class="language-row-actions">${langButton("read-words", tr(pack.data.read ? "Read today ✓" : "Mark as read", pack.data.read ? "امروز خواندم ✓" : "خواندم"), `aria-pressed="${pack.data.read}"`)}${langButton("new-essay", tr(essay ? "Open essay" : "Write with these words", essay ? "بازکردن انشا" : "انشا با این کلمات"), "", "primary")}</div></section><div class="language-word-grid">${pack.data.words.map((w) => `<article class="panel language-word-card"><h2 dir="ltr">${esc(w.term)} ${essay && usedWords(essay.data.body, [w]).length ? "✓" : ""}</h2><p dir="auto">${esc(w.meaning)}</p><blockquote dir="ltr">${esc(w.example)}</blockquote></article>`).join("")}</div></section>`
+      `<section class="panel language-assignment"><div><h2 dir="ltr">${esc(pack.data.title)}</h2><p dir="ltr">${esc(pack.data.topic)}</p></div><div class="language-row-actions">${langButton("read-words", tr(pack.data.read ? "Read today ✓" : "Mark as read", pack.data.read ? "امروز خواندم ✓" : "خواندم"), `aria-pressed="${pack.data.read}"`)}${langButton("new-essay", tr(essay ? "Open essay" : "Write with these words", essay ? "بازکردن انشا" : "انشا با این کلمات"), "", "primary")}</div></section>${vocabularySections(pack.data.words, essay?.data.body || "")}</section>`
     );
   const entries = c.records
     .filter((r) => !r.deleted && r.kind === "languageEssay")
@@ -106,6 +107,15 @@ export function renderLanguagePage(c, ui) {
   return (
     heading +
     daybar +
-    `<div class="language-week" aria-label="${tr("Seven-day practice", "تمرین هفت روز")}">${days}</div><section class="panel language-assignment"><div><h2 dir="ltr">${esc(pack.data.title)}</h2><p dir="ltr">${esc(pack.data.topic)}</p><div class="language-word-chips">${wordChips(essay?.data.assignedWords || pack.data.words, essay?.data.body || "")}</div></div>${langButton("new-essay", tr(essay ? "Open essay" : "Write essay", essay ? "بازکردن انشا" : "نوشتن انشا"), "", "primary")}</section><div class="language-essay-list">${entries.map((r) => `<article class="panel language-essay-card"><header><time datetime="${r.data.date}">${dateText(r.data.date, true)}</time><span class="badge ${r.data.reviewed ? "is-reviewed" : "is-written"}">${r.data.reviewed ? tr("Reviewed", "بازبینی شده") : tr("To review", "نیازمند بازبینی")}</span></header><h2 dir="auto">${esc(r.data.title || dailyVocabulary(c.records, r.data.date).data.title)}</h2><div class="language-essay-preview" dir="auto">${reviewedEssay(r.data.body, r.data.corrections)}</div><footer><span>${n(wordCount(r.data.body))} ${tr("words", "کلمه")} · ${n(usedWords(r.data.body, r.data.assignedWords).length)}/${n(r.data.assignedWords.length)} ${tr("assigned words", "کلمهٔ تمرین")}</span>${langButton("open-essay", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button")}</footer></article>`).join("") || `<section class="panel language-empty">${tr("No essays yet.", "هنوز انشایی نیست.")}</section>`}</div></section>`
+    `<div class="language-week" aria-label="${tr("Seven-day practice", "تمرین هفت روز")}">${days}</div>${!pack.id ? `<section class="panel language-assignment"><span>${tr("Add this day's words first.", "اول کلمات این روز را وارد کن.")}</span>${langButton("edit-vocabulary", tr("Add words", "افزودن کلمات"), "", "primary")}</section>` : `<section class="panel language-assignment"><div><h2 dir="ltr">${esc(pack.data.title)}</h2><p dir="ltr">${esc(pack.data.topic)}</p><div class="language-word-chips">${wordChips(essay?.data.assignedWords || pack.data.words, essay?.data.body || "")}</div></div>${langButton("new-essay", tr(essay ? "Open essay" : "Write essay", essay ? "بازکردن انشا" : "نوشتن انشا"), "", "primary")}</section>`}<div class="language-essay-list">${entries.map((r) => `<article class="panel language-essay-card"><header><time datetime="${r.data.date}">${dateText(r.data.date, true)}</time><span class="badge ${r.data.reviewed ? "is-reviewed" : "is-written"}">${r.data.reviewed ? tr("Reviewed", "بازبینی شده") : tr("To review", "نیازمند بازبینی")}</span></header><h2 dir="auto">${esc(r.data.title || dailyVocabulary(c.records, r.data.date).data.title)}</h2><div class="language-essay-preview" dir="auto">${reviewedEssay(r.data.body, r.data.corrections)}</div><footer><span>${n(wordCount(r.data.body))} ${tr("words", "کلمه")} · ${n(usedWords(r.data.body, r.data.assignedWords).length)}/${n(r.data.assignedWords.length)} ${tr("assigned words", "کلمهٔ تمرین")}</span>${langButton("open-essay", tr("Open", "بازکردن"), `data-id="${r.id}"`, "text-button")}</footer></article>`).join("") || `<section class="panel language-empty">${tr("No essays yet.", "هنوز انشایی نیست.")}</section>`}</div></section>`
   );
+}
+
+export function vocabularySections(words, body = "") {
+  const used = new Set(usedWords(body, words));
+  return `<div class="language-word-sections">${Array.from({length: Math.ceil(words.length / 10)}, (_, group) => {
+    const start = group * 10, chunk = words.slice(start, start + 10);
+    const label = `${tr("Words", "کلمات")} ${n(start + 1)}${chunk.length > 1 ? "–" + n(start + chunk.length) : ""}`;
+    return `<section class="panel language-word-section"><h2>${label}</h2><table><caption class="sr-only">${label}</caption><colgroup><col class="word-term-column"><col class="word-meaning-column"><col></colgroup><thead><tr><th scope="col">${tr("Word", "کلمه")}</th><th scope="col">${tr("Meaning", "معنی")}</th><th scope="col">${tr("Example", "جمله")}</th></tr></thead><tbody>${chunk.map(w => `<tr><th scope="row" dir="ltr">${esc(w.term)}${used.has(w.term) ? ' <span aria-label="'+tr("Used", "استفاده شده")+'">✓</span>' : ''}</th><td dir="auto">${esc(w.meaning)}</td><td dir="ltr">${esc(w.example)}</td></tr>`).join("")}</tbody></table></section>`;
+  }).join("")}</div>`;
 }

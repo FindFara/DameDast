@@ -489,3 +489,15 @@
   border-color: #549a6b;
   color: #a6e1b9;
 }
+
+.language-word-sections { display: grid; gap: 16px; margin-block: 18px; }
+.language-word-section { min-width: 0; padding: 14px; }
+.language-word-section h2 { font-size: 15px; margin: 0 0 12px; }
+.language-word-section table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; line-height: 1.7; }
+.language-word-section .word-term-column, .language-word-section .word-meaning-column { width: 25%; }
+.language-word-section th, .language-word-section td { text-align: start; vertical-align: top; padding: 10px 8px; overflow-wrap: anywhere; border-block-end: 1px solid var(--border); }
+.language-word-section thead th { font-size: 13px; font-weight: 400; color: var(--muted); padding-block: 4px 8px; }
+.language-word-section tbody th { font-weight: 600; color: var(--accent); }
+.language-word-section tbody tr:last-child > * { border: 0; }
+.language-word-section td:last-child { color: var(--muted); }
+@media (max-width: 600px) { .language-word-section { padding: 12px 8px; } .language-word-section th, .language-word-section td { padding-inline: 5px; } }

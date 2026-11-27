@@ -50,18 +50,11 @@ const row = (area = "study", date = "2026-11-26", done = false) => ({
   },
 });
 
-test("learning combines language, specialized study and personal development while preserving old links", () => {
+test("language has its own navigation and learning keeps specialized study and personal development", () => {
   const learning = navigationGroups.find((group) => group.id === "learning");
-  assert.deepEqual(learning.items, [
-    "learning",
-    "languageEssays",
-    "languageLessons",
-    "languageVocabulary",
-  ]);
-  assert.equal(
-    navigationGroups.some((group) => group.id === "language"),
-    false,
-  );
+  assert.deepEqual(learning.items, ["learning"]);
+  assert.deepEqual(navigationGroups.find(group => group.id === "language").items,
+    ["languageEssays", "languageLessons", "languageVocabulary"]);
   assert.equal(resolveLearningRoute("weeklyPlan"), "learning");
   assert.equal(resolveLearningRoute("developmentStudy"), "learning");
   const records = [
@@ -76,8 +69,8 @@ test("learning combines language, specialized study and personal development whi
     r.data.title = `${area}-entry`;
     return r;
   });
-  assert.equal(learningEntries(records).length, 5);
-  assert.equal(learningEntries(records, "language").length, 3);
+  assert.equal(learningEntries(records).length, 2);
+  assert.equal(learningEntries(records, "language").length, 0);
   const all = developmentPage({
     page: "learning",
     records,
@@ -85,7 +78,7 @@ test("learning combines language, specialized study and personal development whi
   });
   assert.match(all, /study-entry/);
   assert.match(all, /plan-entry/);
-  assert.match(all, /essay-entry/);
+  assert.doesNotMatch(all, /essay-entry/);
   assert.doesNotMatch(all, /exercise-entry/);
   const filtered = developmentPage({
     page: "learning",
@@ -96,7 +89,7 @@ test("learning combines language, specialized study and personal development whi
   assert.match(filtered, /plan-entry/);
   assert.doesNotMatch(filtered, /study-entry/);
   const { document } = parseHTML(developmentFields(row("study").data));
-  assert.equal(document.querySelectorAll('[name="area"] option').length, 5);
+  assert.equal(document.querySelectorAll('[name="area"] option').length, 2);
   assert.equal(
     document.querySelector('[name="area"] option[value="exercise"]'),
     null,

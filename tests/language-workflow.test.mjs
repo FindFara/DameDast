@@ -35,7 +35,11 @@ function fixture(t) {
     this.dispatchEvent(new window.Event("close"));
   };
   window.HTMLElement.prototype.focus = function () {};
-  const c = { space: "test-language", page: "languageEssays", records: [] };
+  const c = { space: "test-language", page: "languageEssays", records: [{
+    id: crypto.randomUUID(), kind: "languageVocabulary", version: 1,
+    data: {date:"2026-11-26",title:"My words",topic:"My day",read:false,
+      words:[{term:"happy",meaning:"خوشحال",example:"I am happy."}]},
+  }] };
   let fail = false;
   const controller = new LanguageController({
     context: () => c,
@@ -139,4 +143,12 @@ test("failed review saves keep notes and drafts without completing the review", 
     f.c.records.find((r) => r.kind === "languageEssay").data.reviewed,
     false,
   );
+});
+
+test("an essay on an empty day asks for user words and never creates an automatic vocabulary pack", t => {
+  const f = fixture(t); f.c.records = [];
+  f.controller.openEssay("2026-11-26");
+  assert.equal(f.controller.active.kind, "languageVocabulary");
+  assert.equal(f.field("words").value, "");
+  assert.equal(f.c.records.length, 0);
 });

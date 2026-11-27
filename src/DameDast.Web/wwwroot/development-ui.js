@@ -72,7 +72,7 @@ export function developmentPage(c) {
   const date = c.developmentDate || today(),
     isLearning = c.page === "learning";
   const area = isLearning
-    ? { language: "essay", plan: "plan" }[c.learningCategory] || "study"
+    ? c.learningCategory === "plan" ? "plan" : "study"
     : "exercise";
   const filtered = isLearning
     ? learningEntries(c.records, c.learningCategory)
@@ -80,14 +80,13 @@ export function developmentPage(c) {
   const dayEntries = filtered.filter((r) => r.data.date === date);
   const categories = [
     ["all", tr("All", "همه")],
-    ["language", tr("Language", "زبان")],
     ["study", tr("Specialized study", "مطالعهٔ تخصصی")],
     ["plan", tr("Personal development", "توسعهٔ فردی")],
   ];
   const filters = isLearning
     ? `<nav class="learning-filters" aria-label="${tr("Activity type", "نوع فعالیت")}">${categories.map(([key, label]) => button("learning-filter", label, `data-category="${key}" aria-pressed="${(c.learningCategory || "all") === key}"`, (c.learningCategory || "all") === key ? "primary" : "secondary")).join("")}</nav>`
     : "";
-  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${add(date, area)}</div></div>${filters}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
+  const heading = `<section class="development-page"><div class="page-heading"><h1>${t(titles[c.page])}</h1><div class="heading-actions">${isLearning ? button("learning-week-add", tr("Add week", "ثبت هفتگی"), "", "primary") : ""}${add(date, area)}</div></div>${filters}<div class="development-datebar">${button("development-shift", "‹", `data-delta="-1" aria-label="${tr("Previous day", "روز قبل")}"`, "icon-button")}${dateControl("Date", "development-day", date, true)}${button("development-shift", "›", `data-delta="1" aria-label="${tr("Next day", "روز بعد")}"`, "icon-button")}${button("development-today", tr("Today", "امروز"), "", "text-button")}</div>`;
   let calendar;
   if (area === "exercise") {
     const key = monthOf(date),
@@ -117,7 +116,7 @@ export function developmentFields(d = {}, records = []) {
     areas(),
   )
     .filter(([key]) =>
-      d.area === "exercise" ? key === "exercise" : key !== "exercise",
+      d.area === "exercise" ? key === "exercise" : ["study", "plan"].includes(key) || key === d.area,
     )
     .map(
       ([key, label]) =>

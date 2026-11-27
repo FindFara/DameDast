@@ -90,17 +90,10 @@ export function developmentEntries(records, area = null) {
     );
 }
 export function learningEntries(records, category = "all") {
-  const languageAreas = ["essay", "vocabulary", "lesson"];
-  return developmentEntries(records).filter(
-    (r) =>
-      r.data.area !== "exercise" &&
-      (category === "language"
-        ? languageAreas.includes(r.data.area)
-        : ["study", "plan"].includes(category)
-          ? r.data.area === category
-          : true),
-  );
+  return developmentEntries(records).filter(r => ["study", "plan"].includes(r.data.area) &&
+    (category === "all" || r.data.area === category));
 }
+
 export function developmentWeek(date) {
   const start = shiftDay(date, -((weekday(date) + 1) % 7));
   return Array.from({ length: 7 }, (_, i) => shiftDay(start, i));

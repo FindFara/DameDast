@@ -162,6 +162,7 @@ export class LanguageController {
     }
     if (action === "read-words") {
       const r = dailyVocabulary(c.records, this.date);
+      if (!r.id) { this.openVocabulary(button); return; }
       await this.callbacks.save(
         "languageVocabulary",
         { ...r.data, read: !r.data.read },
@@ -225,6 +226,11 @@ export class LanguageController {
         (r) => !r.deleted && r.kind === "languageEssay" && r.data.date === date,
       ),
       vocabulary = dailyVocabulary(c.records, date);
+    if (!record && !vocabulary.id) {
+      this.date = date; this.openVocabulary(opener);
+      this.status(tr("Add your words first.", "اول کلمات این روز را وارد کن."));
+      return;
+    }
     const a = this.restoreDraft({
       kind: "languageEssay",
       id: record?.id || crypto.randomUUID(),
@@ -417,16 +423,8 @@ export class LanguageController {
               r.kind === "languageVocabulary" &&
               r.data.date === a.data.date,
           );
-        if (!pack)
-          await this.callbacks.save(
-            "languageVocabulary",
-            a.vocabulary.data,
-            a.vocabulary.id,
-            false,
-            0,
-            a.space,
-          );
-        else if (pack.id !== a.data.vocabularyId)
+        if (!pack) throw Error("Save the daily words before the essay.");
+        if (pack.id !== a.data.vocabularyId)
           throw Error("The assigned words changed. Reopen the essay.");
       }
       validateLanguage(a.kind, a.data, this.callbacks.context().records, a.id);

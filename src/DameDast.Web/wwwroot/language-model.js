@@ -10,129 +10,18 @@ export const languageKinds = [
   "languageLesson",
   "languageVocabulary",
 ];
-const pack = (title, topic, words) => ({
-  title,
-  topic,
-  words: words.map(([term, meaning, example]) => ({ term, meaning, example })),
-});
-export const vocabularyPacks = [
-  pack(
-    "My daily routine",
-    "Describe a normal day. What do you do before and after work?",
-    [
-      ["usually", "معمولاً", "I usually wake up at seven."],
-      ["wake up", "بیدار شدن", "I wake up early on weekdays."],
-      ["breakfast", "صبحانه", "I have breakfast at home."],
-      ["prepare", "آماده کردن", "I prepare my lunch in the morning."],
-      ["work", "کار کردن؛ کار", "I work in an office."],
-      ["sometimes", "گاهی", "I sometimes walk to work."],
-      ["relax", "استراحت کردن", "I relax after dinner."],
-      ["evening", "عصر؛ اوایل شب", "I read in the evening."],
-    ],
-  ),
-  pack(
-    "Learning something new",
-    "Write about something you want to learn and your plan for learning it.",
-    [
-      ["learn", "یاد گرفتن", "I want to learn English."],
-      ["practice", "تمرین کردن؛ تمرین", "I practice every day."],
-      ["improve", "بهتر کردن؛ پیشرفت کردن", "I want to improve my writing."],
-      ["mistake", "اشتباه", "A mistake can help me learn."],
-      ["understand", "فهمیدن", "I understand this lesson."],
-      ["question", "سؤال", "I have a question."],
-      ["remember", "به یاد آوردن", "I remember new words by using them."],
-      ["progress", "پیشرفت", "Small steps lead to progress."],
-    ],
-  ),
-  pack(
-    "A friend I appreciate",
-    "Describe a friend and explain why you enjoy spending time together.",
-    [
-      ["friend", "دوست", "My friend lives nearby."],
-      ["kind", "مهربان", "She is kind to everyone."],
-      ["honest", "صادق", "He is an honest person."],
-      ["help", "کمک کردن", "We help each other."],
-      ["listen", "گوش دادن", "A good friend can listen."],
-      ["together", "با هم", "We cook together."],
-      ["trust", "اعتماد کردن؛ اعتماد", "I trust my friend."],
-      ["enjoy", "لذت بردن", "We enjoy long walks."],
-    ],
-  ),
-  pack(
-    "A place to visit",
-    "Describe a place you would like to visit and what you would do there.",
-    [
-      ["visit", "دیدن؛ بازدید کردن", "I want to visit a small town."],
-      ["travel", "سفر کردن", "I like to travel by train."],
-      ["quiet", "آرام؛ ساکت", "The village is quiet."],
-      ["beautiful", "زیبا", "The mountains are beautiful."],
-      ["explore", "گشتن و کشف کردن", "I want to explore the city."],
-      ["local", "محلی", "I like local food."],
-      ["journey", "سفر؛ مسیر سفر", "The journey takes two hours."],
-      ["discover", "کشف کردن", "We can discover new places."],
-    ],
-  ),
-  pack(
-    "My favorite meal",
-    "Describe your favorite meal, its ingredients and how you prepare it.",
-    [
-      ["meal", "وعدهٔ غذایی", "Dinner is my favorite meal."],
-      ["fresh", "تازه", "I use fresh vegetables."],
-      ["cook", "آشپزی کردن", "I cook at home."],
-      ["ingredient", "مادهٔ اولیهٔ غذا", "Rice is an important ingredient."],
-      ["healthy", "سالم", "I try to eat healthy food."],
-      ["taste", "مزه؛ مزه دادن", "The taste is wonderful."],
-      ["share", "شریک شدن؛ به اشتراک گذاشتن", "I share food with my family."],
-      ["favorite", "موردعلاقه", "Soup is my favorite dish."],
-    ],
-  ),
-  pack(
-    "A goal for this year",
-    "Write about a personal goal and the small actions that can help you reach it.",
-    [
-      ["goal", "هدف", "My goal is to read more."],
-      ["plan", "برنامه؛ برنامه‌ریزی کردن", "I have a simple plan."],
-      ["achieve", "به دست آوردن؛ محقق کردن", "I can achieve my goal."],
-      ["effort", "تلاش", "Learning takes effort."],
-      ["habit", "عادت", "Reading is a useful habit."],
-      ["patient", "صبور", "I need to be patient."],
-      ["challenge", "چالش", "This challenge helps me grow."],
-      ["success", "موفقیت", "Success takes time."],
-    ],
-  ),
-  pack(
-    "A weekend without my phone",
-    "Imagine a weekend with less screen time. How would you spend it?",
-    [
-      ["weekend", "آخر هفته", "I rest at the weekend."],
-      ["outside", "بیرون", "I spend more time outside."],
-      ["walk", "پیاده‌روی کردن؛ پیاده‌روی", "I go for a walk."],
-      ["notice", "متوجه شدن", "I notice the trees around me."],
-      ["spend", "صرف کردن؛ گذراندن", "I spend time with my family."],
-      ["instead", "در عوض؛ به جای آن", "I read a book instead."],
-      ["peaceful", "آرامش‌بخش", "The park is peaceful."],
-      ["experience", "تجربه", "It is a new experience."],
-    ],
-  ),
-];
 export function dailyVocabulary(records, date) {
   const saved = records.find(
     (r) =>
       !r.deleted && r.kind === "languageVocabulary" && r.data.date === date,
   );
   if (saved) return saved;
-  const index =
-    ((Math.floor(Date.parse(date + "T12:00:00Z") / 86400000) %
-      vocabularyPacks.length) +
-      vocabularyPacks.length) %
-    vocabularyPacks.length;
   return {
-    id: null,
-    version: 0,
-    kind: "languageVocabulary",
-    data: { date, ...structuredClone(vocabularyPacks[index]), read: false },
+    id: null, version: 0, kind: "languageVocabulary",
+    data: { date, title: "", topic: "", words: [], read: false },
   };
 }
+
 export const wordCount = (body) =>
   (String(body).match(/[\p{L}\p{N}]+(?:['’][\p{L}]+)*/gu) || []).length;
 export function usedWords(body, words) {

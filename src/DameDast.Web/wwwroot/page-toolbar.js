@@ -6,7 +6,7 @@ const add = '.page-heading [data-action="add"],.page-heading [data-action="task-
 // This allowlist defines the floating rail. Other page controls stay in the page.
 export const pageToolbarConfig = {
   workoutPrograms: { command: add, icon: "plus" },
-  learning: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
+  learning: { command: '.page-heading [data-action="learning-week-add"]', icon: "plus" },
   developmentExercise: { command: '.page-heading [data-action="development-add"]', icon: "plus" },
   languageEssays: { command: '.page-heading [data-lang-action="new-essay"]', icon: "plus" },
   languageLessons: { command: '.page-heading [data-lang-action="import"]', icon: "upload" },
