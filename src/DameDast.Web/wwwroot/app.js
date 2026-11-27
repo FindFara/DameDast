@@ -156,7 +156,6 @@ let selectedMonth = monthOf(today()),
   flowPeriod = "monthly";
 let transactionFilters = {};
 let transactionFiltersOpen = false;
-let notificationFilter = "unread";
 let refreshInProgress = false;
 let notificationsHtml = "";
 let editorPreset = null;
@@ -250,7 +249,6 @@ const context = () => ({
   typeFilter,
   transactionFilters,
   transactionFiltersOpen,
-  notificationFilter,
   refreshInProgress,
   flowPeriod,
   pendingCount: state.pending.length,
@@ -1683,7 +1681,6 @@ async function onAction(event) {
     return;
   }
   if (action === "transaction-filters-toggle") { transactionFiltersOpen = !transactionFiltersOpen; render(); return; }
-  if (action === "notifications-filter") { notificationFilter = element.dataset.filter === "all" ? "all" : "unread"; renderNotifications(); return; }
   if (action === "notifications-refresh") { await refreshWorkspace(); return; }
   if (action === "workspace-search") { openWorkspaceSearch(); return; }
   if (action === "workspace-open") {
@@ -2708,7 +2705,12 @@ function renderNotifications() {
   dialog.innerHTML = html; notificationsHtml = html;
   const list = dialog.querySelector(".notification-list");
   if (list) list.scrollTop = scroll;
-  if (focused) [...dialog.querySelectorAll("button")].find(button=>button.dataset.action===focused.action && button.dataset.key===focused.key)?.focus({preventScroll:true});
+  if (focused) {
+    const buttons = [...dialog.querySelectorAll("button")];
+    (buttons.find(button=>button.dataset.action===focused.action && button.dataset.key===focused.key) ||
+      buttons.find(button=>button.dataset.action===focused.action && !button.disabled) ||
+      dialog.querySelector('[data-action="notifications-close"]'))?.focus({preventScroll:true});
+  }
 }
 async function markNotificationsRead(notifications) {
   await withLock(async () => {

@@ -779,6 +779,7 @@ Object.assign(fa, {
 });
 Object.assign(fa, {
   "Dashboard layout": "چیدمان داشبورد",
+  "Review": "بررسی",
   "Financial summary": "خلاصهٔ مالی",
   "Live prices": "قیمت‌های روز",
   "This week": "این هفته",

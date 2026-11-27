@@ -31,16 +31,22 @@ const base = {
   marketLoading: false,
   marketHistoryLoading: false,
 };
-test("notification cards keep read occurrences in All and hide them from Unread", () => {
-  const reminder={id:'notice-source',kind:'reminder',data:{title:'Review the project',startDate:'2026-11-16',times:['09:00'],repeat:'once',interval:1}};
+test("notification center only shows unread occurrences, without filter tabs or grouped counts", async () => {
+  const {parseHTML} = await import('linkedom');
+  const reminder={id:'notice-source',kind:'reminder',data:{title:'Review the project',body:'Check the next release',startDate:'2026-11-16',times:['09:00'],repeat:'once',interval:1}};
+  const html=notificationsMarkup({...base,records:[reminder]});
+  const {document}=parseHTML(html);
+  assert.equal(document.querySelectorAll('.notification-list > .notification-card').length,1);
+  assert.equal(document.querySelectorAll('.notification-group,.notification-state,.notification-eyebrow,.badge,[data-action="notifications-filter"]').length,0);
+  assert.match(document.querySelector('.notification-card-heading time').textContent,/09:00/);
+  assert.match(document.querySelector('.notification-card-body p').textContent,/Check the next release/);
+  assert.equal(document.querySelectorAll('.notification-card-body [data-action]').length,2);
   const occurrence=organizerReport([reminder],base.now).notifications[0];
   const records=[reminder,{id:'read',kind:'notificationRead',data:occurrence}];
-  const unread=notificationsMarkup({...base,records,notificationFilter:'unread'});
-  const all=notificationsMarkup({...base,records,notificationFilter:'all'});
-  assert.doesNotMatch(unread,/notification-card read/);
-  assert.match(all,/notification-card read/);
-  assert.match(all,/Review the project/);
-  assert.match(all,/data-action="notification-open"/);
+  for(const notificationFilter of ['all','unread']) {
+    const read=parseHTML(notificationsMarkup({...base,records,notificationFilter})).document;
+    assert.equal(read.querySelector('.notification-card'),null);
+  }
 });
 test("browser catalog matches the embedded .NET catalog; market search and categories constrain cards", () => {
   assert.deepEqual(
@@ -167,12 +173,12 @@ test("dashboard checks move to reminders and the bell, sharing read state and es
   assert.match(reminders, /Follow-ups/);
   assert.match(reminders, /&lt;script&gt;Review&lt;\/script&gt;/);
   assert.match(reminders, /data-action="notification-open"/);
-  assert.match(notificationsMarkup(context), /Overdue tasks/);
+  assert.match(notificationsMarkup(context), /notification-card notification-task/);
   assert.doesNotMatch(renderPage({ ...context, page: "overview" }), /attention-card|Needs your attention|due-callout/);
   const notification = organizerReport(records, base.now).notifications[0];
   records.push({ id: "read", kind: "notificationRead", data: notification });
   assert.doesNotMatch(renderPage({ ...context, page: "reminders" }), /reminder-checks/);
-  assert.match(notificationsMarkup({ ...context, notificationFilter: "all" }), /notification-card read/);
+  assert.doesNotMatch(notificationsMarkup({ ...context, notificationFilter: "all" }), /notification-card notification-task/);
 });
 
 test("goals can be pinned after creation with an icon next to delete; note pins remain in Notes", async () => {
@@ -192,4 +198,17 @@ test("goals can be pinned after creation with an icon next to delete; note pins 
   assert.match(pinned,/Trip/);
   assert.doesNotMatch(pinned,/Pinned note|pin-note/);
   assert.match(renderPage({...base,page:'notes',records:[goal,note]}),/Pinned note/);
+});
+
+test("flat notifications preserve chronological order and omit placeholder midnight times for date-only items", async () => {
+  const {parseHTML}=await import('linkedom');
+  const records=[{id:'payment',kind:'installment',data:{title:'Payment',dueDate:'2026-11-16',amount:100,paid:false,reminderDays:3}},
+    {id:'reminder',kind:'reminder',data:{title:'Reminder',startDate:'2026-11-16',times:['09:00'],repeat:'once',interval:1}},
+    {id:'task',kind:'calendarEvent',data:{title:'Dated task',kind:'task',startDate:'2026-11-15',endDate:'2026-11-15',allDay:true,done:false,repeat:'none',repeatCalendar:'persian'}}];
+  const {document}=parseHTML(notificationsMarkup({...base,records}));
+  const cards=[...document.querySelectorAll('.notification-list > article')];
+  assert.equal(cards.length,3);
+  assert.equal(cards[0].querySelector('strong').textContent,'Reminder');
+  assert.doesNotMatch(document.querySelector('.notification-installment time').textContent,/00:00/);
+  assert.doesNotMatch(document.querySelector('.notification-task time').textContent,/00:00/);
 });

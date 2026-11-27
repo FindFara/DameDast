@@ -106,28 +106,29 @@ export function pinnedPanel(c) {
     .join("")}</div></section>`;
 }
 export function notificationsMarkup(c) {
-  const report = organizerReport(c.records, c.now), unreadOnly = c.notificationFilter !== "all";
-  const visible = report.notifications.filter(n => !unreadOnly || !n.read).slice(0,100);
-  const groups = [["reminder","Reminders"],["task","Overdue tasks"],["check","Checks"],["installment","Installments"],["goal","Savings goals"]];
-  return `<div class="dialog-heading"><div><small class="notification-eyebrow">${t("Your assistant")}</small><h2>${t("Notifications")} <span class="badge">${localizedNumber(report.unread)}</span></h2></div><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">×</button></div>
-    <div class="notification-toolbar"><div class="segment-control" aria-label="${t("Notifications")}">${[["unread","Unread"],["all","All"]].map(([value,label])=>`<button type="button" data-action="notifications-filter" data-filter="${value}" aria-pressed="${(value==='unread')===unreadOnly}" class="${(value==='unread')===unreadOnly?'active':''}">${t(label)}</button>`).join("")}</div><button type="button" class="text-button" data-action="notifications-refresh" ${c.refreshInProgress?'disabled':''}>${t(c.refreshInProgress?"Refreshing…":"Refresh")}</button><button type="button" class="text-button" data-action="notifications-read-all" ${report.unread?'':'disabled'}>${t("Mark all read")}</button></div>
-    <div class="notification-list">${groups.map(([kind,label])=>{
-      const items=visible.filter(n=>n.kind===kind||(kind==='reminder'&&n.kind==='note')); if(!items.length)return "";
-      return `<section class="notification-group notification-${kind}"><header><span class="notification-group-icon">${notificationGlyph(kind)}</span><h3>${t(label)}</h3><span class="badge">${localizedNumber(items.length)}</span></header>${items.map(n => notificationCard(c, n)).join("")}</section>`;
-    }).join("") || `<div class="notification-empty">${notificationGlyph('reminder')}<h3>${t("You are all caught up.")}</h3><p>${t(unreadOnly?"New reminders and payments will appear here.":"There are no notifications yet.")}</p></div>`}</div>`;
+  const visible = organizerReport(c.records, c.now).notifications.filter(n => !n.read).slice(0, 100);
+  return `<div class="dialog-heading"><h2>${t("Notifications")}</h2><button type="button" class="icon-button" data-action="notifications-close" aria-label="${t("Close")}">×</button></div>
+    <div class="notification-toolbar"><button type="button" class="text-button" data-action="notifications-refresh" ${c.refreshInProgress ? 'disabled' : ''}>${t(c.refreshInProgress ? "Refreshing…" : "Refresh")}</button><button type="button" class="text-button" data-action="notifications-read-all" ${visible.length ? '' : 'disabled'}>${t("Mark all read")}</button></div>
+    <div class="notification-list">${visible.map(n => notificationCard(c, n)).join('') || `<div class="notification-empty">${notificationGlyph('reminder')}<h3>${t("You are all caught up.")}</h3></div>`}</div>`;
+}
+function notificationDate(n, record) {
+  const date = tehranParts(n.dueAt).date;
+  if (["reminder", "note"].includes(n.kind)) return { value: n.dueAt, text: smallDate(n.dueAt) };
+  const time = record?.kind === "calendarEvent" && !record.data.allDay ? record.data.startTime : null;
+  return { value: time ? `${date}T${time}` : date, text: `${solarText(date)}${time ? ` · <bdi dir="ltr">${esc(time)}</bdi>` : ''}` };
 }
 function notificationCard(c, n) {
-  const action = n.kind === "task" ? "Review task" : n.kind === "check" ? "Review budget" :
-    n.kind === "installment" ? "Review payment" : n.kind === "goal" ? "Review goal" : "Review reminder";
+  const record = c.records.find(record => record.id === n.sourceId), when = notificationDate(n, record);
   let heading = title(c, n.title);
-  let description = t(n.kind === "task" ? "Overdue" : n.kind === "installment" ?
+  const body = record?.kind === "reminder" ? record.data.body : record?.kind === "calendarEvent" ? record.data.description : null;
+  let description = body ? title(c, body) : t(n.kind === "task" ? "Overdue" : n.kind === "installment" ?
     "A payment needs your attention." : n.kind === "goal" ? "Review your goal progress." : "A reminder for you.");
   if (n.checkType === "spending") {
     const category = categoryInfo(c.records, categories, n.category);
     heading = esc(category.builtin ? t(category.name) : category.name);
     description = `${t("Spending increased")} · +<bdi dir="ltr">${amountText(n.increase, c)}</bdi> ${t("toman")}`;
   }
-  return `<article class="notification-card ${n.read ? 'read' : 'unread'} notification-${n.kind}"><div class="notification-card-heading"><strong dir="auto">${heading}</strong><span class="notification-state">${t(n.read ? 'Read' : 'Unread')}</span></div><p>${description}</p><time datetime="${esc(n.dueAt)}">${smallDate(n.dueAt)}</time><div class="notification-card-actions">${button("notification-open", action, `data-key="${esc(notificationKey(n))}"`, "secondary")}${n.read ? '' : button("notification-read", "Mark read", `data-key="${esc(notificationKey(n))}"`, "text-button")}</div></article>`;
+  return `<article class="notification-card notification-${n.kind}"><div class="notification-card-heading"><strong dir="auto">${heading}</strong><time datetime="${esc(when.value)}">${when.text}</time></div><div class="notification-card-body"><p dir="auto">${description}</p><div class="notification-card-actions">${button("notification-read", "Mark read", `data-key="${esc(notificationKey(n))}"`, "text-button")}${button("notification-open", "Review", `data-key="${esc(notificationKey(n))}"`, "secondary")}</div></div></article>`;
 }
 function notificationGlyph(kind) {
   const paths = { reminder:'<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5Zm5 3h4"/>', installment:'<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 10h18M7 3v4m10-4v4M7 14h4"/>', goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m12 12 8-8"/>' };
