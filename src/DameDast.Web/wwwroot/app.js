@@ -1,3 +1,4 @@
+import { defaultDashboardLayout, moveDashboardSection, toggleDashboardSection } from "./dashboard-layout.js";
 import { validateExercise } from "./exercise.js";
 import { ExerciseClock } from "./exercise-clock.js";
 import { developmentKind, validateDevelopment } from "./development.js";
@@ -169,6 +170,7 @@ let notesView = "grid";
 try { if (localStorage.getItem(scopedStorageKey("damedast-notes-view")) === "list") notesView = "list"; } catch {}
 const settingsGroupsOpen = {};
 let themeDraft = null;
+let dashboardLayoutDraft = null;
 const noteLayout = new ResizeObserver(entries => {
   for (const { target } of entries) {
     const gap = parseFloat(getComputedStyle(target).marginBottom) || 0;
@@ -228,6 +230,7 @@ const context = () => ({
   amountsVisible: dashboardAmountsVisible,
   settingsGroupsOpen,
   themeDraft,
+  dashboardLayoutDraft,
   notesView,
   workbenchEditing: desk.editing,
   planner: planner.state,
@@ -1176,6 +1179,7 @@ async function changeSpace(next) {
   if (next === "demo") url.searchParams.set("demo", "1");
   else url.searchParams.delete("demo");
   history.replaceState(null, "", url.pathname + url.search + url.hash);
+  dashboardLayoutDraft = null;
   space = next;
   state = await loadSpace(space);
   render();
@@ -1610,6 +1614,24 @@ async function onAction(event) {
     return;
   }
   const { action, id, kind } = element.dataset;
+  if (action === "dashboard-customize") {
+    settingsGroupsOpen.dashboard = true;
+    location.hash = "settings";
+    render(); return;
+  }
+  if (action === "dashboard-move") {
+    const direction = Number(element.dataset.direction);
+    dashboardLayoutDraft = moveDashboardSection(dashboardLayoutDraft || preferences().dashboardLayout, id, direction);
+    render();
+    const row = document.querySelector(`[data-dashboard-row="${id}"]`);
+    (row?.querySelector(`[data-direction="${direction}"]:not(:disabled)`) || row?.querySelector('[data-action="dashboard-move"]:not(:disabled)'))?.focus({preventScroll:true});
+    return;
+  }
+  if (action === "dashboard-layout-reset") {
+    dashboardLayoutDraft = defaultDashboardLayout();
+    render(); document.querySelector('[data-action="dashboard-layout-reset"]')?.focus({preventScroll:true}); return;
+  }
+
   if (action === "learning-filter") { learningCategory = ["all", "language", "study", "plan"].includes(element.dataset.category) ? element.dataset.category : "all"; render(); return; }
   if (action === "weight-add") {
     const existing = ofKind("weightEntry").find(r => r.data.date === today());
@@ -2189,6 +2211,16 @@ document.addEventListener("submit", event => {
   render();
   toast("Saved.");
 });
+document.addEventListener("submit", event => {
+  if (!event.target.matches("[data-dashboard-layout-form]")) return;
+  event.preventDefault();
+  try {
+    savePreferences({ dashboardLayout: dashboardLayoutDraft || preferences().dashboardLayout });
+    dashboardLayoutDraft = null;
+    render(); document.querySelector('[data-dashboard-layout-form] [type="submit"]')?.focus({preventScroll:true});
+    toast("Saved.");
+  } catch (error) { showError(error); }
+});
 $("#editor-form").addEventListener("submit", submitEditor);
 $("#editor-form").addEventListener(
   "invalid",
@@ -2216,6 +2248,11 @@ $("#theme-button").onclick = () => {
 };
 
 document.addEventListener("change", (event) => {
+  if (event.target.matches("[data-dashboard-visible]")) {
+    const id = event.target.dataset.dashboardVisible;
+    dashboardLayoutDraft = toggleDashboardSection(dashboardLayoutDraft || preferences().dashboardLayout, id, event.target.checked);
+    render(); document.querySelector(`[data-dashboard-visible="${id}"]`)?.focus({preventScroll:true}); return;
+  }
   if (event.target.name === "development-day") {
     developmentDate = event.target.value;
     render(); return;

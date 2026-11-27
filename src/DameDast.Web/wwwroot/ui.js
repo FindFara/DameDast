@@ -1,3 +1,5 @@
+import { renderDashboardLayout } from "./dashboard-layout.js";
+import { preferences } from "./preferences.js";
 import { weeklyAgendaPanel } from "./weekly-agenda-ui.js";
 import { workoutProgramsPage, workoutTimerPage, weightPlanPage, exerciseFields } from "./exercise-ui.js";
 import { developmentPage, developmentFields } from "./development-ui.js";
@@ -389,16 +391,17 @@ function overview(c) {
       0,
     ),
     budget = visibleBudgets(c.records, c.month);
-  return `${pageHeading(c, "Overview", "transaction")}<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>${weeklyAgendaPanel(c)}${pinnedPanel(c)}${marketStrip(c)}<div class="content-grid">${panel("Cash flow", cashChart(c))}${panel("Spending breakdown", donut(c))}</div><div class="content-grid">${panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions"))}${panel(
-    "Budgets",
-    budget.length
-      ? budget
-          .slice(0, 3)
-          .map((b) => progress(c, b))
-          .join("")
-      : empty("No budgets", "budget"),
-    arrowLink("Manage", "budgets"),
-  )}</div>`;
+  const layout = renderDashboardLayout(preferences().dashboardLayout, {
+    summary: () => `<div class="stats-grid">${amountCard("Total balance", balanceTotal, "featured", countText(kind(c, "account").length, "Accounts"), c)}${amountCard("Income", total.income, "", t("This month"), c)}${amountCard("Spending", total.expense, "", t("This month"), c)}</div>`,
+    week: () => weeklyAgendaPanel(c),
+    pinned: () => pinnedPanel(c),
+    market: () => marketStrip(c),
+    cashflow: () => panel("Cash flow", cashChart(c)),
+    breakdown: () => panel("Spending breakdown", donut(c)),
+    transactions: () => panel("Recent transactions", movementList(c, monthly(c).slice(0, 4)), arrowLink("View all", "transactions")),
+    budgets: () => panel("Budgets", budget.length ? budget.slice(0, 3).map(b => progress(c, b)).join("") : empty("No budgets", "budget"), arrowLink("Manage", "budgets")),
+  });
+  return `${pageHeading(c, "Overview", "transaction")}${layout || `<div class="panel dashboard-empty">${icon('overview')}<h2>${t('A little room for your priorities')}</h2><p>${t('Choose the sections you want to see here.')}</p><button type="button" class="primary" data-action="dashboard-customize">${t('Dashboard layout')}</button></div>`}`;
 }
 function transactions(c) {
   const filters = c.transactionFilters || {};

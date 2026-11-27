@@ -1,3 +1,4 @@
+import { dashboardSettings } from "./dashboard-settings-ui.js";
 import { themeOptions } from "./themes.js";
 import {readNoteSettings} from "./keep-preferences.js";
 import { restoredWorkspaces } from "./backup.js";
@@ -26,6 +27,8 @@ export function settingsPage(c, { icon, actionButton, pageHeading }) {
  ${row("Language", "Changes the app language and reading direction.", `<select id="language-setting" aria-label="${t("Language")}">${option("en", "English", getLanguage())}${option("fa", getLanguage() === "en" ? "Fa" : "فارسی", getLanguage())}</select>`)}
  <div class="setting-row theme-setting-row"><div class="setting-label"><label>${t("Theme")}</label>${info("Theme", "Choose a two-color theme, then save.")}</div><div class="setting-control">${themePicker(c.themeDraft || getTheme())}</div></div>
 
+ ${endGroup}${startGroup("dashboard", "Dashboard layout")}
+ ${dashboardSettings(c.dashboardLayoutDraft || p.dashboardLayout, !!c.dashboardLayoutDraft, icon)}
  ${endGroup}${startGroup("notes", "Notes settings")}
  ${row("Default notes view", "Choose the initial layout for your notes.", `<select data-note-preference="view" aria-label="${t("Default notes view")}">${option("grid","Grid",notes.view)}${option("list","List",notes.view)}</select>`)}
  ${row("Text link previews", "Show a compact text preview for links in notes.", `<label class="switch-control"><input type="checkbox" data-note-preference="linkPreviews" ${notes.linkPreviews ? "checked" : ""} aria-label="${t("Text link previews")}"><span></span></label>`)}

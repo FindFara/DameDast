@@ -1,3 +1,4 @@
+import { defaultDashboardLayout, normalizeDashboardLayout } from "./dashboard-layout.js";
 import { scopedStorageKey } from "./account-scope.js";
 const key = "damdast-preferences-v2";
 export const calendarVisibilityOptions = [
@@ -8,6 +9,7 @@ export const calendarVisibilityOptions = [
   ["goal", "Goals"],
 ];
 const defaults = {
+  dashboardLayout: defaultDashboardLayout(),
   calendar: "persian",
   weekStart: 6,
   weekend: "friday",
@@ -22,7 +24,7 @@ export function preferences() {
       ...JSON.parse(localStorage.getItem(scopedStorageKey(key)) || "{}"),
     });
   } catch {
-    return { ...defaults };
+    return { ...defaults, dashboardLayout: defaultDashboardLayout() };
   }
 }
 export function validatePreferences(value) {
@@ -41,7 +43,7 @@ export function validatePreferences(value) {
         new Set(value.calendarItems).size !== value.calendarItems.length))
   )
     throw Error("Invalid preferences.");
-  const current = { ...value };
+  const current = { ...value, dashboardLayout: normalizeDashboardLayout(value.dashboardLayout) };
   delete current.mainBackground; // Ignore the retired background override in old settings and backups.
   return current;
 }

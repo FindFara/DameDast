@@ -777,6 +777,30 @@ Object.assign(fa, {
   "First investment": "پله اول",
   "Second investment": "پله دوم",
 });
+Object.assign(fa, {
+  "Dashboard layout": "چیدمان داشبورد",
+  "Financial summary": "خلاصهٔ مالی",
+  "Live prices": "قیمت‌های روز",
+  "This week": "این هفته",
+  "Pinned items": "سنجاق‌شده‌ها",
+  "Your dashboard, your way": "داشبورد به سبک تو",
+  "Show what matters": "بخش‌های دلخواهت",
+  "Dashboard sections": "بخش‌های داشبورد",
+  "Move {section} up": "{section} بالاتر",
+  "Move {section} down": "{section} پایین‌تر",
+  "Move up": "بالاتر",
+  "Move down": "پایین‌تر",
+  "Show {section}": "نمایش {section}",
+  "Dashboard preview": "پیش‌نمایش چیدمان",
+  "Choose your first section": "اولین بخش را انتخاب کن",
+  "Open dashboard": "دیدن داشبورد",
+  "Restore default layout": "چیدمان پیش‌فرض",
+  "Unsaved layout": "تغییرات ذخیره نشده",
+  "Layout saved": "چیدمان ذخیره شده",
+  "Save layout": "ذخیرهٔ چیدمان",
+  "A little room for your priorities": "داشبوردت را بچین",
+  "Choose the sections you want to see here.": "بخش‌های دلخواهت را برای نمایش انتخاب کن."
+});
 export function t(key, values = {}) {
   let result = isRtl() ? (fa[key] ?? key) : key;
   for (const [name, value] of Object.entries(values))
