@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v115";
+const CACHE = "damedast-shell-v116";
 const SHELL = [
   "/notification-preferences.js", "/ui-icons.js",
   "/dashboard-layout.js", "/dashboard-settings-ui.js", "/dashboard-layout.css",
@@ -100,6 +100,10 @@ const SHELL = [
   "/extension/shared/portfolio.js",
   "/extension/shared/view.js",
   "/manifest.webmanifest",
+  "/icons/logo.png",
+  "/icons/icon-32.png",
+  "/icons/favicon.ico",
+  "/icons/apple-touch-icon.png",
   "/icons/icon.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",

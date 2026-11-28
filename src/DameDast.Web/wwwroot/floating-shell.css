@@ -55,13 +55,13 @@ main {
   min-width: 0;
 }
 .sidebar .brand-symbol {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
 }
-.sidebar .brand-symbol svg {
-  width: 22px;
-  height: 24px;
+.sidebar .brand-symbol img {
+  width: 100%;
+  height: 100%;
 }
 .sidebar .brand strong,
 html[lang="fa"] .sidebar .brand strong {
