@@ -19,12 +19,14 @@ test('date wheels respect the supported year bounds and reject fractional input'
   assert.throws(()=>clampDateParts({year:1405,month:1.5,day:3}));
 });
 
-async function pickerFixture(context, date) {
+async function pickerFixture(context, date, mode = "date") {
   const { parseHTML } = await import('linkedom');
-  const { document, window } = parseHTML(`<html><body><fieldset data-date-control><legend>Date</legend><input type="hidden" value="${date}"><input data-date-input></fieldset></body></html>`);
-  const originals = { document: globalThis.document, matchMedia: globalThis.matchMedia };
+  const { document, window } = parseHTML(`<html><body><fieldset data-date-control data-date-mode="${mode}"><legend>Date</legend><input type="hidden" value="${date}"><input data-date-input></fieldset></body></html>`);
+  const originals = { document: globalThis.document, matchMedia: globalThis.matchMedia, Event: globalThis.Event };
   let reduce = false;
   globalThis.document = document;
+  globalThis.Event = window.Event;
+  window.HTMLElement.prototype.setCustomValidity = () => {};
   globalThis.matchMedia = query => ({matches: query.includes('reduced-motion') && reduce});
   const animations = [];
   window.HTMLElement.prototype.animate = function(frames, options) {
@@ -150,4 +152,27 @@ test('long touch swipes update all wheels before release, reverse continuously a
     assert.equal(input.value,shown); assert.equal(input.style.transform,'');
   }
   assert.equal(document.querySelector('[data-date-control] input[type=hidden]').value,fromJalali(1405,5,15));
+});
+
+
+test('month-only selection crosses years and stores a Persian month without inventing a day', async context => {
+  const {document, send, part} = await pickerFixture(context, '1405-12', 'month');
+  assert.equal(document.querySelectorAll('[data-date-part]').length, 2);
+  assert.equal(part('day'), null);
+  send(part('month'), 'keydown', {key:'ArrowUp'});
+  assert.equal(part('month').getAttribute('aria-valuenow'), '1');
+  assert.equal(part('year').getAttribute('aria-valuenow'), '1406');
+  send(document.querySelector('#date-picker-dialog form'), 'submit');
+  assert.equal(document.querySelector('[data-date-control] input[type=hidden]').value, '1406-01');
+});
+
+test('recurring day selection keeps day 31 independent of short months and supports wrapping', async context => {
+  const {document, send, part} = await pickerFixture(context, '31', 'day');
+  assert.equal(document.querySelectorAll('[data-date-part]').length, 1);
+  assert.equal(part('day').getAttribute('aria-valuenow'), '31');
+  send(part('day'), 'keydown', {key:'ArrowUp'});
+  assert.equal(part('day').getAttribute('aria-valuenow'), '1');
+  send(part('day'), 'keydown', {key:'ArrowDown'});
+  send(document.querySelector('#date-picker-dialog form'), 'submit');
+  assert.equal(document.querySelector('[data-date-control] input[type=hidden]').value, '31');
 });

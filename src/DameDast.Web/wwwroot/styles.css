@@ -2985,3 +2985,8 @@ dialog::backdrop {
     font-size: 12px;
   }
 }
+
+.finance-type-filter { min-width: 190px; max-width: 320px; }
+.finance-type { width: fit-content; margin-block-end: 4px; }
+
+.asset-collection-views { margin-block-end: 20px; flex-wrap: wrap; }

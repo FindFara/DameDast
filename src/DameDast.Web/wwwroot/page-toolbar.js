@@ -29,7 +29,7 @@ export const pageToolbarConfig = {
   installments: { command: add, icon: "plus" },
   receivables: { command: add, icon: "plus" },
   locked: { command: add, icon: "plus" },
-  assets: { command: '.page-heading [data-action="asset-add"]', icon: "plus" },
+  assets: { command: `${add},.page-heading [data-action="asset-add"]`, icon: "plus" },
   monthlyPlan: { command: add, icon: "plus" },
   monthlyExpenses: { command: add, icon: "plus" },
 };

@@ -1450,3 +1450,16 @@ Object.assign(fa, {
 });
 
 Object.assign(fa, {"Clear":"پاک کردن"});
+
+Object.assign(fa, {
+  "Installments and fixed expenses": "اقساط و هزینه‌های ثابت",
+  "Installment": "قسط", "All types": "همهٔ انواع", "No items for this type.": "موردی از این نوع ثبت نشده است.",
+  "Fixed expenses are shown for the selected month. Installments include all scheduled dates.": "هزینه‌های ثابت برای ماه انتخاب‌شده نمایش داده می‌شوند؛ اقساط شامل همهٔ موعدها هستند.",
+});
+
+Object.assign(fa, {
+  "Assets":"دارایی‌ها", "Asset":"دارایی", "All assets":"همهٔ دارایی‌ها", "Performance":"عملکرد دارایی", "Import and sync":"افزونه و همگام‌سازی",
+  "Known asset value":"ارزش مشخص دارایی‌ها", "Current value (toman)":"ارزش فعلی (تومان)",
+});
+
+Object.assign(fa, {"New payment":"پرداخت جدید"});

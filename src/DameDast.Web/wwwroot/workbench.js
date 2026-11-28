@@ -38,7 +38,7 @@ export const widgetCatalog = [
   },
   {
     type: "assets",
-    title: "Asset performance",
+    title: "Assets",
     page: "assets",
     glyph: "assets",
   },
@@ -56,7 +56,7 @@ export const widgetCatalog = [
   },
 ];
 export const shortcutPages = {
-  overview:"Overview", notes:"Notes", tasks:"Tasks", calendar:"Calendar", projects:"Projects", habits:"Routines", bookmarks:"Saved links", accounts:"Accounts", transactions:"Transactions", budgets:"Budgets", goals:"Savings goals", reminders:"Reminders", assets:"Asset performance", market:"Market", installments:"Installments", monthlyPlan:"Monthly plan", monthlyExpenses:"Monthly expenses", receivables:"Money lent", connected:"Connected", suggestions:"Suggestions", locked:"Locked assets", reports:"Reports", settings:"Settings"
+  overview:"Overview", notes:"Notes", tasks:"Tasks", calendar:"Calendar", projects:"Projects", habits:"Routines", bookmarks:"Saved links", accounts:"Accounts", transactions:"Transactions", budgets:"Budgets", goals:"Savings goals", reminders:"Reminders", assets:"Assets", market:"Market", installments:"Installments and fixed expenses", monthlyPlan:"Monthly plan", monthlyExpenses:"Monthly expenses", receivables:"Money lent", connected:"Connected", suggestions:"Suggestions", locked:"Locked assets", reports:"Reports", settings:"Settings"
 };
 export function legacyStandardSize(type) {
   if (type === "shortcut") return { width: 1, height: 1 };

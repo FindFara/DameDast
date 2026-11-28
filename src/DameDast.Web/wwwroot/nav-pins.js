@@ -1,7 +1,8 @@
+import { resolveFinanceRoute } from "./navigation.js";
 import { scopedStorageKey } from "./account-scope.js";
 const storageKey = "damedast-nav-pins";
 export function validPins(value, allowed) {
-  return Array.isArray(value) ? [...new Set(value)].filter(key => allowed.includes(key)) : [];
+  return Array.isArray(value) ? [...new Set(value.map(resolveFinanceRoute))].filter(key => allowed.includes(key)) : [];
 }
 export function readPins(allowed) {
   try { return validPins(JSON.parse(localStorage.getItem(scopedStorageKey(storageKey)) || "[]"), allowed); }

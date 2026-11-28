@@ -153,10 +153,11 @@ export function assetEntries(records, snapshots, market, now = new Date()) {
   const today = tehranParts(now).date,
     positions = records.filter((r) => !r.deleted && r.kind === "assetPosition"),
     sources = [];
+  const reclassified = new Set(records.filter(r => r.kind !== "assetPosition").map(r => r.data.assetTypeData?.assetPosition?.sourceKey).filter(Boolean));
   for (const s of snapshots || [])
     if (s.category === "assets")
       for (const item of s.items)
-        sources.push({
+        if (!reclassified.has(assetSourceKey(s,item))) sources.push({
           key: assetSourceKey(s, item),
           name: item.label,
           quantity: item.quantity,

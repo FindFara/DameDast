@@ -37,7 +37,7 @@ public static class FinanceRules
         var current = records.SingleOrDefault(x => x.Id == change.Id);
         if ((current?.Version ?? 0) != change.ExpectedVersion)
             throw new ConflictException(change.Id);
-        if (current is not null && current.Kind != change.Kind)
+        if (current is not null && current.Kind != change.Kind && (change.Delete || !AssetTypeRules.IsAsset(current.Kind) || !AssetTypeRules.IsAsset(change.Kind)))
             throw new FinanceException("A record cannot change its type.");
         if (!paymentEffect) InstallmentPaymentRules.CheckChange(records, change);
         if (change.Delete)
@@ -72,6 +72,7 @@ public static class FinanceRules
             var previous = Read<PersonalNote>(current.Data);
             change = change with { Data = JsonSerializer.SerializeToElement(note with { WhiteboardId = previous.WhiteboardId, WhiteboardPreview = previous.WhiteboardPreview }, Json) };
         }
+        change = AssetTypeRules.PreserveDetails(current, change);
         Validate(records, change);
         return new FinanceRecord(change.Id, change.Kind, (current?.Version ?? 0) + 1, false, change.Data.Clone());
     }

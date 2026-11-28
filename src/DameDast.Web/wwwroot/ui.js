@@ -1,3 +1,4 @@
+import { paymentsPage, assetsCollectionPage, assetViews } from "./finance-collections.js";
 import { renderDashboardLayout } from "./dashboard-layout.js";
 import { preferences } from "./preferences.js";
 import { weeklyAgendaPanel } from "./weekly-agenda-ui.js";
@@ -38,7 +39,6 @@ import {
 } from "./planning.js";
 import {
   monthlyPlanPage,
-  monthlyExpensesPage,
   planningEditorFields,
 } from "./planning-ui.js";
 import {
@@ -82,7 +82,7 @@ export const sections = {
     '<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20M9 9v12M15 9v6m0 0h7"/>',
   ],
   assets: [
-    "Asset performance",
+    "Assets",
     '<path d="M3 20h18M5 16l4-5 4 3 6-10M15 4h4v4"/>',
   ],
   projects: ["Projects", '<rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 10h18M3 6V3h7l3 3"/>'],
@@ -136,7 +136,7 @@ export const sections = {
     '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   ],
   installments: [
-    "Installments",
+    "Installments and fixed expenses",
     '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 5h3m4 0h1"/>',
   ],
   receivables: [
@@ -247,12 +247,12 @@ function dashboardMonthPicker(c, date) {
 }
 const empty = (text, kind) =>
   `<div class="empty"><span class="empty-mark">${icon(kind === "installment" ? "installments" : kind === "locked" ? "locked" : "wallet")}</span><p>${t(text)}</p>${kind ? actionButton("add", addNames[kind], `data-kind="${kind}"`) : ""}</div>`;
-function pageHeading(c, title, kind = null) {
+function pageHeading(c, title, kind = null, createLabel = null) {
   const overview = c.page === "overview", date = overview ? tehranParts(c.now).date : null;
   const controls = overview
     ? `<div class="dashboard-controls"><button type="button" class="icon-button amounts-toggle" data-action="dashboard-privacy" aria-label="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}" aria-pressed="${c.amountsVisible === true}" title="${t(c.amountsVisible ? "Hide amounts" : "Show amounts")}">${icon(c.amountsVisible ? "eye" : "eyeOff")}</button>${dashboardMonthPicker(c, date)}</div>`
     : ["budgets", "reports", "installments"].includes(c.page) ? monthPicker(c.month) : "";
-  return `<div class="page-heading${overview ? " overview-heading" : ""}"><h1>${t(title)}</h1><div class="heading-actions">${controls}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${addLabel(kind)}</button>` : ""}</div></div>`;
+  return `<div class="page-heading${overview ? " overview-heading" : ""}"><h1>${t(title)}</h1><div class="heading-actions">${controls}${kind ? `<button class="primary desktop-add" data-action="add" data-kind="${kind}">${icon("plus")}${createLabel ? t(createLabel) : addLabel(kind)}</button>` : ""}</div></div>`;
 }
 function panel(title, content, link = "") {
   return `<section class="panel"><div class="panel-head"><h2>${t(title)}</h2>${link}</div>${content}</section>`;
@@ -265,7 +265,7 @@ export function renderPage(c) {
     workoutPrograms: workoutProgramsPage, workoutTimer: workoutTimerPage, weightPlan: weightPlanPage,
     learning: developmentPage, developmentExercise: developmentPage,
     workbench: (c) => workbenchPage(c, icon),
-    assets: assetsPage,
+    assets: assets,
     projects: projectsPage,
     habits: habitsPage,
     bookmarks: bookmarksPage,
@@ -275,16 +275,16 @@ export function renderPage(c) {
     organizer: (c) => organizerPage(c, () => goals(c, true)),
     tasks: (c) => organizerPage(c, () => goals(c, true)),
     reminders: (c) => organizerPage(c, () => goals(c, true)),
-    monthlyExpenses: monthlyExpensesPage,
-    connected: connectedPage,
+    monthlyExpenses: c => installments({...c, page:"installments", financeType:"monthlyExpense"}),
+    connected: c => assets({...c,page:"assets",assetView:"import"}),
     overview: overview,
     transactions: transactions,
     accounts: accounts,
     budgets: budgets,
     goals: (c) => organizerPage(c, () => goals(c, true)),
     installments: installments,
-    receivables: receivables,
-    locked: locked,
+    receivables: c => assets({...c,page:"assets",financeType:"receivable"}),
+    locked: c => assets({...c, page:"assets", financeType:"locked"}),
     market: market,
     reports: reports,
     settings: settings,
@@ -451,41 +451,13 @@ function goals(c, embedded = false) {
     )}<button class="add-card" data-action="add" data-kind="goal">${icon("plus")}${t("New goal")}</button></div>${totalsHelp()}`;
 }
 function installments(c) {
-  const list = kind(c, "installment").sort((a, b) =>
-      a.data.dueDate.localeCompare(b.data.dueDate),
-    ),
-    unpaid = list.filter((r) => !r.data.paid),
-    sum = (items) => items.reduce((s, r) => s + r.data.amount, 0);
-  return `${pageHeading(c, "Installments", "installment")}<div class="stats-grid">${amountCard("Total remaining", sum(unpaid), "featured")}${amountCard("Due this month", sum(unpaid.filter((r) => inMonth(r.data.dueDate, c.month))))}${amountCard("Overdue", sum(unpaid.filter((r) => dueDays(r.data.dueDate) < 0)))}</div><div class="toolbar">${actionButton("push", "Enable reminders", `aria-label="${t("Enable reminders")}"`)}</div>${panel("Payment calendar", list.length ? `<div class="installment-list">${list.map((r) => `<article class="installment-row ${r.data.paid ? "paid" : ""}"><span class="category-icon ${r.data.paid ? "income" : ""}">${icon(r.data.paid ? "check" : "installments")}</span><div class="installment-description"><strong dir="auto">${dataText(c, r.data.title)}</strong><small>${dateText(r.data.dueDate, true)} <span class="separator">·</span><span class="${!r.data.paid && dueDays(r.data.dueDate) < 0 ? "negative" : ""}">${r.data.paid ? t("Paid") : dueText(dueDays(r.data.dueDate))}</span></small></div><div class="movement-amount">${number(r.data.amount)}<small>${t("toman")}</small></div><div class="row-actions">${actionButton("paid", r.data.paid ? "Mark unpaid" : "Mark paid", `data-id="${r.id}"`, "small-button")}<button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button><button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></article>`).join("")}</div>` : empty("No installments", "installment"))}<p class="small-note">${t("Recording a payment creates an expense in the selected account. Reversing it removes that expense.")}</p>`;
+  return paymentsPage(c, {pageHeading, amountCard, icon, number, unit, actionButton});
 }
-function receivables(c) {
-  const list = kind(c, "receivable"),
-    sum = list.reduce((s, r) => s + r.data.amount, 0),
-    returned = list.reduce((s, r) => s + r.data.returned, 0);
-  return `${pageHeading(c, "Money lent", "receivable")}<div class="stats-grid">${amountCard("Still to receive", sum - returned, "featured")}${amountCard("Total lent", sum)}${amountCard("Returned", returned)}</div><div class="cards-grid">${list.map((r) => `<article class="panel"><div class="card-heading"><span class="avatar">${dataText(c, r.data.person.slice(0, 1))}</span><span class="badge">${r.data.amount === r.data.returned ? t("Settled") : r.data.dueDate ? dueText(dueDays(r.data.dueDate)) : t("No due date")}</span></div><h2 dir="auto">${dataText(c, r.data.person)}</h2><div class="amount">${number(r.data.amount - r.data.returned)}${unit()}</div><div class="progress-track"><div class="progress-fill" style="width:${(r.data.returned / r.data.amount) * 100}%"></div></div><div class="progress-detail"><span>${t("Returned")} ${number(r.data.returned)}</span><span>${number(r.data.amount)}</span></div><div class="card-foot">${actionButton("edit", "Record repayment", `data-id="${r.id}"`, "text-button")}<button class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t("Delete")}">${icon("trash")}</button></div></article>`).join("")}<button class="add-card" data-action="add" data-kind="receivable">${icon("plus")}${t("New loan")}</button></div>${totalsHelp()}`;
-}
-function locked(c) {
-  const list = kind(c, "locked");
-  return `${pageHeading(c, "Locked assets", "locked")}<div class="stats-grid">${amountCard(
-    "Total locked",
-    list.reduce((s, r) => s + r.data.amount, 0),
-    "featured",
-  )}${amountCard(
-    "Releasing in 30 days",
-    list
-      .filter(
-        (r) =>
-          r.data.releaseDate &&
-          dueDays(r.data.releaseDate) >= 0 &&
-          dueDays(r.data.releaseDate) <= 30,
-      )
-      .reduce((s, r) => s + r.data.amount, 0),
-  )}${amountCard(
-    "Release date reached",
-    list
-      .filter((r) => r.data.releaseDate && dueDays(r.data.releaseDate) < 0)
-      .reduce((s, r) => s + r.data.amount, 0),
-  )}</div><div class="cards-grid">${list.map((r) => `<article class="wallet purple"><div class="card-heading">${icon("locked")}<button class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t("Edit")}">${icon("edit")}</button></div><h2 dir="auto">${dataText(c, r.data.name)}</h2><div class="amount">${number(r.data.amount)}${unit()}</div><div class="card-foot"><span>${r.data.releaseDate ? dateText(r.data.releaseDate, true) : t("No release date")}</span>${actionButton("release", "Mark released", `data-id="${r.id}"`, "text-button")}</div></article>`).join("")}<button class="add-card" data-action="add" data-kind="locked">${icon("plus")}${t("New locked asset")}</button></div>${totalsHelp()}`;
+function assets(c) {
+  const helpers = {pageHeading, amountCard, icon, number, unit, actionButton};
+  if (c.assetView === 'performance' || c.assetView === 'import')
+    return pageHeading(c, 'Assets', 'assetPosition') + assetViews(c.assetView) + (c.assetView === 'performance' ? assetsPage(c, true) : connectedPage(c, true));
+  return assetsCollectionPage(c, helpers);
 }
 function totalsHelp() {
   return `<details class="help"><summary>${t("About totals")}</summary><p>${t("Trackers do not change account balances.")}</p></details>`;

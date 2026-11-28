@@ -1,3 +1,5 @@
+import { assetKinds, preserveAssetTypes, assetTypePreset, assetValueText } from "./asset-types.js";
+import { financeGroup, financeGroups, financeTypeField } from "./finance-collections.js";
 import { learningWeekChanges, learningWeekDays } from "./learning-week.js";
 import { LearningWeekController } from "./learning-week-controller.js";
 import { enabledNotificationReport } from "./notification-preferences.js";
@@ -61,7 +63,7 @@ import {
 } from "./number-inputs.js";
 import { fromJalali, validIso } from "./calendar.js";
 import { instruments as marketInstruments } from "./market-catalog.js";
-import { navigationGroups, navigationColor, plannerPages, resolveLearningRoute } from "./navigation.js";
+import { navigationGroups, navigationColor, plannerPages, resolveLearningRoute, resolveFinanceRoute } from "./navigation.js";
 import {
   organizerReport,
   notificationKey,
@@ -138,6 +140,10 @@ migrateLegacyPreferences();
 const $ = (selector) => document.querySelector(selector);
 const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
+const financeFilters = { installments:"all", assets:"all" };
+let assetsView = "all";
+let financeRoute = null;
+const financeDrafts = new Map();
 let dashboardAmountsVisible = false;
 let assetKey = "",
   assetPeriod = 30,
@@ -150,7 +156,7 @@ let developmentEditorSpace = null;
 let projectId = null;
 let clipInbox = [];
 const connected = new ConnectedStore(() => {
-  if (ready && ["connected", "workbench"].includes(page)) render();
+  if (ready && ["assets", "connected", "workbench"].includes(page)) render();
 });
 let session = { authenticated: false, googleConfigured: false, demoEnabled: true },
   space = "guest",
@@ -253,6 +259,8 @@ const context = () => ({
   month: selectedMonth,
   filter,
   typeFilter,
+  financeType: financeFilters[page] || "all",
+  assetView: assetsView,
   transactionFilters,
   transactionFiltersOpen,
   refreshInProgress,
@@ -482,7 +490,13 @@ function render() {
   deskTools.capture();
   for (const group of document.querySelectorAll('#view [data-setting-group]'))
     settingsGroupsOpen[group.dataset.settingGroup] = group.open;
-  const hash = resolveLearningRoute(location.hash.slice(1));
+  const requested = resolveLearningRoute(location.hash.slice(1));
+  const hash = resolveFinanceRoute(requested);
+  if (financeRoute !== requested) {
+    if (hash in financeFilters) financeFilters[hash] = requested === "monthlyExpenses" ? "monthlyExpense" : requested === "locked" ? "locked" : requested === "receivables" ? "receivable" : "all";
+    assetsView = requested === "connected" ? "import" : "all";
+    financeRoute = requested;
+  }
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
@@ -528,6 +542,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
     developmentEditorSpace = space;
     preset ||= { date: developmentDate, area: developmentArea(page), title: "", notes: "", minutes: 0, done: false, resourceId: null };
   }
+  financeDrafts.clear();
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -561,6 +576,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
     toggleDevelopmentFields(root);
   }
   if (projectKinds.includes(kind)) $("#dialog-fields").insertAdjacentHTML("beforeend", projectField(records(), editing?.data.projectId || preset?.projectId));
+  $("#dialog-fields").insertAdjacentHTML("afterbegin", financeTypeField(kind, !!editing, editing?.data.sourceKey || preset?.sourceKey));
   formatNumericFields($("#editor"));
   updateAssetPreview();
   updatePlanTotal();
@@ -768,7 +784,7 @@ async function commit(
     if (kind === "transaction" && (current?.data.installmentId || data?.installmentId)) throw Error("Edit or reverse this payment from its installment.");
     if (remove && kind === "project" && live.some(r => r.data.projectId === id)) throw Error("Move records out of this project before deleting it.");
     if (remove && kind === "installment" && current?.data.payment) throw Error("Reverse this payment before deleting the installment.");
-    if (!remove) validateData(kind, data, id);
+    if (!remove) { data = preserveAssetTypes(current, kind, data); validateData(kind, data, id); }
     state.pending.push({
       operationId: crypto.randomUUID(),
       id,
@@ -905,6 +921,11 @@ async function submitEditor(event) {
       data.marketSymbol = data.marketSymbol || null;
       data.lots = collectAssetLots();
       data.valuations = parseAssetValuations(data.valuationsText);
+      if (data.currentValue?.trim()) {
+        const valueToman = normalizeDecimal(data.currentValue, 2);
+        data.valuations = [...data.valuations.filter(v => v.date !== today()), {date:today(), valueToman}];
+      }
+      delete data.currentValue;
       delete data.valuationsText;
       for (const key of Object.keys(data))
         if (key.startsWith("lot-date-")) delete data[key];
@@ -955,6 +976,7 @@ async function submitEditor(event) {
         return;
       }
     }
+    if (assetKinds.includes(editorKind) && editorPreset?.assetTypeData) data.assetTypeData = editorPreset.assetTypeData;
     await commit(
       editorKind,
       data,
@@ -1587,6 +1609,7 @@ async function changeLanguage(value) {
       selectedMonth,
       categoryOptions(),
     );
+    $("#dialog-fields").insertAdjacentHTML("afterbegin", financeTypeField(editorKind, !!editing, values.sourceKey));
     if (projectKinds.includes(editorKind)) $("#dialog-fields").insertAdjacentHTML("beforeend", projectField(records(), values.projectId));
     $("#dialog-title").textContent = editing ? t("Edit") : addLabel(editorKind);
     applyMovementType();
@@ -1597,6 +1620,11 @@ async function changeLanguage(value) {
   void updatePushLanguage();
 }
 async function onAction(event) {
+  const assetView = event.target.closest('[data-assets-view]');
+  if (assetView && ['all','performance','import'].includes(assetView.dataset.assetsView)) {
+    assetsView = assetView.dataset.assetsView; render(); return;
+  }
+
   const portfolioFilter = event.target.closest("[data-portfolio-filter]");
   if (portfolioFilter) {
     connectedFilter = portfolioFilter.dataset.portfolioFilter;
@@ -2024,6 +2052,7 @@ async function onAction(event) {
     return;
   }
   if (action === "asset-select") {
+    assetsView = "performance";
     assetKey = element.dataset.key;
     render();
     void loadAssetHistory();
@@ -2277,6 +2306,41 @@ $("#theme-button").onclick = () => {
 };
 
 document.addEventListener("change", (event) => {
+  if (event.target.matches("[data-finance-filter]")) {
+    if (page in financeFilters && ["all", ...financeGroups[page].map(([kind]) => kind)].includes(event.target.value)) {
+      financeFilters[page] = event.target.value; render();
+    }
+    return;
+  }
+  if (event.target.matches("[data-finance-kind]")) {
+    const next = event.target.value, previous = editorKind;
+    if (!financeGroup(previous) || financeGroup(next) !== financeGroup(previous) || (editing && financeGroup(previous) !== 'assets')) return;
+    try {
+    const original = editing, draft = Object.fromEntries(new FormData($("#editor-form")));
+    for (const key of ['amount','returned']) if (key in draft) draft[key] = Number(numInput(draft[key]));
+    if (previous === 'monthlyExpense' && !draft.hasEnd) draft.endMonth = null;
+    let value = null;
+    if (previous === 'assetPosition') {
+      draft.lots = collectAssetLots(); draft.valuations = parseAssetValuations(draft.valuationsText);
+      draft.sourceKey = original?.data.sourceKey || editorPreset?.sourceKey || null;
+      draft.marketSymbol = draft.marketSymbol || null;
+      value = draft.currentValue?.trim() ? normalizeDecimal(draft.currentValue,2) : assetValueText(assetEntries(records(),connected.snapshots,marketData).find(a => a.key === original?.id || a.key === draft.sourceKey));
+      if (value !== null && draft.currentValue?.trim()) draft.valuations = [...draft.valuations.filter(v=>v.date!==today()), {date:today(),valueToman:value}];
+    }
+    financeDrafts.set(previous,draft);
+    const drafts = new Map(financeDrafts);
+    const archive = {...original?.data.assetTypeData, ...editorPreset?.assetTypeData};
+    for (const [kind,data] of drafts) { if (assetKinds.includes(kind)) { const copy = {...data}; delete copy.assetTypeData; delete copy.valuationsText; delete copy.currentValue; for (const key of Object.keys(copy)) if (key.startsWith('lot-date-')) delete copy[key]; archive[kind] = copy; } }
+    const preset = drafts.get(next) || (financeGroup(next)==='assets' ? assetTypePreset({kind:previous,data:{...draft,assetTypeData:archive}},next,value)
+      : {amount:draft.amount,title:draft.title});
+    if (financeGroup(next)==='assets') preset.assetTypeData = archive;
+    openEditor(next,null,null,preset);
+    editing = original;
+    if (original) $("#dialog-title").textContent = `${t('Edit')} · ${t('Assets')}`;
+    for (const [kind,values] of drafts) financeDrafts.set(kind,values);
+    } catch (error) { event.target.value = previous; $("#form-error").textContent = message(error.message); }
+    return;
+  }
   if (event.target.matches("[data-dashboard-visible]")) {
     const id = event.target.dataset.dashboardVisible;
     dashboardLayoutDraft = toggleDashboardSection(dashboardLayoutDraft || preferences().dashboardLayout, id, event.target.checked);
@@ -3012,7 +3076,7 @@ document.addEventListener("click", (event) => {
     if (!detail.contains(event.target)) detail.open = false;
 });
 
-function workspacePages() { return Object.entries(sections).map(([id, [label]]) => ({ id, title: t(label) })); }
+function workspacePages() { return Object.entries(sections).filter(([id]) => resolveFinanceRoute(id) === id).map(([id, [label]]) => ({ id, title: t(label) })); }
 function refreshWorkspaceSearch() {
   if (!state) return;
   const query = $("#workspace-search-input").value;

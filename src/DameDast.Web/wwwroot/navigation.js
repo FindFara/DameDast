@@ -18,13 +18,13 @@ export const navigationGroups = [
     id: "investing",
     label: "Investing",
     color: "#a47bc4",
-    items: ["assets", "market", "suggestions", "connected", "locked"],
+    items: ["assets", "market", "suggestions"],
   },
   {
     id: "obligations",
     label: "Obligations",
     color: "#c58b48",
-    items: ["installments", "monthlyExpenses", "receivables"],
+    items: ["installments"],
   },
 ];
 export function navigationColor(page) {
@@ -43,3 +43,6 @@ export const plannerPages = [
 ];
 
 export const resolveLearningRoute = page => ["weeklyPlan", "developmentStudy"].includes(page) ? "learning" : page;
+
+// Retain saved links while showing only the combined destinations in navigation.
+export const resolveFinanceRoute = page => page === 'monthlyExpenses' ? 'installments' : ['receivables','locked','connected'].includes(page) ? 'assets' : page;
