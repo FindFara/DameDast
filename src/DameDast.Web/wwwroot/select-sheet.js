@@ -82,7 +82,7 @@ export function installSelectSheet() {
   }
   function refresh() {
     if(active&&!active.isConnected)close(false);
-    for(const select of document.querySelectorAll("select:not([multiple])")) {
+    for(const select of document.querySelectorAll("select:not([multiple]):not([data-native-select])")) {
       if(!select.closest(".excalidraw"))update(select);
     }
   }

@@ -1465,3 +1465,16 @@ Object.assign(fa, {
 Object.assign(fa, {"New payment":"پرداخت جدید"});
 
 Object.assign(fa, {"Selected prices":"قیمت‌های انتخابی", "Choose between 1 and 8 prices.":"بین ۱ تا ۸ قیمت انتخاب کن."});
+
+Object.assign(fa, {
+ "Repeat":"تکرار", "Does not repeat":"بدون تکرار", "Number of payments (optional)":"تعداد پرداخت‌ها (اختیاری)", "No end":"بدون پایان",
+ "Leave the count empty to repeat every month without an end date.":"برای تکرار ماهانه بدون پایان، تعداد را خالی بگذار.", "Choose 1 to 100 payments.":"تعداد پرداخت را بین ۱ تا ۱۰۰ وارد کن.",
+ "Date and amount filters":"فیلتر بازهٔ زمانی و مبلغ", "From date":"از تاریخ", "To date":"تا تاریخ", "Select Persian date":"انتخاب تاریخ شمسی",
+ "Minimum amount (toman)":"حداقل مبلغ (تومان)", "Maximum amount (toman)":"حداکثر مبلغ (تومان)", "No minimum":"بدون حداقل", "No maximum":"بدون حداکثر", "Clear filters":"پاک کردن فیلترها",
+ "The start date must be before the end date.":"تاریخ شروع نباید بعد از تاریخ پایان باشد.", "The minimum amount must not exceed the maximum.":"حداقل مبلغ نباید بیشتر از حداکثر باشد.",
+ "Fixed expenses repeat in the selected date range, or the selected month when no range is entered.":"تکرار هزینه‌های ثابت در بازهٔ تاریخ انتخابی نمایش داده می‌شود؛ بدون بازه، ماه انتخاب‌شده ملاک است.", "Results":"نتیجه", "Pages":"صفحه‌ها",
+});
+
+Object.assign(fa, {"Expected payments":"پرداخت‌های مورد انتظار"});
+
+Object.assign(fa, {"Resize card":"تغییر اندازهٔ بلوک"});

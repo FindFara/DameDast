@@ -49,7 +49,7 @@
 
 body.workbench-fullscreen main { padding: 0 !important; min-height: 100dvh; }
 body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-width: none; min-height: 100dvh; margin: 0; border-radius: 0; padding: 82px clamp(12px,1.5vw,24px) 30px; }
-.desk-home #desk-board { --desk-cell-gap: 12px; display: grid; gap: var(--desk-cell-gap); grid-template-columns: repeat(var(--desk-columns,24),minmax(0,1fr)); grid-template-rows: repeat(var(--desk-rows,12),clamp(48px,calc((100dvh - 160px - 132px)/12),64px)); min-width: 0; background: transparent; }
+.desk-home #desk-board { --desk-cell-gap: 12px; --desk-row-height:clamp(48px,calc((100dvh - 160px - 132px)/12),64px); display: grid; gap: var(--desk-cell-gap); grid-template-columns: repeat(var(--desk-columns,24),minmax(0,1fr)); grid-template-rows: repeat(var(--desk-rows,12),var(--desk-row-height)); min-width: 0; background: transparent; }
 .desk-home .desk-scroll { overflow: visible; }
 .desk-home.workbench-editing .desk-scroll { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
 .desk-home .desk-card { border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); background: var(--desk-card-bg,var(--surface)); }
@@ -86,10 +86,10 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
 .desk-floating-actions > .desk-edit-fab { flex:0 0 48px; display: grid; place-items: center; width: 48px; height: 48px; min-width: 48px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface-raised); color: var(--accent); box-shadow: 0 4px 18px #12322315; cursor: pointer; }
 .desk-floating-actions > .desk-edit-fab[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
 .desk-floating-actions svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-@media (max-width:1099px) { .desk-home #desk-board { --desk-cell-gap:10px; grid-template-rows:repeat(var(--desk-rows,12),52px); } }
+@media (max-width:1099px) { .desk-home #desk-board { --desk-cell-gap:10px; --desk-row-height:52px; grid-template-rows:repeat(var(--desk-rows,12),var(--desk-row-height)); } }
 @media (max-width:599px) {
   body.workbench-fullscreen .desk-home { padding: 82px 12px 92px; }
-  .desk-home #desk-board { --desk-cell-gap:10px; grid-template-rows:repeat(var(--desk-rows,12),50px); }
+  .desk-home #desk-board { --desk-cell-gap:10px; --desk-row-height:50px; grid-template-rows:repeat(var(--desk-rows,12),var(--desk-row-height)); }
   .desk-home .desk-card { border-radius:20px; }
   .desk-home .desk-card-body { padding:16px; }
   .desk-home .desk-widget-search .desk-card-body { padding:12px 14px; }
@@ -141,7 +141,7 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
 @media (prefers-reduced-motion:reduce) { .desk-google-services a { transition:none; } }
 
 /* Individual square launcher tiles, with the destination name always visible. */
-.desk-home .desk-widget-shortcut { aspect-ratio:1; align-self:start; border-radius:18px; }
+.desk-home .desk-widget-shortcut { width:min(100%,calc(var(--desk-row-height) * var(--desk-widget-rows) + var(--desk-cell-gap) * (var(--desk-widget-rows) - 1))); aspect-ratio:1; max-height:100%; align-self:start; justify-self:center; border-radius:18px; }
 .desk-home .desk-widget-shortcut:not(.desk-custom-color) { background:var(--surface-raised); border-color:var(--border); box-shadow:none; }
 .desk-home .desk-widget-shortcut .desk-card-body { overflow:hidden; }
 .desk-home .desk-shortcut { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:7px; padding:8px 5px; color:var(--ink); text-align:center; }
@@ -151,7 +151,7 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
 .desk-home.workbench-editing .desk-shortcut { padding-top:20px; gap:4px; }
 .desk-home .desk-google-services { gap:10px; }
 .desk-home .desk-google-services a { aspect-ratio:1; justify-content:center; padding:8px 4px; background:var(--surface-raised); border:1px solid var(--border); border-radius:17px; }
-.desk-home .desk-widget-markets .desk-card-body { padding:12px 14px; }
+.desk-home .desk-widget-markets .desk-card-body { padding:8px 14px; }
 .desk-market-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-block-end:5px; }
 .desk-market-heading > strong { font-size:13px; }
 .desk-market-source { padding:2px 7px; color:var(--ink); background:var(--surface-soft); border-radius:8px; font-size:10px; text-decoration:none; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -174,3 +174,27 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
 .desk-market-options label { display:flex; align-items:center; gap:8px; min-height:36px; font-size:12px; }
 .desk-market-options input { width:17px; height:17px; min-width:17px; min-height:17px; accent-color:var(--accent); }
 .desk-market-options small { margin-inline-start:auto; color:var(--muted); font-size:10px; }
+
+/* Quiet scrollbars and direct manipulation on the board. */
+.desk-home .desk-card-body,.desk-home .desk-scroll { scrollbar-width:thin; scrollbar-color:color-mix(in srgb,var(--muted) 28%,transparent) transparent; }
+.desk-home .desk-card-body::-webkit-scrollbar,.desk-home .desk-scroll::-webkit-scrollbar { width:4px; height:4px; }
+.desk-home .desk-card-body::-webkit-scrollbar-thumb,.desk-home .desk-scroll::-webkit-scrollbar-thumb { background:color-mix(in srgb,var(--muted) 28%,transparent); border-radius:10px; }
+.desk-home .desk-card-body::-webkit-scrollbar-track,.desk-home .desk-scroll::-webkit-scrollbar-track { background:transparent; }
+.desk-home .desk-card { touch-action:pan-y; -webkit-touch-callout:none; }
+.desk-home .desk-card:not(:has(input:focus,textarea:focus)) { cursor:grab; }
+.desk-home .desk-card a,.desk-home .desk-card button { cursor:pointer; }
+.desk-home .desk-moving { opacity:.85; cursor:grabbing; pointer-events:none; }
+.desk-home .desk-resizing { outline:2px solid var(--accent); z-index:6; }
+.desk-home .desk-edge { position:absolute; z-index:7; padding:0; min-height:0; min-width:0; border:0; background:transparent; color:var(--accent); opacity:0; pointer-events:none; touch-action:none; }
+.desk-home .desk-edge::after { content:''; position:absolute; background:currentColor; border-radius:9px; opacity:.6; }
+.desk-home .desk-edge-left,.desk-home .desk-edge-right { width:14px; top:36px; bottom:18px; cursor:ew-resize; }
+.desk-home .desk-edge-left { left:0; }.desk-home .desk-edge-right { right:0; }
+.desk-home .desk-edge-left::after,.desk-home .desk-edge-right::after { width:3px; height:24px; top:calc(50% - 12px); left:5px; }
+.desk-home .desk-edge-bottom { height:14px; bottom:0; left:18px; right:18px; cursor:ns-resize; }
+.desk-home .desk-edge-bottom::after { height:3px; width:24px; top:5px; left:calc(50% - 12px); }
+.desk-home .desk-edge-corner { width:22px; height:22px; bottom:0; right:0; cursor:nwse-resize; }
+.desk-home .desk-edge-corner::after { width:8px; height:8px; bottom:6px; right:6px; background:transparent; border-right:2px solid currentColor; border-bottom:2px solid currentColor; border-radius:0 0 3px; }
+.desk-home .desk-card:is(.desk-selected,:focus-within) .desk-edge,.desk-home.workbench-editing .desk-edge { opacity:1; pointer-events:auto; }
+@media(hover:hover) { .desk-home .desk-card:hover .desk-edge { opacity:1; pointer-events:auto; } }
+@media(pointer:coarse) { .desk-home .desk-edge-left,.desk-home .desk-edge-right { width:22px; }.desk-home .desk-edge-bottom { height:22px; }.desk-home .desk-edge-corner { width:30px; height:30px; } }
+.desk-home :is(.desk-widget-clock,.desk-widget-shortcut,.desk-widget-search,.desk-widget-pet) .desk-card-body { overflow:clip; }

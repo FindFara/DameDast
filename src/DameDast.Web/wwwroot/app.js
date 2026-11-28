@@ -1,3 +1,5 @@
+import { normalizeFixedExpense } from "./fixed-expense-schedule.js";
+import { emptyPaymentFilters, normalizePaymentFilters } from "./payment-filters.js";
 import { assetKinds, preserveAssetTypes, assetTypePreset, assetValueText } from "./asset-types.js";
 import { financeGroup, financeGroups, financeTypeField } from "./finance-collections.js";
 import { learningWeekChanges, learningWeekDays } from "./learning-week.js";
@@ -142,6 +144,7 @@ const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
 const financeFilters = { installments:"all", assets:"all" };
 let assetsView = "all";
+let paymentFilters = emptyPaymentFilters(), paymentPage = 1, fixedDateTouched = false;
 let financeRoute = null;
 const financeDrafts = new Map();
 let dashboardAmountsVisible = false;
@@ -261,6 +264,7 @@ const context = () => ({
   typeFilter,
   financeType: financeFilters[page] || "all",
   assetView: assetsView,
+  paymentFilters, paymentPage,
   transactionFilters,
   transactionFiltersOpen,
   refreshInProgress,
@@ -543,6 +547,7 @@ function openEditor(kind, id = null, type = null, preset = null) {
     preset ||= { date: developmentDate, area: developmentArea(page), title: "", notes: "", minutes: 0, done: false, resourceId: null };
   }
   financeDrafts.clear();
+  fixedDateTouched = false;
   editorPreset = preset;
   if (kind === "transaction" && !ofKind("account").length) {
     toast("Create an account first.");
@@ -862,7 +867,7 @@ async function submitEditor(event) {
   const button = $("#save-button");
   button.disabled = true;
   try {
-    const data = Object.fromEntries(new FormData(event.target));
+    let data = Object.fromEntries(new FormData(event.target));
     for (const name of [
       "amount",
       "openingBalance",
@@ -949,9 +954,7 @@ async function submitEditor(event) {
     }
     if (editorKind === "budget") data.calendar = "persian";
     if (editorKind === "monthlyExpense") {
-      data.accountId = data.accountId || null;
-      data.endMonth = data.hasEnd ? data.endMonth : null;
-      delete data.hasEnd;
+      data = normalizeFixedExpense(data, editing?.data, fixedDateTouched);
     }
     if (editorKind === "investmentStep") {
       data.actualValue =
@@ -1595,8 +1598,7 @@ async function changeLanguage(value) {
           percentText: r.querySelector("[data-plan-percent]").value,
         }),
       );
-    if (editorKind === "monthlyExpense" && !values.hasEnd)
-      values.endMonth = null;
+
     $("#dialog-fields").innerHTML = editorFields(
       editorKind,
       values,
@@ -1620,6 +1622,10 @@ async function changeLanguage(value) {
   void updatePushLanguage();
 }
 async function onAction(event) {
+  const paging = event.target.closest('[data-payment-page]');
+  if (paging) { paymentPage = Number(paging.dataset.paymentPage); render(); return; }
+  if (event.target.closest('[data-payment-reset]')) { paymentFilters = emptyPaymentFilters(); paymentPage = 1; render(); return; }
+
   const assetView = event.target.closest('[data-assets-view]');
   if (assetView && ['all','performance','import'].includes(assetView.dataset.assetsView)) {
     assetsView = assetView.dataset.assetsView; render(); return;
@@ -2306,9 +2312,18 @@ $("#theme-button").onclick = () => {
 };
 
 document.addEventListener("change", (event) => {
+  if (editorKind === "monthlyExpense" && event.target.matches('#editor [name="dueDate"]')) fixedDateTouched = true;
+  if (event.target.matches('[name="recurrence"]') && editorKind === 'monthlyExpense') {
+    document.querySelector('[data-fixed-repeat-count]').hidden = event.target.value === 'once'; return;
+  }
+
   if (event.target.matches("[data-finance-filter]")) {
     if (page in financeFilters && ["all", ...financeGroups[page].map(([kind]) => kind)].includes(event.target.value)) {
-      financeFilters[page] = event.target.value; render();
+      const form = document.querySelector('[data-payment-filters]');
+      try {
+        if (form) paymentFilters = normalizePaymentFilters(Object.fromEntries(new FormData(form)));
+        financeFilters[page] = event.target.value; paymentPage = 1; render();
+      } catch (error) { form.querySelector('[data-payment-filter-error]').textContent = message(error.message); event.target.value = financeFilters[page]; }
     }
     return;
   }
@@ -2318,7 +2333,7 @@ document.addEventListener("change", (event) => {
     try {
     const original = editing, draft = Object.fromEntries(new FormData($("#editor-form")));
     for (const key of ['amount','returned']) if (key in draft) draft[key] = Number(numInput(draft[key]));
-    if (previous === 'monthlyExpense' && !draft.hasEnd) draft.endMonth = null;
+
     let value = null;
     if (previous === 'assetPosition') {
       draft.lots = collectAssetLots(); draft.valuations = parseAssetValuations(draft.valuationsText);
@@ -3132,3 +3147,12 @@ async function installmentPayment(id) {
 }
 
 window.addEventListener("online", () => void updatePushLanguage());
+
+document.addEventListener('submit', event => {
+  if (!event.target.matches('[data-payment-filters]')) return;
+  event.preventDefault();
+  try {
+    paymentFilters = normalizePaymentFilters(Object.fromEntries(new FormData(event.target)));
+    paymentPage = 1; render();
+  } catch (error) { event.target.querySelector('[data-payment-filter-error]').textContent = message(error.message); }
+});

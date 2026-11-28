@@ -240,7 +240,7 @@ export const deskDevices = {
 };
 export const deviceForWidth = width => width < 600 ? "phone" : width < 1100 ? "tablet" : "desktop";
 export function widgetVisibleOnDevice(widget, device) {
-  return !!deskDevices[device] && widget.devices?.[device] !== false;
+  return !!deskDevices[device];
 }
 export function deviceWorkbench(layout, device = "desktop") {
   validateWorkbench(layout);

@@ -1,9 +1,10 @@
+import { filterPayments, fixedExpenseEntries, emptyPaymentFilters } from "./payment-filters.js";
+import { calendarFilterField } from "./persian-date-filter.js";
 import { assetEntries } from './assets.js';
 import { separateAssetEntries } from './asset-types.js';
-import { t } from './i18n.js';
+import { t, localizedNumber } from './i18n.js';
 import { escapeHtml as esc, dueDays } from './finance.js';
 import { inMonth, solarText } from './calendar.js';
-import { recurringForMonth } from './planning.js';
 
 export const financeGroups = {
   installments: [['installment', 'Installment'], ['monthlyExpense', 'Monthly expense']],
@@ -15,10 +16,10 @@ export function financeTypeField(kind, editing = false, sourceKey = null) {
   try { if (kind === "assetPosition" && JSON.parse(sourceKey)?.[0] === "locked") return ""; } catch {}
   return group ? `<label class="field">${t('Type')}<select data-finance-kind ${editing && group !== 'assets' ? 'disabled' : ''}>${financeGroups[group].map(([value, label]) => `<option value="${value}" ${value === kind ? 'selected' : ''}>${t(label)}</option>`).join('')}</select></label>` : '';
 }
-export function paymentEntries(records, month) {
+export function paymentEntries(records, month, filters = {}) {
   return [
     ...records.filter(r => !r.deleted && r.kind === 'installment').map(r => ({...r, date:r.data.dueDate, paid:r.data.paid, amount:r.data.amount})),
-    ...recurringForMonth(records, month).map(r => ({...r, date:r.dueDate, paid:!!r.payment, amount:r.payment?.data.amount ?? r.data.amount})),
+    ...fixedExpenseEntries(records, month, filters),
   ].sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 }
 export function receivableEntries(records) {
@@ -36,19 +37,25 @@ const defaultKind = (c, group) => financeGroups[group].some(([kind]) => kind ===
 const sum = entries => entries.reduce((total,r) => total+r.amount,0);
 const empty = () => `<div class="panel empty"><p>${t('No items for this type.')}</p></div>`;
 
+function paymentFilterForm(filters) {
+  return `<details class="payment-filter-panel" open><summary>${t('Date and amount filters')}</summary><form data-payment-filters><div class="payment-filter-grid">${calendarFilterField('From date','from',filters.from)}${calendarFilterField('To date','to',filters.to)}<label class="field">${t('Minimum amount (toman)')}<input name="minAmount" class="money-input" inputmode="numeric" value="${esc(filters.minAmount)}" placeholder="${t('No minimum')}"></label><label class="field">${t('Maximum amount (toman)')}<input name="maxAmount" class="money-input" inputmode="numeric" value="${esc(filters.maxAmount)}" placeholder="${t('No maximum')}"></label></div><p role="alert" data-payment-filter-error></p><div class="payment-filter-actions"><button type="submit" class="primary">${t('Search')}</button><button type="button" class="secondary" data-payment-reset>${t('Clear filters')}</button></div></form></details>`;
+}
 export function paymentsPage(c, ui) {
   const {pageHeading, amountCard, icon, number, unit, actionButton:button} = ui;
-  const entries = selected(c, paymentEntries(c.records,c.month)), unpaid = entries.filter(r => !r.paid);
+  const filters={...emptyPaymentFilters(),...c.paymentFilters};
+  const entries=filterPayments(selected(c,paymentEntries(c.records,c.month,filters)),filters), unpaid=entries.filter(r=>!r.paid);
+  const pages=Math.max(1,Math.ceil(entries.length/30)), page=Math.min(pages,Math.max(1,c.paymentPage || 1));
+
   const heading = pageHeading(c,'Installments and fixed expenses',defaultKind(c,'installments'),c.financeType && c.financeType !== 'all' ? null : 'New payment');
   const stats = c.financeType === 'monthlyExpense'
-    ? `<div class="stats-grid">${amountCard('Expected this month',entries.reduce((s,r)=>s+r.data.amount,0),'featured')}${amountCard('Recorded payments',sum(entries.filter(r=>r.paid)))}${amountCard('Still to pay',sum(unpaid))}</div>`
+    ? `<div class="stats-grid">${amountCard(filters.from||filters.to?'Expected payments':'Expected this month',entries.reduce((s,r)=>s+r.data.amount,0),'featured')}${amountCard('Recorded payments',sum(entries.filter(r=>r.paid)))}${amountCard('Still to pay',sum(unpaid))}</div>`
     : `<div class="stats-grid">${amountCard('Total remaining',sum(unpaid),'featured')}${amountCard('Due this month',sum(unpaid.filter(r => inMonth(r.date,c.month))))}${amountCard('Overdue',sum(unpaid.filter(r => dueDays(r.date)<0)))}</div>`;
-  const rows = entries.map(r => {
+  const rows = entries.slice((page-1)*30,page*30).map(r => {
     const payment = r.kind === 'installment' ? button('paid',r.paid?'Mark unpaid':'Mark paid',`data-id="${r.id}"`,'small-button')
-      : r.paid ? button('edit','View payment',`data-id="${r.payment.id}"`,'small-button') : button('recurring-pay','Record payment',`data-id="${r.id}"`,'small-button');
+      : r.paid ? button('edit','View payment',`data-id="${r.payment.id}"`,'small-button') : button('recurring-pay','Record payment',`data-id="${r.id}" data-month="${r.occurrenceMonth || ''}"`,'small-button');
     return `<article class="installment-row ${r.paid?'paid':''}" data-finance-record="${r.id}" data-finance-type="${r.kind}"><span class="category-icon">${icon(r.kind === 'installment'?'installments':'monthlyExpenses')}</span><div class="installment-description">${typeBadge(r.kind)}<strong dir="auto">${title(c,r.data.title)}</strong><small>${solarText(r.date)} · <span class="${!r.paid && dueDays(r.date)<0?'negative':''}">${r.paid?t('Paid'):dueDays(r.date)<0?t('Overdue'):t('Unpaid')}</span></small></div><div class="movement-amount">${number(r.amount)}${unit()}</div><div class="row-actions">${payment}<button type="button" class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t('Edit')}">${icon('edit')}</button><button type="button" class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t('Delete')}">${icon('trash')}</button></div></article>`;
   }).join('');
-  return heading + typeFilter('installments',c.financeType || 'all') + stats + `<div class="toolbar">${button('push','Enable reminders','','secondary')}</div>` + (rows ? `<section class="panel installment-list">${rows}</section>` : empty()) + `<p class="small-note">${t('Fixed expenses are shown for the selected month. Installments include all scheduled dates.')}</p><p class="small-note">${t('Recording a payment creates an expense in the selected account. Reversing it removes that expense.')}</p>`;
+  return heading + typeFilter('installments',c.financeType || 'all') + paymentFilterForm(filters) + stats + `<div class="toolbar">${button('push','Enable reminders','','secondary')}</div>` + (rows ? `<section class="panel installment-list">${rows}</section>` : empty()) + `<nav class="payment-pagination" aria-label="${t('Pages')}"><button type="button" data-payment-page="${page-1}" ${page===1?'disabled':''}>${t('Previous')}</button><span>${localizedNumber(entries.length)} ${t('Results')} · ${localizedNumber(page)} / ${localizedNumber(pages)}</span><button type="button" data-payment-page="${page+1}" ${page===pages?'disabled':''}>${t('Next')}</button></nav>` + `<p class="small-note">${t('Fixed expenses repeat in the selected date range, or the selected month when no range is entered.')}</p><p class="small-note">${t('Recording a payment creates an expense in the selected account. Reversing it removes that expense.')}</p>`;
 }
 export function assetsCollectionPage(c, ui) {
   const {pageHeading, amountCard, icon, number, unit, actionButton:button} = ui;
@@ -59,8 +66,13 @@ export function assetsCollectionPage(c, ui) {
   const known = visiblePositions.filter(a=>a.valueCents!==null).reduce((sum,a)=>sum+a.valueCents,0n);
   const trackedValue = entries.reduce((sum,r)=>sum+BigInt(r.amount)*100n,0n);
   const stats = `<div class="stats-grid">${amountCard('Known asset value',Number(known+trackedValue)/100,'featured')}${amountCard('Money lent',sum(entries.filter(r=>r.kind==='receivable')))}${amountCard('Total locked',sum(entries.filter(r=>r.kind==='locked')))}</div>`;
-  const assetCards = visiblePositions.map(a => `<article class="panel" data-finance-type="assetPosition" data-asset-key="${esc(a.key)}"><div class="card-heading">${typeBadge('assetPosition')}<small>${esc(t(a.source?.source || 'Personal asset'))}</small></div><h2 dir="auto">${title(c,a.name)}</h2><div class="amount">${a.valueCents===null?'—':number(Number(a.valueCents)/100,2)}${unit()}</div><div class="card-foot"><button type="button" class="text-button" data-action="asset-edit" data-key="${esc(a.key)}">${t('Edit')}</button><button type="button" class="text-button" data-action="asset-select" data-key="${esc(a.key)}">${t('Performance')}</button>${a.record?button('delete','Delete',`data-id="${a.record.id}"`,'text-button'):''}</div></article>`).join('');
-  const cards = entries.map(r => `<article class="panel" data-finance-record="${r.id}" data-finance-type="${r.kind}"><div class="card-heading">${typeBadge(r.kind)}<button type="button" class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t('Edit')}">${icon('edit')}</button></div><h2 dir="auto">${title(c,r.data.person || r.data.name)}</h2><div class="amount">${number(r.amount)}${unit()}</div>${r.kind==='receivable'?`<div class="progress-track"><div class="progress-fill" style="width:${r.data.returned/r.data.amount*100}%"></div></div><div class="progress-detail"><span>${t('Returned')} ${number(r.data.returned)}</span><span>${number(r.data.amount)}</span></div>`:''}<div class="card-foot"><span>${r.kind==='receivable' && !r.amount?t('Settled'):r.date?solarText(r.date):t(r.kind==='locked'?'No release date':'No due date')}</span>${r.kind==='locked'?button('release','Mark released',`data-id="${r.id}"`,'text-button'):button('edit','Record repayment',`data-id="${r.id}"`,'text-button')}<button type="button" class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t('Delete')}">${icon('trash')}</button></div></article>`).join('');
-  return pageHeading(c,'Assets',defaultKind(c,'assets')) + assetViews(c.assetView) + typeFilter('assets',c.financeType || 'all') + stats + (assetCards || cards?`<div class="cards-grid">${assetCards}${cards}</div>`:empty()) + `<p class="small-note">${t('Trackers do not change account balances.')}</p>`;
+  const assetCards = visiblePositions.map(a => `<article class="panel" data-finance-type="assetPosition" data-asset-key="${esc(a.key)}"><div class="card-heading">${typeBadge('assetPosition')}<small>${esc(t(a.source?.source || 'Personal asset'))}</small></div><h2 dir="auto">${title(c,a.name)}</h2><div class="amount">${a.valueCents===null?'—':number(Number(a.valueCents)/100,2)}${unit()}</div><div class="card-foot"><button type="button" class="text-button" data-action="asset-edit" data-key="${esc(a.key)}">${t('Edit')}</button><button type="button" class="text-button" data-action="asset-select" data-key="${esc(a.key)}">${t('Performance')}</button>${a.record?button('delete','Delete',`data-id="${a.record.id}"`,'text-button'):''}</div></article>`);
+  const cards = entries.map(r => `<article class="panel" data-finance-record="${r.id}" data-finance-type="${r.kind}"><div class="card-heading">${typeBadge(r.kind)}<button type="button" class="icon-button" data-action="edit" data-id="${r.id}" aria-label="${t('Edit')}">${icon('edit')}</button></div><h2 dir="auto">${title(c,r.data.person || r.data.name)}</h2><div class="amount">${number(r.amount)}${unit()}</div>${r.kind==='receivable'?`<div class="progress-track"><div class="progress-fill" style="width:${r.data.returned/r.data.amount*100}%"></div></div><div class="progress-detail"><span>${t('Returned')} ${number(r.data.returned)}</span><span>${number(r.data.amount)}</span></div>`:''}<div class="card-foot"><span>${r.kind==='receivable' && !r.amount?t('Settled'):r.date?solarText(r.date):t(r.kind==='locked'?'No release date':'No due date')}</span>${r.kind==='locked'?button('release','Mark released',`data-id="${r.id}"`,'text-button'):button('edit','Record repayment',`data-id="${r.id}"`,'text-button')}<button type="button" class="icon-button" data-action="delete" data-id="${r.id}" aria-label="${t('Delete')}">${icon('trash')}</button></div></article>`);
+  const groups=new Map();
+  const group=(key,label,card)=>{if(!groups.has(key))groups.set(key,{label,cards:[]});groups.get(key).cards.push(card);};
+  visiblePositions.forEach((asset,index)=>group(asset.symbol?'symbol:'+asset.symbol:'personal',asset.symbol || t('Personal asset'),assetCards[index]));
+  entries.forEach((entry,index)=>group(entry.kind,t(typeLabel(entry.kind)),cards[index]));
+  const columns=[...groups].map(([key,g])=>`<section class="asset-type-column" data-asset-group="${esc(key)}"><h2 class="asset-group-heading">${esc(g.label)}<small>${localizedNumber(g.cards.length)}</small></h2>${g.cards.join('')}</section>`).join('');
+  return pageHeading(c,'Assets',defaultKind(c,'assets')) + assetViews(c.assetView) + typeFilter('assets',c.financeType || 'all') + stats + (columns?`<div class="asset-collection-grid">${columns}</div>`:empty()) + `<p class="small-note">${t('Trackers do not change account balances.')}</p>`;
 }
 export const assetViews = (view = 'all') => `<div class="segment-control asset-collection-views">${[['all','All assets'],['performance','Performance'],['import','Import and sync']].map(([key,label])=>`<button type="button" data-assets-view="${key}" aria-pressed="${key===view}" class="${key===view?'active':''}">${t(label)}</button>`).join('')}</div>`;

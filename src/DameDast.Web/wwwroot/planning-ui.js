@@ -1,3 +1,4 @@
+import { fixedExpenseForm } from "./fixed-expense-schedule.js";
 import { closeIcon } from "./ui-icons.js";
 import {t,getLanguage,localizedNumber,percentage} from './i18n.js';
 import {categories,money,escapeHtml as esc,today} from './finance.js';
@@ -25,7 +26,11 @@ export function planningEditorFields(kind,d,month,accounts,options){
  if(kind==='category')return input('Category name','name',d.name||'','required maxlength="50"')+select('Color','color',categoryColors.map((v,i)=>[v,t('Color')+' '+localizedNumber(i+1)]),d.color||categoryColors[0]);
  if(kind==='note')return input('Title','title',d.title||'','required maxlength="80"')+`<label class="field">${t('Content')}<textarea name="body" rows="7" maxlength="4000" dir="auto">${esc(d.body||'')}</textarea></label>`;
  if(kind==='allocationPlan')return `<label class="field">${t('Plan month')}${monthControl(d.month||month)}</label>`+amount('Monthly money (toman)','total',d.total||'')+`<div id="plan-editor-rows">${(d.rows||[{category:options[0]?.[0]||'Food & drinks',basisPoints:10000}]).map(r=>planEditorRow(r,options)).join('')}</div><div class="plan-editor-actions">${button('plan-row-add','Add category','','secondary')}<span id="plan-percent-total" role="status"></span></div><p class="small-note">${t('Up to 100%. The rest stays unassigned.')}</p>`;
- if(kind==='monthlyExpense')return input('Title','title',d.title||'','required maxlength="80"')+amount('Amount (toman)','amount',d.amount||'')+select('Category','category',options,d.category||'Home')+`<div class="field-grid">${dateControl('Day of Persian month','day',d.day||1,true,'day')}${dateControl('Starts in','startMonth',d.startMonth||month,true,'month')}</div><label class="checkbox-field"><input type="checkbox" name="hasEnd" data-recurring-end ${d.endMonth?'checked':''}>${t('Has an end month')}</label><div id="recurring-end-field" ${d.endMonth?'':'hidden'}>${dateControl('Ends in','endMonth',d.endMonth||month,true,'month')}</div>`+select('Default account','accountId',[['',t('Choose when recording payment')],...accounts],d.accountId||'');
+ if(kind==='monthlyExpense'){
+  const schedule=fixedExpenseForm(d,month);
+  return input('Title','title',d.title||'','required maxlength="80"')+amount('Amount (toman)','amount',d.amount||'')+select('Category','category',options,d.category||'Home')+dateControl('First due date','dueDate',schedule.dueDate,true)+select('Repeat','recurrence',[['once',t('Does not repeat')],['monthly',t('Monthly')]],schedule.recurrence)+`<div data-fixed-repeat-count ${schedule.recurrence==='once'?'hidden':''}>${input('Number of payments (optional)','repeatCount',schedule.repeatCount,'inputmode="numeric" maxlength="4" placeholder="'+t('No end')+'"')}<p class="small-note">${t('Leave the count empty to repeat every month without an end date.')}</p></div>`+select('Default account','accountId',[['',t('Choose when recording payment')],...accounts],d.accountId||'');
+ }
+
  if(kind==='investmentStep')return input('Investment title','title',d.title||'','required maxlength="80"')+amount('Invested amount (toman)','amount',d.amount||'')+dateControl('Investment date','date',d.date||today(),true)+amount('Current value (optional)','actualValue',d.actualValue??'',true)+dateControl('Valuation date (if value entered)','valueDate',d.valueDate||'',false)+`<p class="small-note">${t('Investment steps are tracking records. Record the account movement separately.')}</p>`;
  return null;
 }
