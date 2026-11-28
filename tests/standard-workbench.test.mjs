@@ -10,13 +10,15 @@ test('default search and independent icon shortcuts live in the board with no de
   const shortcuts=layout.widgets.filter(w=>w.type==='shortcut');assert.deepEqual(shortcuts.map(w=>w.options.page),['notes','tasks','calendar','projects']);
   assert.ok(shortcuts.every(w=>w.width===2&&w.height===2));
   const context={records:[{kind:'workbench',data:layout}],space:'guest',now:'2026-11-18T12:00:00Z',connectedSnapshots:[]};
+  layout.widgets[0].background="#ffdf00";
   const html=workbenchPage(context,icon);
+  assert.doesNotMatch(html,/desk-custom-color|--desk-card-bg|#ffdf00/);
   assert.match(html,/desk-widget-search/);assert.equal((html.match(/class="desk-shortcut"/g)||[]).length,4);
   assert.doesNotMatch(html,/<h1|desk-card-head|desk-home-header|desk-today|desk-app-shortcuts/);
   const fields=widgetSettings(layout.widgets.find(w=>w.type==='pet'),context),add=addWidgetFields(icon);
   assert.doesNotMatch(add,/name="(?:size|width|height|x|y|title)"/);
-  assert.doesNotMatch(fields,/name="(?:width|height|x|y|title|device-phone|device-tablet|device-desktop)"/);assert.match(html,/data-desk-resize="right"/);
-  assert.equal((fields.match(/data-desk-swatch=/g)||[]).length,5);assert.doesNotMatch(fields,/type="color"|desk-custom-colors/);
+  assert.doesNotMatch(fields,/name="(?:width|height|x|y|title|device-phone|device-tablet|device-desktop)"/);assert.doesNotMatch(html,/data-desk-resize/);
+  assert.doesNotMatch(fields,/data-desk-swatch|name="background"/);assert.doesNotMatch(fields,/type="color"|desk-custom-colors/);
   assert.equal(deskColors.length,5);assert.ok(new Set(Object.values(shortcutColors)).size>4);
 });
 test('legacy layouts are migrated without losing cards or metadata, including a full 72-card layout',()=>{

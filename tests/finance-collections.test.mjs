@@ -8,6 +8,8 @@ import { assetEntries } from '../src/DameDast.Web/wwwroot/assets.js';
 const row=(id,kind,data)=>({id,kind,data,version:1,deleted:false});
 test('menus combine payment kinds and asset kinds while migrating old routes and pins',()=>{
  const pages=navigationGroups.flatMap(g=>g.items);
+ assert.ok(navigationGroups.find(g=>g.id==='money').items.includes('installments'));
+ assert.ok(!navigationGroups.some(g=>g.id==='obligations'));
  assert.ok(pages.includes('installments'));assert.ok(pages.includes('assets'));
  for(const page of ['monthlyExpenses','receivables','locked','connected'])assert.ok(!pages.includes(page));
  assert.equal(resolveFinanceRoute('monthlyExpenses'),'installments');assert.equal(resolveFinanceRoute('locked'),'assets');

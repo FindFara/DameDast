@@ -186,15 +186,11 @@ body.workbench-fullscreen .desk-home { position: relative; width: 100%; max-widt
 .desk-home .desk-moving { opacity:.85; cursor:grabbing; pointer-events:none; }
 .desk-home .desk-resizing { outline:2px solid var(--accent); z-index:6; }
 .desk-home .desk-edge { position:absolute; z-index:7; padding:0; min-height:0; min-width:0; border:0; background:transparent; color:var(--accent); opacity:0; pointer-events:none; touch-action:none; }
-.desk-home .desk-edge::after { content:''; position:absolute; background:currentColor; border-radius:9px; opacity:.6; }
 .desk-home .desk-edge-left,.desk-home .desk-edge-right { width:14px; top:36px; bottom:18px; cursor:ew-resize; }
 .desk-home .desk-edge-left { left:0; }.desk-home .desk-edge-right { right:0; }
-.desk-home .desk-edge-left::after,.desk-home .desk-edge-right::after { width:3px; height:24px; top:calc(50% - 12px); left:5px; }
 .desk-home .desk-edge-bottom { height:14px; bottom:0; left:18px; right:18px; cursor:ns-resize; }
-.desk-home .desk-edge-bottom::after { height:3px; width:24px; top:5px; left:calc(50% - 12px); }
 .desk-home .desk-edge-corner { width:22px; height:22px; bottom:0; right:0; cursor:nwse-resize; }
-.desk-home .desk-edge-corner::after { width:8px; height:8px; bottom:6px; right:6px; background:transparent; border-right:2px solid currentColor; border-bottom:2px solid currentColor; border-radius:0 0 3px; }
-.desk-home .desk-card:is(.desk-selected,:focus-within) .desk-edge,.desk-home.workbench-editing .desk-edge { opacity:1; pointer-events:auto; }
-@media(hover:hover) { .desk-home .desk-card:hover .desk-edge { opacity:1; pointer-events:auto; } }
+.desk-home.workbench-editing .desk-edge { opacity:1; pointer-events:auto; }
+.desk-home .desk-edge-corner { font-size:18px; line-height:1; opacity:.45; }
 @media(pointer:coarse) { .desk-home .desk-edge-left,.desk-home .desk-edge-right { width:22px; }.desk-home .desk-edge-bottom { height:22px; }.desk-home .desk-edge-corner { width:30px; height:30px; } }
 .desk-home :is(.desk-widget-clock,.desk-widget-shortcut,.desk-widget-search,.desk-widget-pet) .desk-card-body { overflow:clip; }

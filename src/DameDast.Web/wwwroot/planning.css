@@ -5,18 +5,31 @@
 
 .historical-mix .allocation-donut small{display:none}
 
-.payment-filter-panel { margin-block:0 22px; border:1px solid var(--border); border-radius:18px; background:var(--surface); overflow:hidden; }
-.payment-filter-panel > summary { padding:15px 18px; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer; }
-.payment-filter-panel form { padding:0 18px 18px; }
-.payment-filter-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 16px; }
-.payment-filter-grid .field { min-width:0; margin:0; font-size:12px; }
-.payment-filter-grid input,.range-date-field button { width:100%; min-width:0; min-height:44px; border:1px solid var(--border); border-radius:11px; background:var(--surface-soft); color:var(--ink); padding:10px 12px; font:inherit; }
-.range-date-field button { display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:start; cursor:pointer; }
+.payment-filter-panel { margin-block:0 18px; }
+.payment-filter-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.payment-filter-toolbar > .toolbar { margin:0; min-width:0; }
+.payment-filter-toolbar .finance-type-filter { display:flex; flex-direction:row; align-items:center; gap:8px; margin:0; font-size:11px; }
+.payment-filter-toolbar .finance-type-filter select,.payment-filter-toolbar .unified-select-trigger { width:155px; min-height:34px; padding:5px 9px; font-size:11px; border-radius:9px; }
+.payment-filter-toggles { display:flex; gap:6px; margin-inline-start:auto; }
+.payment-filter-toggle { display:flex; align-items:center; gap:5px; min-height:34px; padding:6px 9px; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--muted); font:inherit; font-size:11px; }
+.payment-filter-toggle svg { width:15px; height:15px; }
+.payment-filter-toggle[aria-expanded=true] { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.payment-filter-toggle.has-filter::after { content:''; width:4px; height:4px; border-radius:50%; background:var(--accent); }
+.payment-filter-sections { display:flex; flex-wrap:wrap; gap:12px; }
+.payment-filter-sections fieldset { flex:0 1 370px; min-width:0; margin:12px 0 0; padding:10px 12px 12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+.payment-filter-sections legend { padding-inline:4px; font-size:11px; color:var(--muted); }
+.payment-filter-sections [hidden],.payment-filter-actions[hidden] { display:none; }
+.payment-filter-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.payment-filter-grid .field { min-width:0; margin:0; gap:5px; font-size:10px; }
+.payment-filter-grid input,.range-date-field button { width:100%; min-width:0; min-height:34px; border:1px solid var(--border); border-radius:8px; background:var(--surface-soft); color:var(--ink); padding:6px 8px; font:inherit; font-size:11px; }
+.payment-filter-panel .field input,.payment-filter-panel .range-date-field button { height:34px; min-height:34px; padding:6px 8px; font-size:11px; line-height:20px; }
+.range-date-field button { display:flex; align-items:center; justify-content:space-between; gap:6px; text-align:start; cursor:pointer; }
 .range-date-field button span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.range-date-field svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.5; flex:none; opacity:.65; }
-.range-date-field button[aria-expanded=true] { border-color:#7362ed; outline:2px solid #7362ed20; }
-.payment-filter-actions { display:flex; gap:10px; margin-block-start:17px; }
-[data-payment-filter-error] { color:var(--negative,#c14f65); font-size:12px; margin-block:12px 0; }
+.range-date-field svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.5; flex:none; opacity:.65; }
+.range-date-field button[aria-expanded=true] { border-color:var(--accent); outline:2px solid var(--accent-soft); }
+.payment-filter-actions { display:flex; gap:8px; margin-block-start:10px; }
+.payment-filter-actions button { min-height:32px; padding:5px 11px; font-size:11px; border-radius:8px; }
+[data-payment-filter-error] { color:var(--negative,#c14f65); font-size:12px; margin-block:10px 0; }
 [data-payment-filter-error]:empty { display:none; }
 .payment-pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin-block:14px; font-size:12px; }
 .payment-pagination button { padding:7px 13px; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--ink); font:inherit; cursor:pointer; }
@@ -38,7 +51,7 @@
 .range-calendar-grid button:hover:not(:disabled) { background:#7362ed12; }
 .payment-date-calendar button:focus-visible,.range-month-caption select:focus-visible { outline:2px solid #7362ed; outline-offset:1px; }
 .payment-date-calendar footer { display:flex; justify-content:space-between; gap:8px; border-block-start:1px solid var(--border); padding-block-start:8px; margin-block-start:9px; font-size:11px; color:var(--muted); }
-@media(max-width:599px) { .payment-filter-grid { gap:14px 10px; }.payment-filter-panel form { padding-inline:12px; }.payment-filter-grid .field { font-size:11px; }.range-date-field button { padding-inline:9px; font-size:11px; }.payment-pagination { gap:9px; } }
+@media(max-width:599px) { .payment-filter-toolbar { gap:8px; }.payment-filter-toolbar .finance-type-filter { gap:5px; }.payment-filter-toolbar .finance-type-filter select,.payment-filter-toolbar .unified-select-trigger { width:125px; }.payment-filter-sections fieldset { flex-basis:100%; }.payment-pagination { gap:9px; } }
 
 .range-month-caption [data-range-year] { width:76px; flex:none; }
 .range-month-caption [data-range-month] { width:100px; flex:none; }

@@ -5,10 +5,7 @@ import {
   shortcutPages,
   workbenchRecord,
   widgetCatalog,
-  deskColors,
-  deskColorNames,
   shortcutColors,
-  deskContrast,
   deviceWorkbench,
   deviceForWidth,
 } from "./workbench.js";
@@ -230,11 +227,11 @@ const grip =
 const gear =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14M9 3v6M15 9v6M10 15v6"/></svg>';
 function widgetMarkup(c, w, icon) {
-  const spec = widgetCatalog.find(spec=>spec.type===w.type), heading = t(spec.title), fg = deskContrast(w.background);
-  const style = `--desk-widget-rows:${w.height};grid-column:${w.x+1}/span ${w.width};grid-row:${w.y+1}/span ${w.height};${fg ? `--desk-card-bg:${w.background};--ink:${fg};--muted:${fg};--accent:${fg};--border:color-mix(in srgb,${fg} 15%,transparent);` : ""}`;
+  const spec = widgetCatalog.find(spec=>spec.type===w.type), heading = t(spec.title);
+  const style = `--desk-widget-rows:${w.height};grid-column:${w.x+1}/span ${w.width};grid-row:${w.y+1}/span ${w.height};`;
   const page = Object.hasOwn(shortcutPages,w.options?.page) ? w.options.page : "notes";
   const body = w.type === "search" ? deskSearchMarkup(icon) : w.type === "shortcut" ? `<a class="desk-shortcut" href="#${page}" aria-label="${c.workbenchEditing ? t("Card settings")+": " : ""}${t(shortcutPages[page])}" title="${t(shortcutPages[page])}"><span class="desk-shortcut-symbol" style="--shortcut-color:${shortcutColors[page]}">${icon(page)}</span><span class="desk-shortcut-label">${t(shortcutPages[page])}</span></a>` : components[w.type](c,w);
-  return `<article class="desk-card desk-widget-${w.type}${fg?" desk-custom-color":""}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(w.type === "shortcut" ? t(shortcutPages[page]) : heading)}">${c.workbenchEditing ? `<div class="desk-card-tools"><button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}">${grip}</button><button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button></div>` : ""}<div class="desk-card-body">${body}</div>${["left","right","bottom","corner"].map(edge=>`<button type="button" class="desk-edge desk-edge-${edge}" data-desk-resize="${edge}" aria-label="${t("Resize card")}" title="${t("Resize card")}"></button>`).join("")}</article>`;
+  return `<article class="desk-card desk-widget-${w.type}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(w.type === "shortcut" ? t(shortcutPages[page]) : heading)}">${c.workbenchEditing ? `<div class="desk-card-tools"><button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}">${grip}</button><button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button></div>` : ""}<div class="desk-card-body">${body}</div>${c.workbenchEditing ? ["left","right","bottom","corner"].map(edge=>`<button type="button" class="desk-edge desk-edge-${edge}" data-desk-resize="${edge}" aria-label="${t("Resize card")}" title="${t("Resize card")}">${edge==='corner'?'⤡':''}</button>`).join("") : ""}</article>`;
 }
 export function workbenchPage(c, icon) {
   const source = standardWorkbench(workbenchRecord(c.records)?.data || defaultWorkbench());
@@ -242,9 +239,6 @@ export function workbenchPage(c, icon) {
   const layout = deviceWorkbench(source,device);
   const usedRows = Math.max(device === "desktop" ? 12 : 1,...layout.widgets.map(widget=>widget.y+widget.height));
   return `<section aria-label="${t("Workbench")}" class="workbench-page desk-home${editing ? " workbench-editing" : ""}" ><div class="desk-scroll"><div id="desk-board" class="desk-board${editing ? " is-arranging" : ""}" data-device="${device}" style="--desk-columns:${layout.columns};--desk-rows:${usedRows}" dir="ltr">${layout.widgets.map(widget=>widgetMarkup({...c,workbenchEditing:editing},widget,icon)).join("")}</div></div><output class="sr-only desk-live-status" role="status"></output></section>`;
-}
-export function colorFields(color) {
-  return `<input type="hidden" name="background" value="${esc(color || "")}"><div class="desk-color-swatches" role="group" aria-label="${t("Card background")}">${deskColors.map((hex,index)=>`<button type="button" style="background:${hex}" data-desk-swatch="${hex}" aria-label="${t(deskColorNames[index])}" title="${t(deskColorNames[index])}" aria-pressed="${color === hex}" class="${color === hex ? "selected" : ""}"></button>`).join("")}</div>`;
 }
 export function widgetSettings(w, c) {
   const referenceNotes = textNotes(c.records);
@@ -259,7 +253,7 @@ export function widgetSettings(w, c) {
             "",
           )}${w.referenceId && !referenceNotes.some((r) => r.id === w.referenceId) ? `<option selected value="${w.referenceId}">${t("Unavailable")}</option>` : ""}</select></label>`
       : ""
-  }${toolOptionFields(w.type, w.options || {})}<strong class="desk-field-heading">${t("Card background")}</strong>${colorFields(w.background)}`;
+  }${toolOptionFields(w.type, w.options || {})}`;
 }
 export function addWidgetFields(icon) {
   return `${componentPicker(widgetCatalog,icon)}<div data-widget-options>${toolOptionFields("search")}</div>`;

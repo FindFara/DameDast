@@ -6,7 +6,7 @@ export const navigationGroups = [
     id: "money",
     label: "Money",
     color: "#367c61",
-    items: ["monthlyPlan", "transactions", "accounts", "budgets"],
+    items: ["monthlyPlan", "transactions", "accounts", "budgets", "installments"],
   },
   {
     id: "planning",
@@ -19,12 +19,6 @@ export const navigationGroups = [
     label: "Investing",
     color: "#a47bc4",
     items: ["assets", "market", "suggestions"],
-  },
-  {
-    id: "obligations",
-    label: "Obligations",
-    color: "#c58b48",
-    items: ["installments"],
   },
 ];
 export function navigationColor(page) {

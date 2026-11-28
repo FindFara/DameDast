@@ -1478,3 +1478,5 @@ Object.assign(fa, {
 Object.assign(fa, {"Expected payments":"پرداخت‌های مورد انتظار"});
 
 Object.assign(fa, {"Resize card":"تغییر اندازهٔ بلوک"});
+
+Object.assign(fa, {"Date filters":"فیلتر تاریخ", "Amount filters":"فیلتر مبلغ"});

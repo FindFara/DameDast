@@ -144,6 +144,7 @@ const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
 let connectedFilter = "all";
 const financeFilters = { installments:"all", assets:"all" };
 let assetsView = "all";
+const paymentFilterOpen = {date:false, amount:false};
 let paymentFilters = emptyPaymentFilters(), paymentPage = 1, fixedDateTouched = false;
 let financeRoute = null;
 const financeDrafts = new Map();
@@ -264,7 +265,7 @@ const context = () => ({
   typeFilter,
   financeType: financeFilters[page] || "all",
   assetView: assetsView,
-  paymentFilters, paymentPage,
+  paymentFilters, paymentPage, paymentFilterOpen,
   transactionFilters,
   transactionFiltersOpen,
   refreshInProgress,
@@ -1622,6 +1623,16 @@ async function changeLanguage(value) {
   void updatePushLanguage();
 }
 async function onAction(event) {
+  const filterToggle=event.target.closest('[data-payment-filter-toggle]');
+  if(filterToggle){
+    const key=filterToggle.dataset.paymentFilterToggle;
+    if(!Object.hasOwn(paymentFilterOpen,key))return;
+    paymentFilterOpen[key]=!paymentFilterOpen[key];
+    filterToggle.setAttribute('aria-expanded',String(paymentFilterOpen[key]));
+    document.getElementById(`payment-filter-${key}`).hidden=!paymentFilterOpen[key];
+    document.querySelector('.payment-filter-actions').hidden=!Object.values(paymentFilterOpen).some(Boolean);
+    return;
+  }
   const paging = event.target.closest('[data-payment-page]');
   if (paging) { paymentPage = Number(paging.dataset.paymentPage); render(); return; }
   if (event.target.closest('[data-payment-reset]')) { paymentFilters = emptyPaymentFilters(); paymentPage = 1; render(); return; }

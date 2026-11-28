@@ -1,5 +1,5 @@
 import { closeIcon } from "./ui-icons.js";
-import { workbenchRecord, defaultWorkbench, standardWorkbench, packStandardWidgets, standardSize, resizeWorkbenchWidget, validateWorkbench, deskColors, deviceWorkbench } from "./workbench.js";
+import { workbenchRecord, defaultWorkbench, standardWorkbench, packStandardWidgets, standardSize, resizeWorkbenchWidget, validateWorkbench, deviceWorkbench } from "./workbench.js";
 import { addWidgetFields, widgetSettings } from "./workbench-ui.js";
 import { t } from "./i18n.js";
 import { preferences, savePreferences } from "./preferences.js";
@@ -38,6 +38,7 @@ export class WorkbenchController {
   startPointer(event) {
     const card=event.target.closest?.(".desk-card"), edge=event.target.closest?.("[data-desk-resize]"), handle=event.target.closest?.("[data-desk-drag]");
     if(!card || !this.board?.contains(card) || event.button!==0 || this.isInteracting)return;
+    if(edge && !this.editing)return;
     if(!edge && !handle && event.target.closest("input,textarea,select,[contenteditable=true],[data-desk-action]"))return;
     const touch=event.pointerType==='touch';
     const base=this.current(),widget=base.layout.widgets.find(w=>w.id===card.dataset.deskId), view=deviceWorkbench(base.layout,this.board.dataset.device), shown=view.widgets.find(w=>w.id===widget.id);
@@ -111,7 +112,7 @@ export class WorkbenchController {
   async keyDown(event) {
     if(event.key==="Escape"&&this.gesture){event.preventDefault();this.cancelPointer();return;}
     const edge=event.target.closest?.('[data-desk-resize]');
-    if(edge&&this.board?.contains(edge)&&!this.isInteracting&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
+    if(this.editing&&edge&&this.board?.contains(edge)&&!this.isInteracting&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
       event.preventDefault();const base=this.current(),id=edge.closest('.desk-card').dataset.deskId,w=base.layout.widgets.find(w=>w.id===id);
       const dx=event.key==='ArrowRight'?1:event.key==='ArrowLeft'?-1:0,dy=event.key==='ArrowDown'?1:event.key==='ArrowUp'?-1:0;
       try{await this.save(resizeWorkbenchWidget(base.layout,id,Math.max(w.type==='shortcut'?2:1,Math.min(24,w.width+dx)),Math.max(w.type==='shortcut'?2:1,Math.min(12,w.height+dy))),base);this.board.querySelector(`[data-desk-id="${id}"] [data-desk-resize="${edge.dataset.deskResize}"]`)?.focus({preventScroll:true});}catch(error){this.callbacks.error(error);}return;
@@ -156,14 +157,6 @@ export class WorkbenchController {
       }
     });
     form.querySelectorAll("[data-desk-dialog-close]").forEach(button=>button.onclick=()=>dialog.close());
-    const setColor=color=>{
-      if(!deskColors.includes(color))return;
-      form.elements.background.value=color;
-      form.querySelectorAll("[data-desk-swatch]").forEach(button=>{
-        const selected=button.dataset.deskSwatch===color;button.classList.toggle("selected",selected);button.setAttribute("aria-pressed",String(selected));
-      });
-    };
-    form.querySelectorAll("[data-desk-swatch]").forEach(button=>button.onclick=()=>setColor(button.dataset.deskSwatch));
     const submit=async remove=>{
       const error=form.querySelector("#desk-form-error");error.textContent="";
       try{
@@ -174,8 +167,8 @@ export class WorkbenchController {
           if(values.widgetType==="image"&&next.widgets.filter(widget=>widget.type==="image").length>=MAX_DESK_IMAGES)throw Error("You can add up to 4 photos to your workbench.");
           if(values.widgetType==="image"&&!imageData)throw Error("Choose a photo in card settings.");
           next.widgets.push({id:crypto.randomUUID(),type:values.widgetType,x:0,y:0,...standardSize(values.widgetType),background:null,title:null,referenceId:null,options:optionsFromForm(values.widgetType,values,{},imageData)});
-        }else next.widgets=next.widgets.map(previous=>previous.id===id?{...previous,referenceId:values.referenceId||null,background:values.background.trim()||null,devices:null,options:optionsFromForm(previous.type,values,previous.options||{},imageData)}:previous);
-        // Direct edge gestures save dimensions; settings only change content and color.
+        }else next.widgets=next.widgets.map(previous=>previous.id===id?{...previous,referenceId:values.referenceId||null,background:null,devices:null,options:optionsFromForm(previous.type,values,previous.options||{},imageData)}:previous);
+        // Direct edge gestures save dimensions; settings only change content.
         next.widgets=packStandardWidgets(next.widgets);next.rows=Math.max(12,...next.widgets.map(widget=>widget.y+widget.height));
         form.querySelectorAll("button").forEach(button=>button.disabled=true);await this.save(standardWorkbench(next),base);dialog.close();
       }catch(failure){error.textContent=t(failure.message);form.querySelectorAll("button").forEach(button=>button.disabled=false);}
