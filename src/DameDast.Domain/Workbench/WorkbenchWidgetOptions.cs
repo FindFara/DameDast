@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace DameDast.Domain;
 
 public sealed record WorkbenchWidgetOptions(string? ImageData = null, string? Url = null, string? Description = null,
-    string? Calendar = null, string? ClockStyle = null, string? TimeZone = null, string? PetStyle = null, string? Page = null)
+    string? Calendar = null, string? ClockStyle = null, string? TimeZone = null, string? PetStyle = null, string? Page = null, string? Symbols = null)
 {
     [JsonExtensionData] public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
 }
@@ -14,10 +14,12 @@ public static class WorkbenchOptionRules
     public const int MaximumImageDataLength = 120000;
     private static readonly string[] ShortcutPages = ["overview","notes","tasks","calendar","canvas","projects","habits","bookmarks","accounts","transactions","budgets","goals","reminders","assets","market","installments","monthlyPlan","monthlyExpenses","receivables","connected","suggestions","locked","reports","settings"];
 
+    private static readonly string[] MarketSymbols = ["GOLD", "GOLD24", "GOLD_MITHQAL", "SILVER", "COPPER", "USD", "EUR", "GBP", "AED", "TRY", "CHF", "CNY", "BTC", "ETH", "TRX", "SOL", "BNB", "XRP", "DOGE", "ADA", "LTC", "DOT", "TON", "USDT", "METHGHAL", "AGAS", "YAGHOOT", "NOGHRAT", "FOOLAD", "FEMELI", "FARS", "SHASTA", "KHODRO", "KHESAPA", "WEBMELLAT", "VTEJARAT", "SHEPNA", "TAPICO", "MORVARID"];
+
     public static void Validate(string type, WorkbenchWidgetOptions? options)
     {
         if (options is null) return;
-        if (type is not ("image" or "plainCalendar" or "link" or "calculator" or "keyGenerator" or "clock" or "pet" or "search" or "googleServices" or "shortcut") ||
+        if (type is not ("image" or "plainCalendar" or "link" or "calculator" or "keyGenerator" or "clock" or "pet" or "search" or "googleServices" or "shortcut" or "markets") ||
             options.AdditionalProperties?.Any(entry => entry.Value.ValueKind != JsonValueKind.Null) == true ||
             (options.ImageData is not null && type != "image") ||
             (options.Url is not null && type != "link") ||
@@ -26,6 +28,7 @@ public static class WorkbenchOptionRules
             (options.ClockStyle is not null && (type != "clock" || options.ClockStyle is not ("digital" or "analog"))) ||
             (options.TimeZone is not null && (type != "clock" || options.TimeZone is not ("local" or "Asia/Tehran" or "UTC"))) ||
             (options.PetStyle is not null && (type != "pet" || options.PetStyle is not ("dog" or "cat" or "robot"))) ||
+            (options.Symbols is not null && (type != "markets" || !ValidSymbols(options.Symbols))) ||
             (options.Page is not null && (type != "shortcut" || !ShortcutPages.Contains(options.Page))) ||
             (options.Description is not null && (options.Description.Length > 200 || options.Description != options.Description.Trim())))
             throw new FinanceException("Invalid component settings.");
@@ -37,6 +40,12 @@ public static class WorkbenchOptionRules
 
         if (options.ImageData is { } image && !ValidImage(image))
             throw new FinanceException("Choose a PNG, JPEG or WebP image up to 5 MB.");
+    }
+
+    private static bool ValidSymbols(string value)
+    {
+        var symbols = value.Split(',');
+        return symbols.Length is >= 1 and <= 8 && symbols.Distinct().Count() == symbols.Length && symbols.All(MarketSymbols.Contains);
     }
 
     private static bool ValidImage(string data)

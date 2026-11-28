@@ -1,3 +1,5 @@
+import { marketChoices, selectedMarketSymbols } from "./desk-markets.js";
+import { instruments } from "./market-catalog.js";
 import { t, getLanguage, localizedNumber } from "./i18n.js";
 import { escapeHtml as esc } from "./finance.js";
 import { monthOf, monthLabel, shiftMonth, dateInMonth, daysInMonth } from "./calendar.js";
@@ -11,6 +13,10 @@ import { preferences } from "./preferences.js";
 const button = (action, label, text = label, attrs = "") => `<button type="button" class="secondary" data-tool-action="${action}" aria-label="${esc(t(label))}" ${attrs}>${esc(t(text))}</button>`;
 const select = (name, label, choices, value) => `<label class="field">${t(label)}<select name="${name}">${choices.map(([key, title]) => `<option value="${key}" ${key === value ? "selected" : ""}>${t(title)}</option>`).join("")}</select></label>`;
 export function toolOptionFields(type, options = {}) {
+  if (type === "markets") {
+    const selected = selectedMarketSymbols(options);
+    return `<fieldset class="desk-market-options"><legend>${t('Selected prices')}</legend><p>${t('Choose between 1 and 8 prices.')}</p>${marketChoices.map(symbol=>{const instrument=instruments.find(i=>i.symbol===symbol);return `<label><input type="checkbox" name="market-${symbol}" ${selected.includes(symbol)?'checked':''}><span>${esc(getLanguage()==='fa'?instrument.nameFa:instrument.name)}</span><small dir="ltr">${symbol}</small></label>`;}).join('')}</fieldset>`;
+  }
   if (type === "shortcut") return select("shortcutPage", "Destination", Object.entries(shortcutPages), options.page || "notes");
   if (type === "image") return `<label class="field">${t("Photo")}<input data-desk-image-input type="file" accept="image/png,image/jpeg,image/webp"></label><p class="small-note">${t("Up to 4 photos. Each file up to 5 MB; photos are resized before saving.")}</p>${options.imageData ? `<img class="desk-image-draft" src="${esc(options.imageData)}" alt="">` : ""}<label class="field">${t("Description")}<input name="toolDescription" maxlength="200" value="${esc(options.description || "")}" dir="auto"></label>`;
   if (type === "link") return `<label class="field">${t("Website address")}<input name="toolUrl" type="url" placeholder="https://example.com" value="${esc(options.url || "")}" maxlength="2000" required dir="ltr"></label><label class="field">${t("Description")}<input name="toolDescription" maxlength="200" value="${esc(options.description || "")}" dir="auto"></label>`;
@@ -20,6 +26,7 @@ export function toolOptionFields(type, options = {}) {
   return "";
 }
 export function optionsFromForm(type, values, previous = {}, imageData) {
+  if (type === "markets") return { symbols: marketChoices.filter(symbol=>values[`market-${symbol}`]).join(",") };
   if (type === "shortcut") return { page: values.shortcutPage || "notes" };
   if (type === "image") return { imageData: imageData || previous.imageData || null, description: (values.toolDescription || "").trim() };
   if (type === "link") return { url: safeLink(values.toolUrl || ""), description: (values.toolDescription || "").trim() };
@@ -70,7 +77,7 @@ export function toolMarkup(c, widget) {
   if (widget.type === "plainCalendar") return plainCalendarMarkup(o, 0, c.now);
   if (widget.type === "calculator") return `<form class="desk-calculator" data-desk-calculator><label class="sr-only" for="calc-${widget.id}">${t("Calculation")}</label><input id="calc-${widget.id}" data-calculation maxlength="160" placeholder="(12 + 3) × 4" dir="ltr" autocomplete="off" inputmode="decimal"><output data-tool-output aria-live="polite" dir="ltr">0</output><div class="desk-calculator-keys">${["C", "(", ")", "⌫", "7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "-", "0", ".", "%", "+"].map(key => button("calculate-key", key, key, `data-key="${esc(key)}"`)).join("")}</div><button type="submit" class="primary">=</button></form>`;
   if (widget.type === "keyGenerator") return `<div class="desk-key-generator"><label>${t("Length")}<input data-key-length type="number" min="16" max="128" value="32" dir="ltr"></label><label>${t("Format")}<select data-key-format><option value="base64url">Base64url</option><option value="hex">Hex</option></select></label><input data-key-result readonly aria-label="${t("Generated key")}" dir="ltr"><div>${button("generate-key", "Generate")}${button("copy-key", "Copy")}</div><small>${t("Generated keys are not saved or synced.")}</small><output data-tool-output role="status"></output></div>`;
-  if (widget.type === "clock") return `<div class="desk-clock" data-clock-style="${o.clockStyle || "digital"}" data-time-zone="${o.timeZone || "local"}">${o.clockStyle === "analog" ? `<svg class="desk-clock-face" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/>${Array.from({ length: 12 }, (_, index) => `<path d="M50 8v5" style="transform:rotate(${index * 30}deg)"/>`).join("")}<path class="clock-hour" d="M50 50V27"/><path class="clock-minute" d="M50 50V17"/><path class="clock-second" d="M50 55V13"/><circle cx="50" cy="50" r="2"/></svg>` : ""}<time class="desk-clock-time" dir="ltr"></time><span class="desk-clock-date"></span><small>${t(o.timeZone === "UTC" ? "UTC" : o.timeZone === "Asia/Tehran" ? "Tehran" : "Device time")}</small></div>`;
+  if (widget.type === "clock") return `<div class="desk-clock" data-clock-style="${o.clockStyle || "digital"}" data-time-zone="${o.timeZone || "local"}">${o.clockStyle === "analog" ? `<svg class="desk-clock-face" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/>${Array.from({ length: 12 }, (_, index) => `<path d="M50 8v5" style="transform:rotate(${index * 30}deg)"/>`).join("")}<path class="clock-hour" d="M50 50V27"/><path class="clock-minute" d="M50 50V17"/><path class="clock-second" d="M50 55V13"/><circle cx="50" cy="50" r="2"/></svg>` : ""}<time class="desk-clock-time" dir="ltr"></time><span class="desk-clock-date"></span>${o.timeZone === "UTC" || o.timeZone === "Asia/Tehran" ? `<small>${t(o.timeZone === "UTC" ? "UTC" : "Tehran")}</small>` : ""}</div>`;
   if (widget.type === "pet") return petSceneMarkup(widget);
   return "";
 }

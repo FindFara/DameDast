@@ -29,7 +29,7 @@ export const widgetCatalog = [
   },
   { type: "tasks", title: "Tasks", page: "tasks", glyph: "tasks" },
   { type: "goals", title: "Savings goals", page: "goals", glyph: "goals" },
-  { type: "markets", title: "Market", page: "market", glyph: "market" },
+  { type: "markets", title: "Selected prices", page: "market", glyph: "market" },
   {
     type: "allocation",
     title: "Monthly plan",
@@ -64,7 +64,7 @@ export function legacyStandardSize(type) {
   return { width: 4, height: ["plainCalendar", "calculator", "keyGenerator", "allocation"].includes(type) ? 3 : 2 };
 }
 export function standardSize(type) {
-  if (type === "shortcut") return { width: 1, height: 1 };
+  if (type === "shortcut") return { width: 2, height: 2 };
   const previous = legacyStandardSize(type);
   return { width: previous.width * 2, height: previous.height * 2 };
 }
@@ -165,9 +165,9 @@ export function standardWorkbench(layout, includeLegacyTools = true) {
   layout = { ...layout, widgets: layout.widgets.filter(widget => widget.type !== "canvas" && !(widget.type === "shortcut" && widget.options?.page === "canvas")) };
   const ordered = layout.version === 1 ? [...layout.widgets].sort((a,b)=>a.y-b.y||a.x-b.x) : layout.widgets;
   const widgets = ordered.map(widget => {
-    if (layout.version === 3) return { ...widget };
+    if (layout.version === 3) return widget.type === "shortcut" && widget.width === 1 && widget.height === 1 ? {...widget,width:2,height:2} : {...widget};
     const size = layout.version === 1 ? legacyStandardSize(widget.type) : widget;
-    return { ...widget, width: widget.type === "shortcut" ? 1 : size.width * 2, height: widget.type === "shortcut" ? 1 : size.height * 2 };
+    return { ...widget, width: widget.type === "shortcut" ? 2 : size.width * 2, height: widget.type === "shortcut" ? 2 : size.height * 2 };
   });
   if (layout.version === 1 && includeLegacyTools) {
     const additions = [defaultCard(101,"search"), ...["notes","tasks","calendar","projects"].map((page,index)=>defaultCard(102+index,"shortcut",{page}))];
@@ -187,7 +187,7 @@ export function resizeWorkbenchWidget(layout, id, width, height) {
 export function defaultWorkbench() {
   const widgets = packStandardWidgets([
     defaultCard(101,"search"), ...["notes","tasks","calendar","projects"].map((page,index)=>defaultCard(102+index,"shortcut",{page})),
-    defaultCard(1,"clock"),defaultCard(2,"plainCalendar"),defaultCard(107,"googleServices"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(5,"notes"),defaultCard(6,"tasks")
+    defaultCard(108,"markets"),defaultCard(1,"clock"),defaultCard(2,"plainCalendar"),defaultCard(107,"googleServices"),defaultCard(3,"summary"),defaultCard(4,"pet"),defaultCard(5,"notes"),defaultCard(6,"tasks")
   ]);
   return standardWorkbench({version:3, columns:DESK_COLUMNS, rows:Math.max(DESK_ROWS,...widgets.map(widget=>widget.y+widget.height)), background:null, widgets});
 }

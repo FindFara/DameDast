@@ -1,3 +1,4 @@
+import { validMarketSymbols } from "./desk-markets.js";
 export const MAX_DESK_IMAGES = 4;
 export const MAX_IMAGE_DATA = 120000;
 export const toolTypes = ["search", "googleServices", "shortcut", "image", "plainCalendar", "link", "calculator", "keyGenerator", "clock", "pet"];
@@ -22,14 +23,15 @@ export function validImageData(value) {
   } catch { return false; }
 }
 const optionKeys = {
-  search: [], googleServices: [], shortcut: ["page"], image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
+  markets: ["symbols"], search: [], googleServices: [], shortcut: ["page"], image: ["imageData", "description"], plainCalendar: ["calendar"], link: ["url", "description"],
   clock: ["clockStyle", "timeZone"], pet: ["petStyle"], calculator: [], keyGenerator: [],
 };
 export function validateToolOptions(type, options) {
   if (options == null) return;
-  if (!toolTypes.includes(type) || typeof options !== "object" || Array.isArray(options)
+  if (![...toolTypes,"markets"].includes(type) || typeof options !== "object" || Array.isArray(options)
     || Object.entries(options).some(([key, value]) => value != null && (!optionKeys[type].includes(key) || typeof value !== "string")))
     throw Error("Invalid component settings.");
+  if (options.symbols != null && !validMarketSymbols(options.symbols)) throw Error("Choose between 1 and 8 prices.");
   if (options.description != null && (options.description.length > 200 || options.description !== options.description.trim())) throw Error("Invalid component settings.");
   if (options.imageData != null && !validImageData(options.imageData)) throw Error("Choose a PNG, JPEG or WebP image up to 5 MB.");
   if (options.url != null) safeLink(options.url);

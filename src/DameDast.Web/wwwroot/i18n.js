@@ -1463,3 +1463,5 @@ Object.assign(fa, {
 });
 
 Object.assign(fa, {"New payment":"پرداخت جدید"});
+
+Object.assign(fa, {"Selected prices":"قیمت‌های انتخابی", "Choose between 1 and 8 prices.":"بین ۱ تا ۸ قیمت انتخاب کن."});

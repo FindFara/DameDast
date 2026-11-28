@@ -8,7 +8,7 @@ test('default search and independent icon shortcuts live in the board with no de
   const layout=defaultWorkbench();validateWorkbench(layout);assert.equal(layout.version,3);
   assert.equal(layout.widgets.filter(w=>w.type==='search').length,1);
   const shortcuts=layout.widgets.filter(w=>w.type==='shortcut');assert.deepEqual(shortcuts.map(w=>w.options.page),['notes','tasks','calendar','projects']);
-  assert.ok(shortcuts.every(w=>w.width===1&&w.height===1));
+  assert.ok(shortcuts.every(w=>w.width===2&&w.height===2));
   const context={records:[{kind:'workbench',data:layout}],space:'guest',now:'2026-11-18T12:00:00Z',connectedSnapshots:[]};
   const html=workbenchPage(context,icon);
   assert.match(html,/desk-widget-search/);assert.equal((html.match(/class="desk-shortcut"/g)||[]).length,4);
@@ -41,7 +41,7 @@ test('every component has a fixed size and forged resize values are rejected in 
 test('the fine grid doubles both axes, preserves old widget footprints, and keeps edited dimensions',()=>{
   const old={version:2,columns:12,rows:6,background:null,widgets:[{id:id(),type:'clock',x:0,y:0,width:4,height:2,background:null},{id:id(),type:'shortcut',x:4,y:0,width:1,height:1,background:null,options:{page:'notes'}}]};
   const migrated=standardWorkbench(old);assert.equal(migrated.columns,24);assert.equal(migrated.rows,12);
-  assert.equal(migrated.widgets[0].width,8);assert.equal(migrated.widgets[0].height,4);assert.equal(migrated.widgets[1].width,1);assert.equal(migrated.widgets[1].height,1);
+  assert.equal(migrated.widgets[0].width,8);assert.equal(migrated.widgets[0].height,4);assert.equal(migrated.widgets[1].width,2);assert.equal(migrated.widgets[1].height,2);
   const resized=resizeWorkbenchWidget(migrated,migrated.widgets[0].id,7,5);assert.equal(resized.widgets[0].width,7);assert.equal(resized.widgets[0].height,5);
   assert.deepEqual(standardWorkbench(resized),resized);assert.equal(migrated.widgets[0].width,8);
   for(const [width,height]of[[0,2],[25,2],[2,13],[1.5,3]])assert.throws(()=>resizeWorkbenchWidget(resized,migrated.widgets[0].id,width,height));

@@ -1,3 +1,4 @@
+import { selectedMarketSymbols, deskMarketQuote, marketMark } from "./desk-markets.js";
 import {
   defaultWorkbench,
   standardWorkbench,
@@ -113,22 +114,18 @@ function goalsWidget(c) {
       .join("") || empty("No goals yet.")
   );
 }
-function marketsWidget(c) {
-  return ["GOLD", "USD", "SILVER", "BTC"]
-    .map((symbol) => {
-      const i = instruments.find((i) => i.symbol === symbol),
-        q = c.marketData?.quotes?.find((q) => q.symbol === symbol),
-        delayed = q && new Date(c.now) - new Date(q.asOf) > 7200000;
-      return row(
-        esc(getLanguage() === "fa" ? i.nameFa : i.name),
-        q
-          ? `<bdi dir="ltr">${money(q.price, symbol === "BTC" ? 2 : 0)}</bdi>`
-          : "—",
-        `${t(i.unit)}${q ? ` · ${solarText(tehranParts(q.asOf).date)}${delayed ? " · " + t("Delayed") : ""}` : " · " + t("Unavailable")}`,
-      );
-    })
-    .join("");
+export function marketsWidget(c, w = {}) {
+  const symbols = selectedMarketSymbols(w.options);
+  const sources = [...new Set(symbols.map(symbol=>deskMarketQuote(symbol,c.marketData,c.now)?.source).filter(Boolean))];
+  return `<div class="desk-market-heading"><strong>${t('Selected prices')}</strong><a href="#market" class="desk-market-source">${esc(sources.length===1?sources[0]:t('Market'))}</a></div><div class="desk-market-rows">${symbols.map(symbol=>{
+    const instrument=instruments.find(i=>i.symbol===symbol); if(!instrument)return '';
+    const quote=deskMarketQuote(symbol,c.marketData,c.now);
+    const color=({BTC:'#f7931a',GOLD:'#cda536',SILVER:'#8391a5',USD:'#20a57b',USDT:'#26a17b',ETH:'#627eea'})[symbol] || '#6586c7';
+    const change=quote?.change, changeText=change==null?'—':`${change>0?'+':change<0?'−':''}${localizedNumber(Math.abs(change),2)}%`;
+    return `<button type="button" class="desk-market-row" data-action="market-open" data-symbol="${symbol}" title="${quote?esc(`${quote.source} · ${quote.asOf}`):t('Unavailable')}"><span class="desk-market-identity"><span class="desk-market-mark" style="background:${color}">${marketMark(symbol)}</span><span><strong>${esc(getLanguage()==='fa'?instrument.nameFa:instrument.name)}</strong><small>${symbol}${quote?.delayed?' · '+t('Delayed'):''}</small></span></span><span class="desk-market-value"><strong>${quote?`<bdi dir="ltr">${money(quote.price,quote.unit==='USD'?2:0)}</bdi> <small>${t(quote.unit==='toman'?'toman':'USD')}</small>`:'—'}</strong><small class="${change>0?'positive':change<0?'negative':''}"><bdi dir="ltr">${changeText}</bdi></small></span></button>`;
+  }).join('')}</div>`;
 }
+
 function allocationWidget(c) {
   const plan = rowsOf(c, "allocationPlan").find(
     (r) => r.data.month === c.month,
@@ -236,7 +233,7 @@ function widgetMarkup(c, w, icon) {
   const spec = widgetCatalog.find(spec=>spec.type===w.type), heading = t(spec.title), fg = deskContrast(w.background);
   const style = `grid-column:${w.x+1}/span ${w.width};grid-row:${w.y+1}/span ${w.height};${fg ? `--desk-card-bg:${w.background};--ink:${fg};--muted:${fg};--accent:${fg};--border:color-mix(in srgb,${fg} 15%,transparent);` : ""}`;
   const page = Object.hasOwn(shortcutPages,w.options?.page) ? w.options.page : "notes";
-  const body = w.type === "search" ? deskSearchMarkup(icon) : w.type === "shortcut" ? `<a class="desk-shortcut" href="#${page}" aria-label="${c.workbenchEditing ? t("Card settings")+": " : ""}${t(shortcutPages[page])}" title="${t(shortcutPages[page])}"><span class="desk-shortcut-symbol" style="--shortcut-color:${shortcutColors[page]}">${icon(page)}</span></a>` : components[w.type](c,w);
+  const body = w.type === "search" ? deskSearchMarkup(icon) : w.type === "shortcut" ? `<a class="desk-shortcut" href="#${page}" aria-label="${c.workbenchEditing ? t("Card settings")+": " : ""}${t(shortcutPages[page])}" title="${t(shortcutPages[page])}"><span class="desk-shortcut-symbol" style="--shortcut-color:${shortcutColors[page]}">${icon(page)}</span><span class="desk-shortcut-label">${t(shortcutPages[page])}</span></a>` : components[w.type](c,w);
   return `<article class="desk-card desk-widget-${w.type}${fg?" desk-custom-color":""}" style="${style}" data-desk-id="${w.id}" aria-label="${esc(w.type === "shortcut" ? t(shortcutPages[page]) : heading)}">${c.workbenchEditing ? `<div class="desk-card-tools"><button type="button" class="desk-drag" data-desk-drag="${w.id}" aria-label="${t("Move card")}: ${esc(heading)}">${grip}</button><button type="button" class="desk-configure" data-desk-action="configure" data-id="${w.id}" aria-label="${t("Card settings")}: ${esc(heading)}">${gear}</button></div>` : ""}<div class="desk-card-body">${body}</div></article>`;
 }
 export function workbenchPage(c, icon) {
@@ -250,7 +247,7 @@ export function colorFields(color) {
   return `<input type="hidden" name="background" value="${esc(color || "")}"><div class="desk-color-swatches" role="group" aria-label="${t("Card background")}">${deskColors.map((hex,index)=>`<button type="button" style="background:${hex}" data-desk-swatch="${hex}" aria-label="${t(deskColorNames[index])}" title="${t(deskColorNames[index])}" aria-pressed="${color === hex}" class="${color === hex ? "selected" : ""}"></button>`).join("")}</div>`;
 }
 export function widgetSizeFields(widget) {
-  const dimension = (name,label,max,value) => `<label class="field">${t(label)}<select name="${name}" aria-label="${t(label)}">${Array.from({length:max},(_,index)=>index+1).map(number=>`<option value="${number}" ${number === value ? "selected" : ""}>${localizedNumber(number)}</option>`).join("")}</select></label>`;
+  const dimension = (name,label,max,value) => `<label class="field">${t(label)}<select name="${name}" aria-label="${t(label)}">${Array.from({length:max-(widget.type === "shortcut" ? 1 : 0)},(_,index)=>index+(widget.type === "shortcut" ? 2 : 1)).map(number=>`<option value="${number}" ${number === value ? "selected" : ""}>${localizedNumber(number)}</option>`).join("")}</select></label>`;
   return `<div class="desk-size-fields">${dimension("width","Width",24,widget.width)}${dimension("height","Height",12,widget.height)}</div>`;
 }
 export function widgetSettings(w, c) {

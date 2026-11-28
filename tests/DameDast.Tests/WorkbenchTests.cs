@@ -84,7 +84,7 @@ public sealed class WorkbenchTests
     {
         var cases = new (string Type, WorkbenchWidgetOptions Options)[]
         {
-            ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")), ("search", new()), ("googleServices", new()), ("shortcut", new(Page: "notes")),
+            ("markets", new(Symbols: "BTC,GOLD,SILVER,USD")), ("clock", new(ClockStyle: "analog", TimeZone: "Asia/Tehran")), ("search", new()), ("googleServices", new()), ("shortcut", new(Page: "notes")),
             ("pet", new(PetStyle: "cat")), ("pet", new(PetStyle: "dog")), ("plainCalendar", new(Calendar: "persian")),
             ("link", new(Url: "https://example.com/path", Description: "A useful site")),
             ("calculator", new()), ("keyGenerator", new()),
@@ -110,7 +110,7 @@ public sealed class WorkbenchTests
             ("image", new(ImageData: "data:image/png;base64,YmFk")),
             ("image", new(ImageData: "data:image/png;base64,iVBORw0K Ggo=")),
             ("image", new(ImageData: "data:image/png;base64," + new string('A', 120000))),
-            ("clock", new(ClockStyle: "unknown")), ("clock", new(TimeZone: "not-a-zone")),
+            ("markets", new(Symbols: "BTC,BTC")), ("markets", new(Symbols: "INVALID")), ("notes", new(Symbols: "USD")), ("clock", new(ClockStyle: "unknown")), ("clock", new(TimeZone: "not-a-zone")),
             ("shortcut", new(Page: "javascript:alert(1)")), ("clock", new(Page: "notes")), ("pet", new(PetStyle: "unknown")), ("notes", new(Url: "https://example.com")),
             ("notes", new()), ("clock", new() { AdditionalProperties = new() { ["unexpected"] = JsonSerializer.SerializeToElement("value") } })
         };
