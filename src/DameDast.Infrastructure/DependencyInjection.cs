@@ -26,6 +26,11 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddDbContextFactory<FinanceDb>(options =>
             options.UseNpgsql(PostgreSqlConfiguration.ReadConnectionString(configuration)));
+        services.AddScoped<DameDast.Application.Interfaces.Administration.IAdministrationRepository, AdministrationRepository>();
+        services.AddSingleton<DameDast.Application.Interfaces.Administration.IPageViewRepository, PageViewRepository>();
+        services.AddSingleton<PageViewWorker>();
+        services.AddSingleton<DameDast.Application.Interfaces.Administration.IPageViewRecorder>(p => p.GetRequiredService<PageViewWorker>());
+        services.AddHostedService(p => p.GetRequiredService<PageViewWorker>());
         services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IDatabaseHealth, PostgreSqlHealth>();
         services.AddScoped<IWhiteboardRepository, WhiteboardRepository>();
@@ -50,6 +55,9 @@ public static class DependencyInjection
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<FinanceDb>();
         await db.Database.MigrateAsync(cancellationToken);
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        await new AdministrationRepository(scope.ServiceProvider.GetRequiredService<IDbContextFactory<FinanceDb>>(), scope.ServiceProvider.GetRequiredService<TimeProvider>())
+            .BootstrapAsync(config.GetSection("Administration:BootstrapAdminIds").Get<string[]>() ?? [], cancellationToken);
         await services.GetRequiredService<IPushGateway>().InitializeAsync(cancellationToken);
     }
 }

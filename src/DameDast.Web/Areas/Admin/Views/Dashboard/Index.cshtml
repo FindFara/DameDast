@@ -1,0 +1,43 @@
+@{ Layout = null; }
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><title>مدیریت دمِ دست</title>
+  <link rel="stylesheet" href="/admin/admin.css"><script type="module" src="/admin/admin.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">دمِ دست <span>پنل مدیریت</span></a>
+    <nav aria-label="مدیریت">
+      <button type="button" data-tab="analytics" aria-current="page">آمار بازدید</button>
+      <button type="button" data-tab="users">کاربران</button>
+      <button type="button" data-tab="roles">نقش‌ها</button>
+    </nav>
+    <a class="back" href="/">بازگشت به برنامه ←</a>
+  </aside>
+  <main>
+    <header><div><small>مدیریت دمِ دست</small><h1 id="title">آمار بازدید</h1></div><span id="identity"></span></header>
+    <p id="message" role="status" aria-live="polite" hidden></p>
+    <section id="analytics" aria-label="آمار بازدید">
+      <form id="dates" class="filters">
+        <label>از تاریخ (میلادی)<input type="date" name="from" required></label>
+        <label>تا تاریخ (میلادی)<input type="date" name="to" required></label>
+        <label>صفحه<select name="page"><option value="">همهٔ صفحه‌ها</option></select></label>
+        <button class="primary" type="submit">نمایش آمار</button>
+      </form>
+      <div class="metrics"><article><span>بازدید در بازه</span><strong id="total">—</strong></article><article><span>صفحه‌های بازدیدشده</span><strong id="page-count">—</strong></article><article><span>میانگین روزانه</span><strong id="average">—</strong></article></div>
+      <article class="panel"><h2>روند روزانه</h2><p class="muted">تعداد ورود به صفحه‌ها، شامل مهمان‌ها؛ این آمار تعداد افراد یکتا نیست. روزها بر اساس UTC هستند.</p><div id="daily-chart" class="chart"></div></article>
+      <article class="panel"><h2>بازدید هر صفحه</h2><div id="page-chart"></div></article>
+      <p class="muted">آمار به‌صورت پس‌زمینه ثبت می‌شود. بازدیدهای آفلاین، صف پُر و زمان اختلال ذخیره‌سازی ممکن است ثبت نشوند.</p>
+    </section>
+    <section id="users" aria-label="کاربران" hidden>
+      <div class="section-head"><form id="search" class="filters"><label>جست‌وجوی نام، ایمیل یا شناسه<input name="search" type="search" maxlength="200"></label><button type="submit">جست‌وجو</button></form><button id="new-user" class="primary" type="button">افزودن کاربر</button></div>
+      <article class="panel table-scroll"><table><thead><tr><th>کاربر</th><th>نقش‌ها</th><th>وضعیت</th><th>آخرین فعالیت</th><th>عملیات</th></tr></thead><tbody id="user-rows"></tbody></table></article>
+      <div class="pagination"><button id="prev" type="button">قبلی</button><span id="pagination"></span><button id="next" type="button">بعدی</button></div>
+    </section>
+    <section id="roles" aria-label="نقش‌ها" hidden><div class="section-head"><p>نقش Admin اجازهٔ ورود به این پنل را می‌دهد.</p><button id="new-role" class="primary" type="button">افزودن نقش</button></div><article class="panel table-scroll"><table><thead><tr><th>نقش</th><th>تعداد کاربران</th><th>عملیات</th></tr></thead><tbody id="role-rows"></tbody></table></article></section>
+  </main>
+  <dialog id="user-dialog"><form id="user-form"><h2 id="user-title">کاربر</h2><p class="muted">شناسه باید همان شناسهٔ Google حساب باشد؛ ورود با گوگل انجام می‌شود.</p><label>شناسهٔ Google<input name="id" dir="ltr" maxlength="256" required></label><label>نام<input name="name" maxlength="200" required></label><label>ایمیل<input name="email" type="email" dir="ltr" maxlength="320"></label><label class="check"><input name="isActive" type="checkbox">حساب فعال است</label><fieldset><legend>نقش‌ها</legend><div id="user-role-options"></div></fieldset><p class="form-error" role="alert"></p><footer><button type="button" data-close>انصراف</button><button class="primary" type="submit">ذخیره</button></footer></form></dialog>
+  <dialog id="role-dialog"><form id="role-form"><h2>نقش</h2><label>نام نقش<input name="name" maxlength="64" required></label><p class="form-error" role="alert"></p><footer><button type="button" data-close>انصراف</button><button class="primary" type="submit">ذخیره</button></footer></form></dialog>
+</body></html>

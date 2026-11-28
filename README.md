@@ -16,6 +16,8 @@ Latest frontend: project workspaces and independent writing and planning section
 
 [Google sign-in, asset P/L and grouped numbers](docs/GOOGLE-CANVAS-ASSETS-fa.md). Real Google OAuth client keys still need to be configured.
 
+Admin area: user and role management, daily page-view charts and MediatR pipeline logging. [Setup and behavior (Persian)](docs/ADMINISTRATION-fa.md).
+
 Architecture update: ASP.NET Core controllers dispatch through MediatR handlers, entity-organized interfaces, application services and repository contracts. See [Architecture guide](docs/ARCHITECTURE-fa.md). The self-hosted .NET backend and the separately hosted Worker remain distinct deployments.
 
 # DameDast · دمِ دست

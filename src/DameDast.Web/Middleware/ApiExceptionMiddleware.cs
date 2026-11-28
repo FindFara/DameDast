@@ -31,6 +31,10 @@ public sealed class ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExce
         {
             await WriteErrorAsync(context, StatusCodes.Status400BadRequest, new { error = "Your session expired. Refresh the page." });
         }
+        catch (DameDast.Application.Features.Administration.AdminForbiddenException)
+        {
+            await WriteErrorAsync(context, StatusCodes.Status403Forbidden, new { error = "Administrator access is required." });
+        }
         catch (UnauthorizedAccessException)
         {
             await WriteErrorAsync(context, StatusCodes.Status401Unauthorized, new { error = "Sign in to continue." });

@@ -11,6 +11,8 @@ public sealed class AuthorizationBehavior<TRequest, TResponse>(ICurrentUser curr
         cancellationToken.ThrowIfCancellationRequested();
         if (request is IAuthenticatedRequest)
             currentUser.RequireId();
+        if (request is DameDast.Application.Features.Administration.IAdminRequest && !currentUser.IsAdmin)
+            throw new DameDast.Application.Features.Administration.AdminForbiddenException();
         return next();
     }
 }

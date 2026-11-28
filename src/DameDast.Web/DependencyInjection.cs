@@ -16,7 +16,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<CsrfValidationFilter>();
-        services.AddControllers(options => options.Filters.AddService<CsrfValidationFilter>()).ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = _ => new BadRequestObjectResult(new { error = "Invalid request. Check the submitted fields." }));
+        services.AddControllersWithViews(options => options.Filters.AddService<CsrfValidationFilter>()).ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = _ => new BadRequestObjectResult(new { error = "Invalid request. Check the submitted fields." }));
         services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(configuration["Storage:DataDirectory"] ?? "data", "keys"))).SetApplicationName("DameDast");
         services.AddAntiforgery(options =>
         {
@@ -31,6 +31,13 @@ public static class DependencyInjection
         });
         AddAuthentication(services, configuration);
         services.AddAuthorization();
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("page-views", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+        });
         return services;
     }
 

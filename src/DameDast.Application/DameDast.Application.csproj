@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="../DameDast.Domain/DameDast.Domain.csproj" />
     <ProjectReference Include="../DameDast.Common/DameDast.Common.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
   </ItemGroup>

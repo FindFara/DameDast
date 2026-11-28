@@ -4,6 +4,11 @@ namespace DameDast.Infrastructure;
 
 public sealed class FinanceDb(DbContextOptions<FinanceDb> options) : DbContext(options)
 {
+    public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<AppRole> Roles => Set<AppRole>();
+    public DbSet<AppUserRole> UserRoles => Set<AppUserRole>();
+    public DbSet<PageViewDaily> PageViews => Set<PageViewDaily>();
+
     public DbSet<LedgerRow> Ledgers => Set<LedgerRow>();
     public DbSet<FinanceRecordRow> FinanceRecords => Set<FinanceRecordRow>();
     public DbSet<Receipt> Receipts => Set<Receipt>();

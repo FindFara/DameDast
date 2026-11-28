@@ -132,6 +132,8 @@ import {
   pickerCaption,
 } from "./ui.js";
 
+import { createPageViewTracker } from "./page-views.js";
+const trackPageView = createPageViewTracker();
 migrateLegacyPreferences();
 const $ = (selector) => document.querySelector(selector);
 const profileMenu = new ProfileMenu($("#profile-button"), $("#profile-menu"));
@@ -484,6 +486,7 @@ function render() {
   if (desk.isInteracting && ["workbench", "settings"].includes(hash)) return;
   if (desk.gesture) desk.releasePointer();
   page = isNoteRoute(hash) ? "notes" : Object.hasOwn(sections, hash) ? hash : "overview";
+  trackPageView(page, session.csrf);
   if (page === "overview") selectedMonth = `${monthOf(today()).slice(0, 4)}-${selectedMonth.slice(5)}`;
   document.body.classList.toggle("workbench-fullscreen", page === "workbench");
   renderChrome();

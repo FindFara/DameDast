@@ -334,8 +334,8 @@ html[lang="fa"] .brand strong {
 .profile-area { position:relative; margin-top:auto; }
 .profile-menu { position:absolute; inset-inline:0; bottom:calc(100% + 8px); z-index:20; padding:6px; background:var(--surface-raised); border:1px solid var(--border); border-radius:16px; box-shadow:0 8px 28px #172e4926; }
 .profile-menu[hidden] { display:none; }
-.profile-menu button { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:10px; background:transparent; color:var(--ink); text-align:start; font:inherit; font-size:13px; cursor:pointer; }
-.profile-menu button:hover, .profile-menu button:focus-visible { background:var(--accent-soft); outline:2px solid var(--accent); outline-offset:-2px; }
+.profile-menu :is(button, a) { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:10px; background:transparent; color:var(--ink); text-align:start; font:inherit; font-size:13px; cursor:pointer; }
+.profile-menu :is(button, a):hover, .profile-menu :is(button, a):focus-visible { background:var(--accent-soft); outline:2px solid var(--accent); outline-offset:-2px; }
 .profile-menu p { padding:8px 12px; margin:0 0 4px; border-bottom:1px solid var(--border); font-size:12px; overflow-wrap:anywhere; }
 .profile {
   display: flex;

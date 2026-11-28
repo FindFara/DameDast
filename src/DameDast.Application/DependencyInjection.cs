@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddMediatR(configuration =>
         {
             configuration.RegisterServicesFromAssemblyContaining<SyncFinanceCommand>();
+            configuration.AddOpenBehavior(typeof(LoggingBehavior<, >));
             configuration.AddOpenBehavior(typeof(AuthorizationBehavior<, >));
             configuration.AddOpenBehavior(typeof(ValidationBehavior<, >));
         });

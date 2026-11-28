@@ -5,7 +5,7 @@ import { accountSpace } from "./account-scope.js";
 export function profileMenuMarkup(session) {
   if (accountSpace(session) === "guest")
     return `<button type="button" data-action="google"><span class="google-g" aria-hidden="true">G</span>${t("Sign in with Google")}</button>`;
-  return `<p><bdi dir="auto">${esc(session.name || t("Google account"))}</bdi></p><button type="button" data-action="workspace-google">${t("My workspace")}</button><button type="button" data-action="logout">${t("Sign out")}</button>`;
+  return `<p><bdi dir="auto">${esc(session.name || t("Google account"))}</bdi></p>${session.isAdmin ? '<a href="/admin">مدیریت / Admin</a>' : ""}<button type="button" data-action="workspace-google">${t("My workspace")}</button><button type="button" data-action="logout">${t("Sign out")}</button>`;
 }
 
 export function googlePictureUrl(value) {
@@ -33,7 +33,7 @@ export class ProfileMenu {
       if (event.key === "Escape") {
         event.preventDefault(); event.stopImmediatePropagation(); this.toggle(false); button.focus();
       } else if (["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key) && menu.contains(event.target)) {
-        event.preventDefault(); const items = [...menu.querySelectorAll("button")], index = items.indexOf(document.activeElement);
+        event.preventDefault(); const items = [...menu.querySelectorAll("button, a[href]")], index = items.indexOf(document.activeElement);
         items[event.key === "Home" ? 0 : event.key === "End" ? items.length-1 : (index+(event.key === "ArrowDown" ? 1 : -1)+items.length)%items.length]?.focus();
       }
     }, true);
@@ -43,7 +43,7 @@ export class ProfileMenu {
   }
   toggle(open) {
     this.menu.hidden = !open; this.button.setAttribute("aria-expanded", String(open));
-    if (open) this.menu.querySelector("button")?.focus();
+    if (open) this.menu.querySelector("button, a[href]")?.focus();
   }
   render(session, space = "guest") {
     this.renderIdentity(session, space);

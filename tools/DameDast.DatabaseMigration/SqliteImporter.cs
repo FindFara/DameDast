@@ -47,13 +47,17 @@ public static class SqliteImporter
         {
             await using var command = destination.Database.GetDbConnection().CreateCommand();
             command.Transaction = transaction.GetDbTransaction();
-            command.CommandText = $"SELECT EXISTS (SELECT 1 FROM {Quote(entity.GetTableName()!)})";
+            // Built-in roles are migration seed data, not an existing user's destination data.
+            var predicate = entity.ClrType == typeof(AppRole) ? " WHERE NOT \"IsSystem\" OR \"Name\" NOT IN ('Admin', 'User')" : "";
+            command.CommandText = $"SELECT EXISTS (SELECT 1 FROM {Quote(entity.GetTableName()!)}{predicate})";
             if ((bool)(await command.ExecuteScalarAsync(cancellationToken))!)
                 throw new InvalidOperationException("Import requires an empty PostgreSQL destination. Existing data was kept unchanged.");
         }
 
         var counts = new Dictionary<string, long> { ["FinanceRecords"] = 0 };
-        foreach (var entity in entities)
+        // These tables did not exist in the legacy SQLite format; populate the directory after import.
+        foreach (var entity in entities.Where(x => x.ClrType != typeof(AppRole) && x.ClrType != typeof(AppUser)
+            && x.ClrType != typeof(AppUserRole) && x.ClrType != typeof(PageViewDaily)))
         {
             var table = entity.GetTableName()!;
             if (!tables.Contains(table)) { counts.TryAdd(table, 0); continue; }
@@ -71,8 +75,9 @@ public static class SqliteImporter
                     var column = property.GetColumnName(StoreObjectIdentifier.Table(table, entity.GetSchema()))!;
                     if (!columns.TryGetValue(column, out var ordinal))
                     {
-                        // Push language was introduced after the first deployments.
-                        if (entity.ClrType == typeof(DeviceSubscription) && property.Name == nameof(DeviceSubscription.Language)) continue;
+                        // Keep defaults for push settings introduced after the first SQLite deployments.
+                        if (entity.ClrType == typeof(DeviceSubscription) && property.Name is nameof(DeviceSubscription.Language)
+                            or nameof(DeviceSubscription.RemindersEnabled) or nameof(DeviceSubscription.InstallmentsEnabled)) continue;
                         throw new InvalidOperationException($"Missing source column {table}.{column}.");
                     }
                     property.PropertyInfo!.SetValue(row, ConvertValue(reader.GetValue(ordinal), property.ClrType));
@@ -102,6 +107,16 @@ public static class SqliteImporter
             destination.ChangeTracker.Clear();
             counts[table] = count;
         }
+        await destination.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "Users" ("Id", "Name", "Email", "IsActive", "CreatedAt", "LastSeenAt")
+            SELECT "Id", left("Id", 200), NULL, TRUE, CURRENT_TIMESTAMP, NULL FROM (
+                SELECT "UserId" AS "Id" FROM "Ledgers"
+                UNION SELECT "UserId" FROM "Subscriptions"
+                UNION SELECT "UserId" FROM "WhiteboardLibraries"
+                UNION SELECT "OwnerId" FROM "Whiteboards"
+            ) AS owners WHERE length("Id") > 0;
+            INSERT INTO "UserRoles" ("UserId", "RoleName") SELECT "Id", 'User' FROM "Users";
+            """, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return counts;
     }

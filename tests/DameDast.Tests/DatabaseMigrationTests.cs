@@ -24,6 +24,8 @@ public sealed class DatabaseMigrationTests
             var counts = await SqliteImporter.ImportAsync(path, db, CancellationToken.None);
             Assert.Equal(10, counts.Count);
             Assert.All(counts.Values, count => Assert.Equal(1, count));
+            Assert.Equal("alice", (await db.Users.SingleAsync()).Id);
+            Assert.Equal("User", (await db.UserRoles.SingleAsync()).RoleName);
             var ledger = await db.Ledgers.SingleAsync();
             var record = await db.FinanceRecords.SingleAsync();
             Assert.Equal("یادداشت", JsonSerializer.Deserialize<JsonElement>(record.Data).GetProperty("title").GetString());
@@ -64,6 +66,8 @@ public sealed class DatabaseMigrationTests
                 await command.ExecuteNonQueryAsync();
             }
             await Assert.ThrowsAsync<FormatException>(() => SqliteImporter.ImportAsync(path, db, CancellationToken.None));
+            Assert.Empty(await db.Users.ToListAsync());
+            Assert.Empty(await db.UserRoles.ToListAsync());
             Assert.Empty(await db.Ledgers.ToListAsync());
             Assert.Empty(await db.MarketSamples.ToListAsync());
             Assert.Empty(await db.Receipts.ToListAsync());

@@ -1,4 +1,4 @@
-const CACHE = "damedast-shell-v113";
+const CACHE = "damedast-shell-v114";
 const SHELL = [
   "/notification-preferences.js", "/ui-icons.js",
   "/dashboard-layout.js", "/dashboard-settings-ui.js", "/dashboard-layout.css",
@@ -51,7 +51,7 @@ const SHELL = [
   "/calendar-editor-ui.js",
   "/app.js",
   "/account-scope.js",
-  "/profile-menu.js",
+  "/profile-menu.js", "/page-views.js",
   "/store.js",
   "/legacy-storage.js",
   "/finance.js",
@@ -136,6 +136,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/hubs/") ||
     url.pathname.startsWith("/auth/") ||
+    url.pathname === "/admin" || url.pathname.startsWith("/admin/") ||
     url.pathname.startsWith("/signin-google") ||
     url.pathname === "/health"
   )

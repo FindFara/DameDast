@@ -28,8 +28,10 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 app.UseAuthentication();
+app.UseMiddleware<UserDirectoryMiddleware>();
 app.UseMiddleware<AccountScopeMiddleware>();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 // Private, read-only access keeps historical linked documents exportable after canvas retirement.
 app.MapGet("/api/legacy/whiteboards/{id:guid}", async (Guid id, DameDast.Application.Interfaces.Sessions.ICurrentUser user, MediatR.ISender sender, CancellationToken ct) =>

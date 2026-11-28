@@ -6,6 +6,7 @@ namespace DameDast.Web.Identity;
 public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
     private ClaimsPrincipal? User => accessor.HttpContext?.User;
+    public bool IsAdmin => IsAuthenticated && User?.IsInRole("Admin") == true;
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated == true;
     public string? Id => User?.FindFirstValue(ClaimTypes.NameIdentifier);
     public string? Name => User?.Identity?.Name;

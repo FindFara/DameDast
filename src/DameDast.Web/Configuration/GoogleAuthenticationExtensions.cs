@@ -23,6 +23,21 @@ public static class GoogleAuthenticationExtensions
                 context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
                 return Task.CompletedTask;
             };
+            options.Events.OnTicketReceived = async context =>
+            {
+                var principal = context.Principal;
+                var id = principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (id is not null)
+                {
+                    var directory = context.HttpContext.RequestServices.GetRequiredService<DameDast.Application.Interfaces.Administration.IAdministrationRepository>();
+                    var access = await directory.EnsureUserAsync(new(id, principal?.Identity?.Name, principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value), context.HttpContext.RequestAborted);
+                    if (!access.IsActive)
+                    {
+                        context.HandleResponse();
+                        context.Response.Redirect("/?authError=disabled");
+                    }
+                }
+            };
             options.Events.OnRemoteFailure = context =>
             {
                 context.HandleResponse();

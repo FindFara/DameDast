@@ -22,6 +22,76 @@ namespace DameDast.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DameDast.Infrastructure.AppRole", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Name");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+                });
+
+            modelBuilder.Entity("DameDast.Infrastructure.AppUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("DameDast.Infrastructure.AppUserRole", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RoleName")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("UserId", "RoleName");
+
+                    b.HasIndex("RoleName");
+
+                    b.ToTable("UserRoles", (string)null);
+                });
+
             modelBuilder.Entity("DameDast.Infrastructure.DeviceSubscription", b =>
                 {
                     b.Property<string>("Id")
@@ -36,8 +106,8 @@ namespace DameDast.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("RemindersEnabled").HasColumnType("boolean");
-                    b.Property<bool>("InstallmentsEnabled").HasColumnType("boolean");
+                    b.Property<bool>("InstallmentsEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Language")
                         .IsRequired()
@@ -47,6 +117,9 @@ namespace DameDast.Infrastructure.Migrations
                     b.Property<string>("P256dh")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("RemindersEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -146,6 +219,28 @@ namespace DameDast.Infrastructure.Migrations
                     b.ToTable("MarketSamples", null, t =>
                         {
                             t.HasCheckConstraint("CK_MarketSamples_Price", "\"Price\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DameDast.Infrastructure.PageViewDaily", b =>
+                {
+                    b.Property<string>("Page")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<long>("Views")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Page", "Date");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("PageViews", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PageViews_Views", "\"Views\" >= 0");
                         });
                 });
 
@@ -290,6 +385,21 @@ namespace DameDast.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DameDast.Infrastructure.AppUserRole", b =>
+                {
+                    b.HasOne("DameDast.Infrastructure.AppRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DameDast.Infrastructure.AppUser", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DameDast.Infrastructure.FinanceRecordRow", b =>
                 {
                     b.HasOne("DameDast.Infrastructure.LedgerRow", null)
@@ -324,6 +434,11 @@ namespace DameDast.Infrastructure.Migrations
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DameDast.Infrastructure.AppUser", b =>
+                {
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("DameDast.Infrastructure.LedgerRow", b =>
